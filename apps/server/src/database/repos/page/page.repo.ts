@@ -472,4 +472,52 @@ export class PageRepo {
       .selectAll()
       .execute();
   }
+
+  async findByIds(pageIds: string[]): Promise<
+    Array<{
+      id: string;
+      slugId: string;
+      title: string;
+      spaceId: string;
+      workspaceId: string;
+    }>
+  > {
+    return this.db
+      .selectFrom('pages')
+      .select(['id', 'slugId', 'title', 'spaceId', 'workspaceId'])
+      .where('id', 'in', pageIds)
+      .where('deletedAt', 'is', null)
+      .execute();
+  }
+
+  async findInSpaceByTitle(
+    spaceId: string,
+    query: string,
+    limit = 20,
+  ): Promise<
+    Array<{
+      id: string;
+      slugId: string;
+      title: string;
+      spaceId: string;
+      spaceSlug: string;
+    }>
+  > {
+    const searchPattern = `%${query}%`;
+    return this.db
+      .selectFrom('pages')
+      .select([
+        'pages.id',
+        'pages.slugId',
+        'pages.title',
+        'pages.spaceId',
+      ])
+      .leftJoin('spaces', 'spaces.id', 'pages.spaceId')
+      .select('spaces.slug as spaceSlug')
+      .where('pages.spaceId', '=', spaceId)
+      .where('pages.deletedAt', 'is', null)
+      .where('pages.title', 'ilike', searchPattern)
+      .limit(limit)
+      .execute();
+  }
 }

@@ -1,0 +1,192 @@
+.inputWrapper {
+  position: relative;
+}
+
+.inputPill {
+  display: flex;
+  flex-direction: column;
+  border-radius: 20px;
+  border: 1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4));
+  background: light-dark(var(--mantine-color-white), var(--mantine-color-dark-7));
+  padding: 8px 8px 6px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.inputPill:focus-within {
+  border-color: light-dark(var(--mantine-color-blue-5), var(--mantine-color-blue-5));
+  box-shadow: 0 0 0 2px light-dark(rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.2));
+}
+
+.textarea {
+  width: 100%;
+  resize: none;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  line-height: 1.5;
+  color: light-dark(var(--mantine-color-gray-8), var(--mantine-color-dark-0));
+  font-family: var(--mantine-font-family);
+  font-weight: 400;
+  max-height: 160px;
+  overflow-y: auto;
+  letter-spacing: -0.01em;
+  padding: 6px 10px;
+  min-height: 24px;
+}
+
+.textarea:focus {
+  outline: none;
+}
+
+.textarea::placeholder {
+  color: light-dark(var(--mantine-color-gray-5), var(--mantine-color-dark-3));
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 4px 0;
+}
+
+.toolbarLeft {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.toolbarRight {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: light-dark(var(--mantine-color-gray-5), var(--mantine-color-dark-2));
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.iconButton:hover {
+  background: light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-5));
+  color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0));
+}
+
+.optionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 160px;
+}
+
+.optionItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--mantine-radius-sm);
+  border: none;
+  background: transparent;
+  color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0));
+  font-size: 13px;
+  font-family: var(--mantine-font-family);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  width: 100%;
+  text-align: left;
+}
+
+.optionItem:hover {
+  background: light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-5));
+}
+
+.settingsDropdown {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px;
+  min-width: 180px;
+}
+
+.settingsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.settingsLabel {
+  font-size: 12px;
+  color: light-dark(var(--mantine-color-gray-6), var(--mantine-color-dark-1));
+  font-family: var(--mantine-font-family);
+}
+
+.modelSelect {
+  width: 120px;
+}
+
+.modelSelect .mantine-Select-input {
+  font-size: 12px;
+}
+
+.sendButton {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sendButton.enabled {
+  background: linear-gradient(135deg, var(--mantine-color-blue-6), var(--mantine-color-violet-6));
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.sendButton.enabled:hover {
+  filter: brightness(1.05);
+  transform: scale(1.05);
+}
+
+.sendButton.enabled:active {
+  transform: scale(0.98);
+}
+
+.sendButton.disabled {
+  background: light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-5));
+  color: light-dark(var(--mantine-color-gray-4), var(--mantine-color-dark-3));
+  cursor: not-allowed;
+}
+
+.sendButton.stop {
+  background: var(--mantine-color-red-6);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(211, 47, 47, 0.3);
+}
+
+.sendButton.stop:hover {
+  filter: brightness(1.1);
+}
+
+@media (max-width: 640px) {
+  .modelSelect {
+    width: 100px;
+  }
+  
+  .settingsLabel {
+    font-size: 11px;
+  }
+}

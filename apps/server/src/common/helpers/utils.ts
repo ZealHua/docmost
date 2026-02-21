@@ -4,7 +4,10 @@ import { sanitize } from 'sanitize-filename-ts';
 import { FastifyRequest } from 'fastify';
 import { Readable, Transform } from 'stream';
 
-export const envPath = path.resolve(process.cwd(), '..', '..', '.env');
+// Resolve .env path relative to this file's location in the dist folder
+// __dirname in compiled code = dist/common/helpers
+// Need to go up 5 levels: dist → apps/server → apps → project root
+export const envPath = path.resolve(__dirname, '..', '..', '..', '..', '..', '.env');
 
 export async function hashPassword(password: string) {
   const saltRounds = 12;

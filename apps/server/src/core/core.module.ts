@@ -46,6 +46,6 @@ export class CoreModule implements NestModule {
         { path: 'health/live', method: RequestMethod.GET },
         { path: 'billing/stripe/webhook', method: RequestMethod.POST },
       )
-      .forRoutes('*');
+      .forRoutes({ path: '*', method: RequestMethod.ALL });
   }
 }

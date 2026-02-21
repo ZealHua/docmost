@@ -41,7 +41,7 @@ export async function prepareFile(
       fileName,
       fileSize,
       fileExtension,
-      mimeType: getMimeType(file.originalname),
+      mimeType: getMimeType(file.filename),
       multiPartFile: file,
     };
   } catch (error) {

@@ -277,4 +277,20 @@ export class EnvironmentService {
       'http://localhost:11434',
     );
   }
+
+  getDeepSeekApiKey(): string {
+    return this.configService.get<string>('DEEPSEEK_API_KEY');
+  }
+
+  getDeepSeekApiUrl(): string {
+    return this.configService.get<string>('DEEPSEEK_API_URL');
+  }
+
+  getMiniMaxApiKey(): string {
+    return this.configService.get<string>('MINIMAX_API_KEY');
+  }
+
+  getMiniMaxApiUrl(): string {
+    return this.configService.get<string>('MINIMAX_API_URL');
+  }
 }

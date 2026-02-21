@@ -14,6 +14,7 @@ import {
   IconPlus,
   IconSearch,
   IconSettings,
+  IconSparkles,
   IconTrash,
 } from "@tabler/icons-react";
 import classes from "./space-sidebar.module.css";
@@ -114,6 +115,26 @@ export function SpaceSidebar() {
                   stroke={2}
                 />
                 <span>{t("Search")}</span>
+              </div>
+            </UnstyledButton>
+
+            <UnstyledButton
+              component={Link}
+              to={`/s/${spaceSlug}/ai`}
+              className={clsx(
+                classes.menu,
+                location.pathname === `/s/${spaceSlug}/ai`
+                  ? classes.activeButton
+                  : "",
+              )}
+            >
+              <div className={classes.menuItemInner}>
+                <IconSparkles
+                  size={18}
+                  className={classes.menuItemIcon}
+                  stroke={2}
+                />
+                <span>{t("AI Chat")}</span>
               </div>
             </UnstyledButton>
 

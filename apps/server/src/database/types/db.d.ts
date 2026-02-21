@@ -3,18 +3,13 @@
  * Please do not edit it manually.
  */
 
-import type { ColumnType } from 'kysely';
+import type { ColumnType } from "kysely";
 
-export type Generated<T> =
-  T extends ColumnType<infer S, infer I, infer U>
-    ? ColumnType<S, I | undefined, U>
-    : ColumnType<T, T | undefined, T>;
+export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
+  ? ColumnType<S, I | undefined, U>
+  : ColumnType<T, T | undefined, T>;
 
-export type Int8 = ColumnType<
-  string,
-  bigint | number | string,
-  bigint | number | string
->;
+export type Int8 = ColumnType<string, bigint | number | string, bigint | number | string>;
 
 export type Json = JsonValue;
 
@@ -30,15 +25,36 @@ export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
+export interface AiMessages {
+  content: string;
+  createdAt: Generated<Timestamp>;
+  id: Generated<string>;
+  role: string;
+  sessionId: string;
+  sources: Generated<Json | null>;
+  workspaceId: string;
+}
+
+export interface AiSessions {
+  createdAt: Generated<Timestamp>;
+  id: Generated<string>;
+  pageId: string | null;
+  selectedPageIds: Generated<Json | null>;
+  title: string | null;
+  updatedAt: Generated<Timestamp>;
+  userId: string;
+  workspaceId: string;
+}
+
 export interface ApiKeys {
   createdAt: Generated<Timestamp>;
+  creatorId: string;
   deletedAt: Timestamp | null;
   expiresAt: Timestamp | null;
   id: Generated<string>;
   lastUsedAt: Timestamp | null;
   name: string | null;
   updatedAt: Generated<Timestamp>;
-  creatorId: string;
   workspaceId: string;
 }
 
@@ -77,25 +93,25 @@ export interface AuthProviders {
   createdAt: Generated<Timestamp>;
   creatorId: string | null;
   deletedAt: Timestamp | null;
+  groupSync: Generated<boolean>;
   id: Generated<string>;
   isEnabled: Generated<boolean>;
-  groupSync: Generated<boolean>;
   ldapBaseDn: string | null;
   ldapBindDn: string | null;
   ldapBindPassword: string | null;
+  ldapConfig: Generated<Json | null>;
   ldapTlsCaCert: string | null;
   ldapTlsEnabled: Generated<boolean | null>;
   ldapUrl: string | null;
-  ldapUserAttributes: Json | null;
+  ldapUserAttributes: Generated<Json | null>;
   ldapUserSearchFilter: string | null;
-  ldapConfig: Json | null;
-  settings: Json | null;
   name: string;
   oidcClientId: string | null;
   oidcClientSecret: string | null;
   oidcIssuer: string | null;
   samlCertificate: string | null;
   samlUrl: string | null;
+  settings: Generated<Json | null>;
   type: string;
   updatedAt: Generated<Timestamp>;
   workspaceId: string;
@@ -195,6 +211,40 @@ export interface GroupUsers {
   id: Generated<string>;
   updatedAt: Generated<Timestamp>;
   userId: string;
+}
+
+export interface Notifications {
+  actorId: string | null;
+  archivedAt: Timestamp | null;
+  commentId: string | null;
+  createdAt: Generated<Timestamp>;
+  data: Json | null;
+  emailedAt: Timestamp | null;
+  id: Generated<string>;
+  pageId: string | null;
+  readAt: Timestamp | null;
+  spaceId: string | null;
+  type: string;
+  userId: string;
+  workspaceId: string;
+}
+
+export interface PageEmbeddings {
+  attachmentId: Generated<string>;
+  chunkIndex: Generated<number>;
+  chunkLength: Generated<number>;
+  chunkStart: Generated<number>;
+  createdAt: Generated<Timestamp>;
+  deletedAt: Timestamp | null;
+  embedding: string;
+  id: Generated<string>;
+  metadata: Generated<Json>;
+  modelDimensions: number;
+  modelName: string;
+  pageId: string;
+  spaceId: string;
+  updatedAt: Generated<Timestamp>;
+  workspaceId: string;
 }
 
 export interface PageHistory {
@@ -300,12 +350,12 @@ export interface Users {
   deletedAt: Timestamp | null;
   email: string;
   emailVerifiedAt: Timestamp | null;
+  hasGeneratedPassword: Generated<boolean>;
   id: Generated<string>;
   invitedById: string | null;
   lastActiveAt: Timestamp | null;
   lastLoginAt: Timestamp | null;
   locale: string | null;
-  hasGeneratedPassword: Generated<boolean | null>;
   name: string | null;
   password: string | null;
   role: string | null;
@@ -324,6 +374,18 @@ export interface UserTokens {
   usedAt: Timestamp | null;
   userId: string;
   workspaceId: string | null;
+}
+
+export interface Watchers {
+  addedById: string | null;
+  createdAt: Generated<Timestamp>;
+  id: Generated<string>;
+  mutedAt: Timestamp | null;
+  pageId: string | null;
+  spaceId: string;
+  type: string;
+  userId: string;
+  workspaceId: string;
 }
 
 export interface WorkspaceInvitations {
@@ -362,35 +424,9 @@ export interface Workspaces {
   updatedAt: Generated<Timestamp>;
 }
 
-export interface Notifications {
-  id: Generated<string>;
-  userId: string;
-  workspaceId: string;
-  type: string;
-  actorId: string | null;
-  pageId: string | null;
-  spaceId: string | null;
-  commentId: string | null;
-  data: Json | null;
-  readAt: Timestamp | null;
-  emailedAt: Timestamp | null;
-  archivedAt: Timestamp | null;
-  createdAt: Generated<Timestamp>;
-}
-
-export interface Watchers {
-  id: Generated<string>;
-  userId: string;
-  pageId: string | null;
-  spaceId: string;
-  workspaceId: string;
-  type: string;
-  addedById: string | null;
-  mutedAt: Timestamp | null;
-  createdAt: Generated<Timestamp>;
-}
-
 export interface DB {
+  aiMessages: AiMessages;
+  aiSessions: AiSessions;
   apiKeys: ApiKeys;
   attachments: Attachments;
   authAccounts: AuthAccounts;
@@ -402,6 +438,7 @@ export interface DB {
   groups: Groups;
   groupUsers: GroupUsers;
   notifications: Notifications;
+  pageEmbeddings: PageEmbeddings;
   pageHistory: PageHistory;
   pages: Pages;
   shares: Shares;

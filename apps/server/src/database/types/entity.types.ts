@@ -22,8 +22,10 @@ import {
   UserMfa as _UserMFA,
   ApiKeys,
   Watchers,
+  PageEmbeddings,
+  AiSessions,
+  AiMessages,
 } from './db';
-import { PageEmbeddings } from '@docmost/db/types/embeddings.types';
 
 // Workspace
 export type Workspace = Selectable<Workspaces>;
@@ -143,3 +145,13 @@ export type UpdatableNotification = Updateable<Omit<Notifications, 'id'>>;
 export type Watcher = Selectable<Watchers>;
 export type InsertableWatcher = Insertable<Watchers>;
 export type UpdatableWatcher = Updateable<Omit<Watchers, 'id'>>;
+
+// AI Session
+export type AiSession = Selectable<AiSessions>;
+export type InsertableAiSession = Insertable<AiSessions>;
+export type UpdatableAiSession = Updateable<Omit<AiSessions, 'id'>>;
+
+// AI Message
+export type AiMessage = Selectable<AiMessages>;
+export type InsertableAiMessage = Insertable<AiMessages>;
+export type UpdatableAiMessage = Updateable<Omit<AiMessages, 'id'>>;

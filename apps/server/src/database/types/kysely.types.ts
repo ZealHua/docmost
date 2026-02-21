@@ -1,5 +1,5 @@
 import { Kysely, Transaction } from 'kysely';
-import { DbInterface } from '@docmost/db/types/db.interface';
+import { DB } from '@docmost/db/types/db';
 
-export type KyselyDB = Kysely<DbInterface>;
-export type KyselyTransaction = Transaction<DbInterface>;
+export type KyselyDB = Kysely<DB>;
+export type KyselyTransaction = Transaction<DB>;

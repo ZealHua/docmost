@@ -1,0 +1,83 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 100%;
+  position: relative;
+}
+
+.header {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 1rem;
+  height: 48px;
+  flex-shrink: 0;
+  background: var(--mantine-color-body);
+}
+
+.headerControls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  position: relative;
+}
+
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--mantine-radius-sm);
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background: transparent;
+  color: light-dark(var(--mantine-color-gray-6), var(--mantine-color-dark-1));
+}
+
+.iconButton:hover {
+  background: light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-5));
+  color: light-dark(var(--mantine-color-gray-8), var(--mantine-color-dark-0));
+}
+
+.messageArea {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+  z-index: 1;
+  padding: 2rem 1.75rem 1.5rem;
+}
+
+.messageAreaInner {
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.inputArea {
+  position: relative;
+  z-index: 10;
+  padding: 1rem 1.75rem 1.25rem;
+  background: var(--mantine-color-body);
+  flex-shrink: 0;
+}
+
+.inputInner {
+  max-width: 100%;
+}
+
+.footerNote {
+  text-align: center;
+  margin-top: 10px;
+  font-size: 11px;
+  color: light-dark(var(--mantine-color-gray-5), var(--mantine-color-dark-3));
+  font-family: var(--mantine-font-family);
+  letter-spacing: 0.01em;
+}
