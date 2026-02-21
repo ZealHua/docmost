@@ -1,3 +1,5 @@
+/* ─── Outer centering shell ─────────────────────────────────────────────── */
+
 .emptyState {
   flex: 1;
   display: flex;
@@ -8,35 +10,118 @@
 
 .emptyStateContent {
   text-align: center;
-  max-width: 320px;
+  max-width: 340px;
+  animation: emptyFadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.emptyIcon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: light-dark(
-    linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1)),
-    linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2))
-  );
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 12px;
-  color: light-dark(var(--mantine-color-blue-6), var(--mantine-color-blue-4));
+@keyframes emptyFadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
+
+
+/* ─── Icon assembly ─────────────────────────────────────────────────────── */
+
+.emptyIconLarge {
+  margin-bottom: 24px;
+}
+
+
+/* ─── Title ─────────────────────────────────────────────────────────────── */
 
 .emptyTitle {
-  font-size: 15px;
-  font-weight: 600;
-  color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0));
-  margin-bottom: 4px;
+  font-family: 'Sora', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+
+  /* Same shimmer gradient as .label — but full colour, not faded */
+  background: linear-gradient(
+    90deg,
+    #7c3aed 0%,
+    #c4b5fd 40%,
+    #a78bfa 60%,
+    #7c3aed 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 4s linear infinite;
+
+  margin-bottom: 8px;
 }
 
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+
+/* ─── Description ───────────────────────────────────────────────────────── */
+
 .emptyDescription {
+  font-family: 'Sora', sans-serif;
   font-size: 13px;
-  color: light-dark(var(--mantine-color-gray-5), var(--mantine-color-dark-2));
-  line-height: 1.5;
+  font-weight: 400;
+  line-height: 1.65;
+  color: light-dark(rgba(109, 40, 217, 0.55), rgba(196, 176, 255, 0.38));
+  letter-spacing: 0.01em;
+  margin-bottom: 20px;
+}
+
+
+/* ─── Prompt chips ──────────────────────────────────────────────────────── */
+
+.emptyChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  justify-content: center;
+}
+
+.chip {
+  font-family: 'Sora', sans-serif;
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  padding: 5px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+
+  /* Same doneBadge surface language */
+  background: light-dark(rgba(147, 112, 255, 0.07), rgba(147, 112, 255, 0.1));
+  border: 1px solid light-dark(rgba(147, 112, 255, 0.2), rgba(147, 112, 255, 0.2));
+  color: light-dark(rgba(109, 40, 217, 0.75), rgba(196, 176, 255, 0.6));
+
+  transition: background 0.18s ease, border-color 0.18s ease,
+              box-shadow 0.18s ease, transform 0.18s cubic-bezier(0.34, 1.4, 0.64, 1);
+
+  /* Staggered entrance */
+  animation: chipFadeIn 0.4s ease both;
+}
+
+.chip:nth-child(1) { animation-delay: 0.25s; }
+.chip:nth-child(2) { animation-delay: 0.35s; }
+.chip:nth-child(3) { animation-delay: 0.45s; }
+
+@keyframes chipFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Hover — same cite-badge:hover glow */
+.chip:hover {
+  background: light-dark(rgba(147, 112, 255, 0.14), rgba(147, 112, 255, 0.2));
+  border-color: rgba(147, 112, 255, 0.4);
+  color: light-dark(rgba(109, 40, 217, 0.9), rgba(220, 210, 255, 0.85));
+  box-shadow: 0 0 12px rgba(109, 40, 217, 0.2);
+  transform: translateY(-2px);
+}
+
+.chip:active {
+  transform: translateY(0) scale(0.97);
+  transition-duration: 0.08s;
 }
 
 .messageContainer {
@@ -66,10 +151,64 @@
   font-size: 12px;
 }
 
+.avatarWrapper {
+  position: relative;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Spinning orbital ring — same mechanic as iconRing::after in thinking block */
+.avatarRing {
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  border-top-color: rgba(167, 139, 250, 0.7);
+  border-right-color: rgba(167, 139, 250, 0.2);
+  animation: avatarOrbit 3s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes avatarOrbit {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
 .avatar.user {
-  background: linear-gradient(135deg, var(--mantine-color-blue-6), var(--mantine-color-violet-6));
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  /* Violet core — matches #9370ff system, no blue bleed */
+  background: radial-gradient(
+    circle at 35% 35%,
+    #b39dff 0%,
+    #7c3aed 50%,
+    #5b21b6 100%
+  );
   color: #fff;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
+
+  /* Ambient glow matching violet brand */
+  box-shadow:
+    0 0 0 1px rgba(147, 112, 255, 0.35),
+    0 2px 12px rgba(124, 58, 237, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+
+  /* Entrance pop */
+  animation: avatarPop 0.35s cubic-bezier(0.34, 1.5, 0.64, 1) both;
+}
+
+@keyframes avatarPop {
+  from { transform: scale(0.6); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
 }
 
 .avatar.assistant {
@@ -77,7 +216,10 @@
     linear-gradient(135deg, #f0effe, #ddd6fe),
     linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(99, 102, 241, 0.3))
   );
-  color: light-dark(var(--mantine-color-violet-7), var(--mentine-color-violet-4));
+  color: light-dark(
+    var(--mantine-color-violet-7),
+    var(--mentine-color-violet-4)
+  );
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
@@ -95,22 +237,117 @@
 }
 
 .bubble.user {
-  background: linear-gradient(135deg, var(--mantine-color-blue-6) 0%, var(--mantine-color-violet-6) 100%);
-  color: #fff;
+  position: relative;
+  overflow: hidden;
+  max-width: 72%;
+
+  /* Deep violet — same #0f0b1f family but inverted for a filled surface */
+  background: linear-gradient(
+    135deg,
+    #6d28d9 0%,
+    #7c3aed 40%,
+    #6d28d9 100%
+  );
+  background-size: 200% 200%;
+
+  color: rgba(255, 255, 255, 0.93);
+  font-size: 13.5px;
+  line-height: 1.65;
+
+  padding: 10px 14px;
+  border-radius: 14px;
   border-bottom-right-radius: 4px;
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.28), 0 1px 4px rgba(0, 0, 0, 0.06);
+
+  /* Top-edge highlight + ambient glow */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.15),
+    0 4px 20px rgba(109, 40, 217, 0.45),
+    0 1px 4px rgba(0, 0, 0, 0.12);
+
+  border: 1px solid rgba(167, 139, 250, 0.25);
+
+  /* Slow background drift for subtle liveliness */
+  animation:
+    bubbleSlide 0.3s cubic-bezier(0.22, 1, 0.36, 1) both,
+    bubbleDrift 6s ease-in-out infinite 0.3s;
+}
+
+/* Sent-from-right slide entrance */
+@keyframes bubbleSlide {
+  from { transform: translateX(12px) scale(0.97); opacity: 0; }
+  to   { transform: translateX(0)    scale(1);    opacity: 1; }
+}
+
+/* Gentle background shimmer drift */
+@keyframes bubbleDrift {
+  0%, 100% { background-position: 0% 50%; }
+  50%       { background-position: 100% 50%; }
+}
+
+/* Gloss sheen layer — same shimmer-pass concept as .label shimmer */
+.bubbleShimmer {
+  position: absolute;
+  top: 0; left: -75%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 60%
+  );
+  animation: sheenPass 4s ease-in-out infinite 0.6s;
+  pointer-events: none;
+}
+
+@keyframes sheenPass {
+  0%   { left: -75%; opacity: 0; }
+  10%  { opacity: 1; }
+  45%  { left: 125%;  opacity: 1; }
+  50%, 100% { left: 125%; opacity: 0; }
+}
+
+/* Hover — subtle lift matching .header:hover feel */
+.bubble.user:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.15),
+    0 6px 28px rgba(109, 40, 217, 0.55),
+    0 2px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .bubble.assistant {
   background: light-dark(rgba(248, 247, 255, 0.85), rgba(30, 27, 75, 0.5));
   color: light-dark(var(--mantine-color-gray-8), var(--mantine-color-dark-0));
   border-bottom-left-radius: 4px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06), 0 0 0 1px light-dark(rgba(196, 191, 255, 0.3), rgba(99, 102, 241, 0.1));
+  box-shadow:
+    0 2px 12px rgba(0, 0, 0, 0.06),
+    0 0 0 1px light-dark(rgba(196, 191, 255, 0.3), rgba(99, 102, 241, 0.1));
 }
 
 .assistantContent {
   flex: 1;
   min-width: 0;
+}
+
+.assistantHeader {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 6px;
+  color: light-dark(
+    var(--mantine-color-violet-6),
+    var(--mantine-color-violet-4)
+  );
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-family: var(--mantine-font-family);
+  opacity: 0.85;
 }
 
 .timestamp {
@@ -142,7 +379,10 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: light-dark(var(--mantine-color-violet-6), var(--mantine-color-violet-5));
+  background: light-dark(
+    var(--mantine-color-violet-6),
+    var(--mantine-color-violet-5)
+  );
   animation: bounce 1.2s ease-in-out infinite;
 }
 
@@ -159,7 +399,9 @@
 }
 
 @keyframes bounce {
-  0%, 80%, 100% {
+  0%,
+  80%,
+  100% {
     transform: translateY(0);
   }
   40% {
@@ -186,14 +428,9 @@
   padding: 10px 14px;
   margin-bottom: 8px;
   border-radius: 8px;
-  background: light-dark(
-    rgba(139, 92, 246, 0.08),
-    rgba(139, 92, 246, 0.15)
-  );
-  border: 1px solid light-dark(
-    rgba(139, 92, 246, 0.15),
-    rgba(139, 92, 246, 0.25)
-  );
+  background: light-dark(rgba(139, 92, 246, 0.08), rgba(139, 92, 246, 0.15));
+  border: 1px solid
+    light-dark(rgba(139, 92, 246, 0.15), rgba(139, 92, 246, 0.25));
 }
 
 .thinkingHeader {
@@ -227,10 +464,7 @@
 .thinkingContent {
   font-size: 13px;
   line-height: 1.6;
-  color: light-dark(
-    var(--mantine-color-gray-7),
-    var(--mantine-color-dark-1)
-  );
+  color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-1));
   white-space: pre-wrap;
   word-break: break-word;
 }

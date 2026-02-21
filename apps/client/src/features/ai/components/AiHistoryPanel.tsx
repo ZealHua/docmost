@@ -243,9 +243,6 @@ export function AiHistoryPanel({
                         )}
                       </div>
                       <div className={styles.sessionActions}>
-                        {activeSessionId === session.id && !searchQuery && !editingId && (
-                          <div className={styles.activeIndicator} />
-                        )}
                         {onRenameSession && !editingId && (
                           <button
                             className={styles.editButton}

@@ -50,7 +50,12 @@ export default function AiPage() {
     }
   }, [sessions, activeSession, setSession, loadSessionMessages, setMessages]);
 
+  // An "empty" session already exists if there's an active session with no messages yet.
+  const isEmptySession = !!activeSession && messages.length === 0;
+
   const handleNewChat = () => {
+    // Don't create another session when the current one hasn't received any user input yet.
+    if (isEmptySession) return;
     createSession(undefined).then((newSession) => {
       setActiveSessionAtom(newSession);
       clearMessages();
@@ -107,7 +112,13 @@ export default function AiPage() {
         {/* Header */}
         <Box className={styles.header}>
           <div className={styles.headerControls}>
-            <button className={styles.iconButton} onClick={handleNewChat} title={t('New chat')}>
+            <button
+              className={styles.iconButton}
+              onClick={handleNewChat}
+              title={t('New chat')}
+              disabled={isEmptySession}
+              style={isEmptySession ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
+            >
               <IconPlus size={18} />
             </button>
 

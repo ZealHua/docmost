@@ -134,7 +134,7 @@ export function SpaceSidebar() {
                   className={classes.menuItemIcon}
                   stroke={2}
                 />
-                <span>{t("AI Chat")}</span>
+                <span>{t("Intelligence")}</span>
               </div>
             </UnstyledButton>
 

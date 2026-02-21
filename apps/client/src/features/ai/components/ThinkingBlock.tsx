@@ -3,6 +3,7 @@ import { Collapse } from '@mantine/core';
 import { IconBrain, IconChevronDown, IconSparkles } from '@tabler/icons-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useTranslation } from 'react-i18next';
 import styles from './ThinkingBlock.module.css';
 
 interface ThinkingBlockProps {
@@ -21,6 +22,7 @@ export function ThinkingBlock({
   isStreaming = false,
   defaultOpen = false,
 }: ThinkingBlockProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(defaultOpen || isStreaming);
   const [duration, setDuration] = useState<number | null>(null);
   const startRef = useRef(Date.now());
@@ -58,10 +60,10 @@ export function ThinkingBlock({
   if (!thinking) return null;
 
   const sublabel = isStreaming
-    ? `Reasoning · ${formatDuration(elapsed)}`
+    ? t('Reasoning...', { time: formatDuration(elapsed) })
     : duration
-    ? `Reasoned for ${formatDuration(duration)}`
-    : 'Reasoning complete';
+    ? t('Reasoned for {{time}}', { time: formatDuration(duration) })
+    : t('Reasoning complete');
 
   const wrapperClass = `${styles.wrapper} ${isStreaming ? styles.wrapperActive : ''}`;
 
@@ -81,7 +83,7 @@ export function ThinkingBlock({
 
         <div className={styles.labelGroup}>
           <span className={`${styles.label} ${!isStreaming ? styles.labelStatic : ''}`}>
-            Thinking
+            {t('Thinking')}
           </span>
           <span className={styles.sublabel}>{sublabel}</span>
         </div>
@@ -95,7 +97,7 @@ export function ThinkingBlock({
         ) : (
           <div className={styles.doneBadge}>
             <IconSparkles size={10} strokeWidth={2} />
-            Done
+            {t('Done')}
           </div>
         )}
 

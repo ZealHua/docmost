@@ -178,6 +178,47 @@ export class AiController {
   }
 
   /**
+   * Automatically generate and update session title.
+   */
+  @Post('sessions/:id/auto-title')
+  async autoTitle(
+    @Param('id', ParseUUIDPipe) id: string,
+    @AuthUser() user: any,
+    @AuthWorkspace() workspace: any,
+  ) {
+    const session = await this.sessionRepo.findById(id);
+    if (!session || session.workspaceId !== workspace.id || session.userId !== user.id) {
+      throw new NotFoundException('Session not found');
+    }
+
+    // Only rename if it's still the default title
+    if (session.title !== 'New Chat') {
+      return this.mapSessionToResponse(session);
+    }
+
+    const messages = await this.messageRepo.findBySessionId(id);
+    const firstUserMessage = messages.find((m) => m.role === 'user');
+
+    if (!firstUserMessage) {
+      return this.mapSessionToResponse(session);
+    }
+
+    try {
+      const titlePrompt = `Summarize the following question/statement in 5 words or fewer, return only the short title with no punctuation:\n\n${firstUserMessage.content}`;
+      const provider = this.orchestrator.getProvider('glm-4.5');
+      const generatedTitle = await provider.generateText('', titlePrompt, 'glm-4.5');
+      const cleanTitle = generatedTitle.trim().slice(0, 60);
+
+      await this.sessionRepo.updateTitle(id, cleanTitle);
+      const updated = await this.sessionRepo.findById(id);
+      return this.mapSessionToResponse(updated);
+    } catch (e) {
+      console.warn('Auto-rename failed:', e);
+      return this.mapSessionToResponse(session);
+    }
+  }
+
+  /**
    * Add a message to a session.
    */
   @Post('sessions/:id/messages')

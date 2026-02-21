@@ -1,18 +1,21 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Box } from '@mantine/core';
-import { IconSparkles, IconUser } from '@tabler/icons-react';
-import { useAtomValue } from 'jotai';
+import React, { useEffect, useRef, useState } from "react";
+import { Box } from "@mantine/core";
+import { IconSparkles, IconUser } from "@tabler/icons-react";
+import { useAtomValue } from "jotai";
 import {
   aiIsStreamingAtom,
   aiMessagesAtom,
   aiSourcesAtom,
   aiStreamingContentAtom,
   aiStreamingThinkingAtom,
-} from '../store/ai.atoms';
-import { AiCitationRenderer } from './AiCitationRenderer';
-import { ThinkingBlock } from './ThinkingBlock';
-import { useTranslation } from 'react-i18next';
-import styles from './AiMessageList.module.css';
+} from "../store/ai.atoms";
+import { AiCitationRenderer } from "./AiCitationRenderer";
+import { ThinkingBlock } from "./ThinkingBlock";
+import { AiInsightsIcon } from "./AiInsightsIcon";
+import { AiMessageCard } from "./AiMessageCard";
+import { useTranslation } from "react-i18next";
+import styles from "./AiMessageList.module.css";
+import cardStyles from "./AiMessageCard.module.css";
 
 function TypingIndicator() {
   return (
@@ -42,60 +45,76 @@ export function AiMessageList() {
   }, [messages]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, streamingContent, isStreaming]);
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
   if (messages.length === 0 && !isStreaming) {
     return (
-      <Box className={styles.emptyState}>
-        <Box className={styles.emptyStateContent}>
-          <div className={styles.emptyIcon}>
-            <IconSparkles size={24} />
-          </div>
-          <div className={styles.emptyTitle}>{t('How can I help you today?')}</div>
+      <div className={styles.emptyState}>
+        <div className={styles.emptyStateContent}>
+          <AiInsightsIcon size={80} className={styles.emptyIconLarge} />
+
+          <div className={styles.emptyTitle}>{t('How can I help you?')}</div>
           <div className={styles.emptyDescription}>
-            {t('Ask questions about your workspace content. AI answers are grounded in your pages.')}
+            {t("Ask me anything — I'll think it through with you.")}
           </div>
-        </Box>
-      </Box>
+
+          <div className={styles.emptyChips}>
+            <span className={styles.chip}>{t('Summarise a doc')}</span>
+            <span className={styles.chip}>{t('Write some code')}</span>
+            <span className={styles.chip}>{t('Explain a concept')}</span>
+          </div>
+        </div>
+      </div>
     );
   }
 
   return (
     <Box className={styles.messageContainer}>
       {messages.map((msg) => {
-        const isUser = msg.role === 'user';
+        const isUser = msg.role === "user";
         const isNew = msg.id === newMessageId;
 
         return (
           <div
             key={msg.id}
-            className={`${styles.messageRow} ${isUser ? styles.user : ''} ${
-              isNew ? styles.messageNew : ''
+            className={`${styles.messageRow} ${isUser ? styles.user : ""} ${
+              isNew ? styles.messageNew : ""
             }`}
           >
-            <div className={`${styles.avatar} ${isUser ? styles.user : styles.assistant}`}>
-              {isUser ? <IconUser size={14} /> : <IconSparkles size={14} />}
-            </div>
+            {isUser && (
+              <div className={`${styles.avatarWrapper} ${styles.user}`}>
+                <div className={styles.avatarRing} />
+                <div className={`${styles.avatar} ${styles.user}`}>
+                  <IconUser size={13} />
+                </div>
+              </div>
+            )}
             {isUser ? (
               <div className={`${styles.bubble} ${styles.user}`}>
+                <span className={styles.bubbleShimmer} />
                 {msg.content}
               </div>
             ) : (
-              <div className={styles.assistantContent}>
+              <AiMessageCard header={<AiInsightsIcon showLabel size={16} />}>
                 {msg.thinking && (
                   <ThinkingBlock thinking={msg.thinking} isStreaming={false} />
                 )}
-                <AiCitationRenderer content={msg.content} sources={msg.sources} />
+                <div className={cardStyles.body}>
+                  <AiCitationRenderer
+                    content={msg.content}
+                    sources={msg.sources}
+                  />
+                </div>
                 <div className={`${styles.timestamp} ${styles.assistant}`}>
                   {formatTime(msg.createdAt)}
                 </div>
-              </div>
+              </AiMessageCard>
             )}
           </div>
         );
@@ -103,19 +122,21 @@ export function AiMessageList() {
 
       {isStreaming && (
         <div className={`${styles.messageRow} ${styles.messageNew}`}>
-          <div className={`${styles.avatar} ${styles.assistant}`}>
-            <IconSparkles size={14} />
-          </div>
-          <div className={styles.assistantContent}>
+          <AiMessageCard header={<AiInsightsIcon showLabel size={16} />}>
             {streamingThinking && (
               <ThinkingBlock thinking={streamingThinking} isStreaming={true} />
             )}
             {streamingContent ? (
-              <AiCitationRenderer content={streamingContent} sources={sources} />
-            ) : !streamingThinking && (
-              <TypingIndicator />
+              <div className={cardStyles.body}>
+                <AiCitationRenderer
+                  content={streamingContent}
+                  sources={sources}
+                />
+              </div>
+            ) : (
+              !streamingThinking && <TypingIndicator />
             )}
-          </div>
+          </AiMessageCard>
         </div>
       )}
 

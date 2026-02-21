@@ -16,12 +16,14 @@ import { marked } from "marked";
 import { DOMSerializer } from "@tiptap/pm/model";
 import { htmlToMarkdown } from "@docmost/editor-ext";
 import { useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 interface EditorAiMenuProps {
   editor: Editor | null;
 }
 
 const EditorAiMenu = ({ editor }: EditorAiMenuProps): JSX.Element | null => {
+  const { t } = useTranslation();
   const aiGenerateStreamMutation = useAiGenerateStreamMutation();
   const location = useLocation();
   const isSmBreakpoint = useMediaQuery("(max-width: 48em)");
@@ -288,6 +290,7 @@ const EditorAiMenu = ({ editor }: EditorAiMenuProps): JSX.Element | null => {
         <ResultPreview output={output} isLoading={isLoading} />
         <CommandSelector
           selectedIndex={selectedIndex}
+          t={t}
           isLoading={isLoading}
           output={output}
           currentItems={currentItems}
@@ -296,7 +299,7 @@ const EditorAiMenu = ({ editor }: EditorAiMenuProps): JSX.Element | null => {
           <TextInput
             ref={inputRef}
             className={classes.aiInput}
-            placeholder="Ask AI..."
+            placeholder={t('Ask AI...')}
             data-autofocus
             value={prompt}
             disabled={isLoading}

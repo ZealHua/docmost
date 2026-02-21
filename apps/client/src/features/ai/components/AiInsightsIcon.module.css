@@ -1,0 +1,131 @@
+.aiHeaderWrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 0;
+  cursor: default;
+  user-select: none;
+}
+
+/* ── Icon ── */
+.aiIcon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Ambient glow disc behind everything */
+.aiIconGlow {
+  position: absolute;
+  inset: -22%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.35) 0%, transparent 70%);
+  animation: glowPulse 2.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* SVG itself */
+.aiIconSvg {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Central 4-point star */
+.aiStarCenter {
+  transform-origin: 50% 50%;
+  animation: starSpin 6s linear infinite;
+}
+
+/* The four arms of the main star */
+.aiStarArm {
+  filter: drop-shadow(0 0 2px rgba(167, 139, 250, 0.8));
+}
+
+/* Orbiting dot 1 */
+.aiOrbit1 {
+  transform-origin: 50% 50%;
+  animation: orbit1 2.4s linear infinite;
+}
+
+/* Orbiting dot 2 */
+.aiOrbit2 {
+  transform-origin: 50% 50%;
+  animation: orbit2 2.4s linear infinite;
+}
+
+/* Tiny accent sparkle top-right */
+.aiSparkleAccent {
+  transform-origin: 75% 15%;
+  animation: accentPop 2.8s ease-in-out infinite;
+}
+
+/* ── Label ── */
+.aiLabel {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  background: linear-gradient(90deg, #7c3aed 0%, #a78bfa 50%, #7c3aed 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: labelShimmer 3.5s linear infinite;
+  opacity: 0.9;
+}
+
+/* ── Keyframes ── */
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50%       { opacity: 1;   transform: scale(1.25); }
+}
+
+@keyframes starSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes orbit1 {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes orbit2 {
+  from { transform: rotate(180deg); }
+  to   { transform: rotate(540deg); }
+}
+
+@keyframes accentPop {
+  0%, 100% { opacity: 0.4; transform: scale(0.8); }
+  45%      { opacity: 1;   transform: scale(1.2); }
+  55%      { opacity: 1;   transform: scale(1.2); }
+}
+
+@keyframes labelShimmer {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+/* Hover: speed up icon + brighten glow */
+.aiHeaderWrapper:hover .aiStarCenter {
+  animation-duration: 1.5s;
+}
+.aiHeaderWrapper:hover .aiOrbit1 {
+  animation-duration: 0.9s;
+}
+.aiHeaderWrapper:hover .aiOrbit2 {
+  animation-duration: 0.9s;
+}
+.aiHeaderWrapper:hover .aiIconGlow {
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.6) 0%, transparent 70%);
+  animation-duration: 1.2s;
+}
+.aiHeaderWrapper:hover .aiLabel {
+  animation-duration: 1.2s;
+  opacity: 1;
+}

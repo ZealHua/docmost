@@ -93,6 +93,12 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
   return (
     <Box className={styles.inputWrapper}>
       <Box className={styles.inputPill}>
+        <div className={styles.scanLine} />
+        <span className={`${styles.corner} ${styles.cornerTopLeft}`} />
+        <span className={`${styles.corner} ${styles.cornerTopRight}`} />
+        <span className={`${styles.corner} ${styles.cornerBottomLeft}`} />
+        <span className={`${styles.corner} ${styles.cornerBottomRight}`} />
+
         {/* Line 1: Textarea */}
         <textarea
           ref={textareaRef}
@@ -143,7 +149,7 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
               <Popover.Dropdown>
                 <Box w={280}>
                   <TextInput
-                    placeholder={t('Search pages...')}
+                    placeholder={t('Search pages')}
                     value={searchQuery}
                     onChange={(e) => {
                       setSearchQuery(e.target.value);
@@ -169,6 +175,9 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
                         </List.Item>
                       ))}
                     </List>
+                  )}
+                  {pageSearch.data && pageSearch.data.length === 0 && searchQuery && (
+                    <Box ta="center" c="dimmed" py="xs">{t('No pages found')}</Box>
                   )}
                   {pageSearch.data && pageSearch.data.length === 0 && searchQuery && (
                     <Box ta="center" c="dimmed" py="xs">{t('No pages found')}</Box>

@@ -6,7 +6,7 @@ import classes from "./ai-menu.module.css";
 
 interface CommandSelectorProps {
   selectedIndex: number;
-
+  t?: (key: string) => string;
   isLoading: boolean;
   output: string;
   currentItems: CommandItem[];
@@ -16,6 +16,7 @@ interface CommandSelectorProps {
 
 const CommandSelector = ({
   selectedIndex,
+  t,
   children,
   isLoading,
   output,
@@ -59,7 +60,7 @@ const CommandSelector = ({
                 onClick={() => handleCommand(item)}
                 disabled={isLoading}
               >
-                {item.name}
+                {t ? t(item.name) : item.name}
               </Menu.Item>
             );
           })}

@@ -1,4 +1,5 @@
 import { useCallback, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAtom, useAtomValue } from 'jotai';
 import {
   aiMessagesAtom,
@@ -12,10 +13,12 @@ import {
   aiSelectedPagesAtom,
 } from '../store/ai.atoms';
 import { streamAiChat } from '../services/ai-chat.service';
+import { MODEL_CONFIG } from '../lib/models.config';
 import { AiMessage, RagSource, AiSession } from '../types/ai-chat.types';
 import api from '@/lib/api-client';
 
 export function useAiChat(workspaceId?: string) {
+  const queryClient = useQueryClient();
   const [messages, setMessages] = useAtom(aiMessagesAtom);
   const [activeSession, setActiveSession] = useAtom(aiActiveSessionAtom) as readonly [AiSession | null, (val: AiSession | null) => void];
   const [, setSources] = useAtom(aiSourcesAtom);
@@ -117,11 +120,33 @@ export function useAiChat(workspaceId?: string) {
             setStreamingContent('');
             setStreamingThinking('');
             setIsStreaming(false);
+
+            // Auto-rename: only on the first real message, when title is still the default
+            if (activeSession?.title === 'New Chat') {
+              try {
+                const response = await api.post<{ title: string }>(`/ai/sessions/${sessionId}/auto-title`);
+                const newTitle = response.data.title;
+
+                // Update local query cache so the sidebar updates instantly
+                queryClient.setQueryData<AiSession[]>(['ai-sessions', workspaceId], (old = []) =>
+                  old.map((s) => (s.id === sessionId ? { ...s, title: newTitle } : s)),
+                );
+
+                // Also update active session atom if it matches
+                if (activeSession.id === sessionId) {
+                  setActiveSession({ ...activeSession, title: newTitle });
+                }
+              } catch (e) {
+                console.warn('Failed to auto-update title:', e);
+              }
+            }
           },
         },
         { 
           sessionId: sessionId, 
-          model: selectedModel, 
+          model: thinking && MODEL_CONFIG[selectedModel]?.thinkingModel
+            ? MODEL_CONFIG[selectedModel].thinkingModel!
+            : selectedModel,
           thinking, 
           ...(selectedPages.length > 0 && { selectedPageIds: selectedPages.map(p => p.pageId) })
         },

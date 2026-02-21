@@ -1,64 +1,276 @@
-.inputWrapper {
-  position: relative;
-}
+/* ─── Input Pill Container ──────────────────────────────────────────────── */
 
 .inputPill {
+  position: relative;
   display: flex;
   flex-direction: column;
-  border-radius: 20px;
-  border: 1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4));
-  background: light-dark(var(--mantine-color-white), var(--mantine-color-dark-7));
+  border-radius: 18px;
+  border: 1px solid light-dark(rgba(147, 112, 255, 0.18), rgba(147, 112, 255, 0.14));
+  background: light-dark(rgba(250, 248, 255, 0.9), rgba(15, 11, 31, 0.85));
   padding: 8px 8px 6px;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  overflow: hidden;
+}
+
+/* Top-edge shimmer line — same as .answer-card::before */
+.inputPill::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 15%; right: 15%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(167, 139, 250, 0.5), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+/* Ambient glow disc — same aura as .ai-icon__glow */
+.inputPill::after {
+  content: '';
+  position: absolute;
+  bottom: -40px; right: 20px;
+  width: 120px;
+  height: 80px;
+  background: radial-gradient(ellipse, rgba(109, 40, 217, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  opacity: 0;
 }
 
 .inputPill:focus-within {
-  border-color: light-dark(var(--mantine-color-blue-5), var(--mantine-color-blue-5));
-  box-shadow: 0 0 0 2px light-dark(rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.2));
+  border-color: rgba(147, 112, 255, 0.4);
+  box-shadow:
+    0 0 0 3px rgba(109, 40, 217, 0.1),
+    0 4px 24px rgba(109, 40, 217, 0.18),
+    inset 0 1px 0 rgba(167, 139, 250, 0.08);
+  animation: pillBreathe 2.8s ease-in-out infinite;
 }
+
+/* Same glowBreathe mechanic as .wrapperActive */
+@keyframes pillBreathe {
+  0%, 100% {
+    box-shadow:
+      0 0 0 3px rgba(109, 40, 217, 0.08),
+      0 4px 20px rgba(109, 40, 217, 0.14),
+      inset 0 1px 0 rgba(167, 139, 250, 0.06);
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px rgba(109, 40, 217, 0.14),
+      0 6px 28px rgba(109, 40, 217, 0.24),
+      inset 0 1px 0 rgba(167, 139, 250, 0.12);
+  }
+}
+
+.inputPill:focus-within::before { opacity: 1; }
+.inputPill:focus-within::after  { opacity: 1; }
+
+/* Scan line — same as .scanLine on the thinking block, plays once on focus */
+.inputPill:focus-within .scanLine {
+  animation: inputScan 1.2s ease-out forwards;
+}
+
+.scanLine {
+  position: absolute;
+  left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(147, 112, 255, 0.6), transparent);
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0;
+  top: 0;
+}
+
+@keyframes inputScan {
+  0%   { top: 0;    opacity: 0; }
+  8%   {            opacity: 1; }
+  92%  {            opacity: 0.6; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* Corner brackets — same .corner mechanic as thinking block */
+.corner {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-color: rgba(147, 112, 255, 0.5);
+  border-style: solid;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  z-index: 3;
+  pointer-events: none;
+}
+.inputPill:focus-within .corner { opacity: 1; }
+
+.cornerTopLeft     { top: 0; left: 0;  border-width: 1px 0 0 1px; border-radius: 18px 0 0 0; }
+.cornerTopRight    { top: 0; right: 0; border-width: 1px 1px 0 0; border-radius: 0 18px 0 0; }
+.cornerBottomLeft  { bottom: 0; left: 0;  border-width: 0 0 1px 1px; border-radius: 0 0 0 18px; }
+.cornerBottomRight { bottom: 0; right: 0; border-width: 0 1px 1px 0; border-radius: 0 0 18px 0; }
+
+
+/* ─── Textarea ──────────────────────────────────────────────────────────── */
 
 .textarea {
   width: 100%;
   resize: none;
   border: none;
   background: transparent;
-  font-size: 14px;
-  line-height: 1.5;
-  color: light-dark(var(--mantine-color-gray-8), var(--mantine-color-dark-0));
-  font-family: var(--mantine-font-family);
-  font-weight: 400;
+  font-family: 'Sora', sans-serif;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: light-dark(rgba(30, 10, 60, 0.85), rgba(220, 210, 255, 0.82));
   max-height: 160px;
-  overflow-y: auto;
-  letter-spacing: -0.01em;
   padding: 6px 10px;
-  min-height: 24px;
-}
-
-.textarea:focus {
+  caret-color: #9370ff;
   outline: none;
+  position: relative;
+  z-index: 1;
 }
 
 .textarea::placeholder {
-  color: light-dark(var(--mantine-color-gray-5), var(--mantine-color-dark-3));
+  color: light-dark(rgba(147, 112, 255, 0.35), rgba(147, 112, 255, 0.28));
+  font-style: italic;
+  letter-spacing: 0.01em;
 }
+
+/* Scrollbar tinted to match violet system */
+.textarea::-webkit-scrollbar       { width: 3px; }
+.textarea::-webkit-scrollbar-track { background: transparent; }
+.textarea::-webkit-scrollbar-thumb {
+  background: rgba(147, 112, 255, 0.3);
+  border-radius: 2px;
+}
+.textarea::-webkit-scrollbar-thumb:hover {
+  background: rgba(147, 112, 255, 0.55);
+}
+
+
+/* ─── Toolbar ───────────────────────────────────────────────────────────── */
 
 .toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 4px 4px 0;
+  position: relative;
+  z-index: 1;
 }
 
-.toolbarLeft {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+/* Toolbar top-divider — same .divider gradient */
+.toolbar::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 6px; right: 6px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(147, 112, 255, 0.25), transparent);
 }
 
-.toolbarRight {
+
+/* ─── Send Button ───────────────────────────────────────────────────────── */
+
+.sendButton {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  transition: transform 0.2s cubic-bezier(0.34, 1.4, 0.64, 1), box-shadow 0.2s ease;
+  overflow: hidden;
+  flex-shrink: 0;
+
+  /* Disabled state */
+  background: light-dark(rgba(147, 112, 255, 0.08), rgba(147, 112, 255, 0.08));
+  color: rgba(147, 112, 255, 0.3);
+  box-shadow: none;
+}
+
+.sendButton.enabled {
+  /* Deep violet radial — same avatar radial-gradient approach */
+  background: radial-gradient(
+    circle at 35% 30%,
+    #b39dff 0%,
+    #7c3aed 45%,
+    #5b21b6 100%
+  );
+  color: #fff;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 2px 12px rgba(109, 40, 217, 0.5),
+    0 0 0 1px rgba(147, 112, 255, 0.3);
+
+  animation: sendPulse 2.4s ease-in-out infinite;
+}
+
+/* Orbital ring on send button — mirrors avatarRing */
+.sendButton.enabled::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  border-top-color: rgba(196, 176, 255, 0.6);
+  border-right-color: rgba(196, 176, 255, 0.15);
+  animation: sendOrbit 2.4s linear infinite;
+  pointer-events: none;
+}
+
+/* Gloss sheen — same sheenPass as user bubble */
+.sendButton.enabled::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.18) 0%,
+    transparent 60%
+  );
+  pointer-events: none;
+}
+
+@keyframes sendPulse {
+  0%, 100% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.2),
+      0 2px 12px rgba(109, 40, 217, 0.4),
+      0 0 0 1px rgba(147, 112, 255, 0.25);
+  }
+  50% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.2),
+      0 4px 20px rgba(109, 40, 217, 0.6),
+      0 0 0 1px rgba(167, 139, 250, 0.4);
+  }
+}
+
+@keyframes sendOrbit {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.sendButton.enabled:hover {
+  transform: scale(1.08) translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 6px 24px rgba(109, 40, 217, 0.65),
+    0 0 0 1px rgba(167, 139, 250, 0.5);
+  animation: none;
+}
+
+.sendButton.enabled:active {
+  transform: scale(0.94);
+  transition-duration: 0.08s;
+}
+
+.inputWrapper {
+  position: relative;
 }
 
 .iconButton {
@@ -78,34 +290,6 @@
 .iconButton:hover {
   background: light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-5));
   color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0));
-}
-
-.optionsList {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 160px;
-}
-
-.optionItem {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: var(--mantine-radius-sm);
-  border: none;
-  background: transparent;
-  color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0));
-  font-size: 13px;
-  font-family: var(--mantine-font-family);
-  cursor: pointer;
-  transition: background 0.15s ease;
-  width: 100%;
-  text-align: left;
-}
-
-.optionItem:hover {
-  background: light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-5));
 }
 
 .settingsDropdown {
@@ -137,40 +321,6 @@
   font-size: 12px;
 }
 
-.sendButton {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.sendButton.enabled {
-  background: linear-gradient(135deg, var(--mantine-color-blue-6), var(--mantine-color-violet-6));
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
-}
-
-.sendButton.enabled:hover {
-  filter: brightness(1.05);
-  transform: scale(1.05);
-}
-
-.sendButton.enabled:active {
-  transform: scale(0.98);
-}
-
-.sendButton.disabled {
-  background: light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-5));
-  color: light-dark(var(--mantine-color-gray-4), var(--mantine-color-dark-3));
-  cursor: not-allowed;
-}
-
 .sendButton.stop {
   background: var(--mantine-color-red-6);
   color: #fff;
@@ -181,12 +331,14 @@
   filter: brightness(1.1);
 }
 
-@media (max-width: 640px) {
-  .modelSelect {
-    width: 100px;
-  }
-  
-  .settingsLabel {
-    font-size: 11px;
-  }
+.toolbarLeft {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.toolbarRight {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }

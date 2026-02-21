@@ -7,6 +7,7 @@ import { Popover, Text, Anchor } from '@mantine/core';
 import { Link } from 'react-router-dom';
 import { RagSource } from '../types/ai-chat.types';
 import { buildPageUrl } from '@/features/page/page.utils';
+import cardStyles from './AiMessageCard.module.css';
 
 interface AiCitationRendererProps {
   content: string;
@@ -52,21 +53,15 @@ export function AiCitationRenderer({ content, sources }: AiCitationRendererProps
           const source = sources[ref - 1];
 
           if (!source) {
-            return <sup>[{ref}]</sup>;
+            return <span className={cardStyles.citationBadge}>{ref}</span>;
           }
 
           return (
             <Popover withArrow width={280} position="top" shadow="md">
               <Popover.Target>
-                <sup
-                  style={{
-                    cursor: 'pointer',
-                    color: 'var(--mantine-color-blue-6)',
-                    fontWeight: 600,
-                  }}
-                >
-                  [{ref}]
-                </sup>
+                <span className={cardStyles.citationBadge}>
+                  {ref}
+                </span>
               </Popover.Target>
               <Popover.Dropdown>
                 <Text fw={600} size="sm" mb={4}>

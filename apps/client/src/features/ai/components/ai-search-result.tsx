@@ -1,11 +1,13 @@
 import React, { useMemo } from "react";
-import { Paper, Text, Group, Stack, Loader, Box } from "@mantine/core";
-import { IconSparkles, IconFileText } from "@tabler/icons-react";
+import { Stack, Loader, Group, Text, Paper } from "@mantine/core";
 import { Link } from "react-router-dom";
 import { IAiSearchResponse } from "../services/ai-search-service.ts";
 import { buildPageUrl } from "@/features/page/page.utils.ts";
 import { AiCitationRenderer } from "./AiCitationRenderer.tsx";
+import { AiMessageCard } from "./AiMessageCard.tsx";
+import { AiInsightsIcon } from "./AiInsightsIcon.tsx";
 import { useTranslation } from "react-i18next";
+import cardStyles from "./AiMessageCard.module.css";
 
 interface AiSearchResultProps {
   result?: IAiSearchResponse;
@@ -59,49 +61,49 @@ export function AiSearchResult({
 
   return (
     <Stack gap="md" p="md">
-      <Paper p="md" radius="md" withBorder>
-        <Group gap="xs" mb="sm">
-          <IconSparkles size={20} color="var(--mantine-color-blue-6)" />
-          <Text fw={600} size="sm">
-            {t("AI Answer")}
-          </Text>
-          {isLoading && <Loader size="xs" />}
-        </Group>
-        <AiCitationRenderer content={answer} sources={deduplicatedSources} />
-      </Paper>
+      <AiMessageCard
+        header={
+          <Group gap="xs">
+            <AiInsightsIcon />
+            {isLoading && <Loader size="xs" />}
+          </Group>
+        }
+      >
+        <div className={cardStyles.body}>
+          <AiCitationRenderer content={answer} sources={deduplicatedSources} />
+        </div>
+      </AiMessageCard>
 
       {deduplicatedSources.length > 0 && (
-        <Stack gap="xs">
-          <Text size="xs" fw={600} c="dimmed">
-            {t("Sources")}
-          </Text>
-          {deduplicatedSources.map((source) => (
-            <Box
+        <div className={cardStyles.citations}>
+          <div className={cardStyles.citationsTitle}>{t("Sources")}</div>
+          {deduplicatedSources.map((source, index) => (
+            <Link
               key={source.pageId}
-              component={Link}
               to={buildPageUrl(source.spaceSlug, source.slugId, source.title)}
-              style={{
-                textDecoration: "none",
-                color: "inherit",
-                display: "block",
-              }}
+              className={cardStyles.citationLink}
             >
-              <Paper
-                p="xs"
-                radius="sm"
-                withBorder
-                style={{ cursor: "pointer" }}
+              <div
+                className={cardStyles.citationRow}
+                style={{ animationDelay: `${index * 0.07}s` }}
               >
-                <Group gap="xs">
-                  <IconFileText size={16} />
-                  <Text size="sm" truncate>
-                    {source.title}
-                  </Text>
-                </Group>
-              </Paper>
-            </Box>
+                <div className={cardStyles.citationNum}>{index + 1}</div>
+                <div className={cardStyles.citationContent}>
+                  <div className={cardStyles.citationSource}>
+                    <span className={cardStyles.citationSourceText}>
+                      {source.title}
+                    </span>
+                  </div>
+                  {source.excerpt && (
+                    <div className={cardStyles.citationSnippet}>
+                      {source.excerpt}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </Link>
           ))}
-        </Stack>
+        </div>
       )}
     </Stack>
   );

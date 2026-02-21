@@ -1,14 +1,17 @@
 .panel {
-  position: absolute;
+  position: fixed;
   top: 52px;
-  right: 0;
+  right: 16px;
   width: 300px;
+  max-height: calc(100vh - 72px);
   background: light-dark(var(--mantine-color-white), var(--mantine-color-dark-7));
   border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   border: 1px solid light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-4));
-  z-index: 100;
+  z-index: 9999;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
   transform-origin: top right;
 }
 
@@ -84,8 +87,9 @@
 
 .sessionList {
   padding: 2px 4px 6px;
-  max-height: 420px;
+  flex: 1;
   overflow-y: auto;
+  min-height: 0;
 }
 
 .sectionLabel {
@@ -204,13 +208,6 @@
   color: var(--mantine-color-red-6);
 }
 
-.activeIndicator {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--mantine-color-gray-5);
-  flex-shrink: 0;
-}
 
 .emptySessions {
   padding: 20px 14px;
