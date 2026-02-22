@@ -26,6 +26,7 @@ import useAuth from "@/features/auth/hooks/use-auth.ts";
 import { CustomAvatar } from "@/components/ui/custom-avatar.tsx";
 import { useTranslation } from "react-i18next";
 import { AvatarIconType } from "@/features/attachments/types/attachment.types.ts";
+import classes from "./top-menu.module.css";
 
 export default function TopMenu() {
   const { t } = useTranslation();
@@ -41,9 +42,9 @@ export default function TopMenu() {
   }
 
   return (
-    <Menu width={250} position="bottom-end" withArrow shadow={"lg"}>
+    <Menu width={250} position="bottom-end" withArrow shadow={"lg"} classNames={{ dropdown: classes.menu }}>
       <Menu.Target>
-        <UnstyledButton>
+        <UnstyledButton className={classes.workspaceButton}>
           <Group gap={7} wrap={"nowrap"}>
             <CustomAvatar
               avatarUrl={workspace?.logo}
@@ -52,20 +53,21 @@ export default function TopMenu() {
               size="sm"
               type={AvatarIconType.WORKSPACE_ICON}
             />
-            <Text fw={500} size="sm" lh={1} mr={3} lineClamp={1}>
+            <Text fw={500} size="sm" lh={1} mr={3} lineClamp={1} className={classes.workspaceName}>
               {workspace?.name}
             </Text>
-            <IconChevronDown size={16} />
+            <IconChevronDown size={16} className={classes.workspaceChevron} />
           </Group>
         </UnstyledButton>
       </Menu.Target>
       <Menu.Dropdown>
-        <Menu.Label>{t("Workspace")}</Menu.Label>
+        <Menu.Label className={classes.menuLabel}>{t("Workspace")}</Menu.Label>
 
         <Menu.Item
           component={Link}
           to={APP_ROUTE.SETTINGS.WORKSPACE.GENERAL}
-          leftSection={<IconSettings size={16} />}
+          leftSection={<IconSettings size={16} className={classes.menuItemIcon} />}
+          className={classes.menuItem}
         >
           {t("Workspace settings")}
         </Menu.Item>
@@ -73,15 +75,16 @@ export default function TopMenu() {
         <Menu.Item
           component={Link}
           to={APP_ROUTE.SETTINGS.WORKSPACE.MEMBERS}
-          leftSection={<IconUsers size={16} />}
+          leftSection={<IconUsers size={16} className={classes.menuItemIcon} />}
+          className={classes.menuItem}
         >
           {t("Manage members")}
         </Menu.Item>
 
-        <Menu.Divider />
+        <Menu.Divider className={classes.menuDivider} />
 
-        <Menu.Label>{t("Account")}</Menu.Label>
-        <Menu.Item component={Link} to={APP_ROUTE.SETTINGS.ACCOUNT.PROFILE}>
+        <Menu.Label className={classes.menuLabel}>{t("Account")}</Menu.Label>
+        <Menu.Item component={Link} to={APP_ROUTE.SETTINGS.ACCOUNT.PROFILE} className={classes.menuItem}>
           <Group wrap={"nowrap"}>
             <CustomAvatar
               size={"sm"}
@@ -89,11 +92,11 @@ export default function TopMenu() {
               name={user.name}
             />
 
-            <div style={{ width: 190 }}>
-              <Text size="sm" fw={500} lineClamp={1}>
+            <div className={classes.userInfo}>
+              <Text size="sm" fw={500} lineClamp={1} className={classes.userName}>
                 {user.name}
               </Text>
-              <Text size="xs" c="dimmed" truncate="end">
+              <Text size="xs" c="dimmed" truncate="end" className={classes.userEmail}>
                 {user.email}
               </Text>
             </div>
@@ -102,7 +105,8 @@ export default function TopMenu() {
         <Menu.Item
           component={Link}
           to={APP_ROUTE.SETTINGS.ACCOUNT.PROFILE}
-          leftSection={<IconUserCircle size={16} />}
+          leftSection={<IconUserCircle size={16} className={classes.menuItemIcon} />}
+          className={classes.menuItem}
         >
           {t("My profile")}
         </Menu.Item>
@@ -110,14 +114,15 @@ export default function TopMenu() {
         <Menu.Item
           component={Link}
           to={APP_ROUTE.SETTINGS.ACCOUNT.PREFERENCES}
-          leftSection={<IconBrush size={16} />}
+          leftSection={<IconBrush size={16} className={classes.menuItemIcon} />}
+          className={classes.menuItem}
         >
           {t("My preferences")}
         </Menu.Item>
 
         <Menu.Sub>
           <Menu.Sub.Target>
-            <Menu.Sub.Item leftSection={<IconBrightnessFilled size={16} />}>
+            <Menu.Sub.Item leftSection={<IconBrightnessFilled size={16} className={classes.themeIcon} />} className={classes.themeItem}>
               {t("Theme")}
             </Menu.Sub.Item>
           </Menu.Sub.Target>
@@ -125,37 +130,40 @@ export default function TopMenu() {
           <Menu.Sub.Dropdown>
             <Menu.Item
               onClick={() => setColorScheme("light")}
-              leftSection={<IconSun size={16} />}
+              leftSection={<IconSun size={16} className={classes.themeIcon} />}
               rightSection={
                 colorScheme === "light" ? <IconCheck size={16} /> : null
               }
+              className={classes.themeItem}
             >
               {t("Light")}
             </Menu.Item>
             <Menu.Item
               onClick={() => setColorScheme("dark")}
-              leftSection={<IconMoon size={16} />}
+              leftSection={<IconMoon size={16} className={classes.themeIcon} />}
               rightSection={
                 colorScheme === "dark" ? <IconCheck size={16} /> : null
               }
+              className={classes.themeItem}
             >
               {t("Dark")}
             </Menu.Item>
             <Menu.Item
               onClick={() => setColorScheme("auto")}
-              leftSection={<IconDeviceDesktop size={16} />}
+              leftSection={<IconDeviceDesktop size={16} className={classes.themeIcon} />}
               rightSection={
                 colorScheme === "auto" ? <IconCheck size={16} /> : null
               }
+              className={classes.themeItem}
             >
               {t("System settings")}
             </Menu.Item>
           </Menu.Sub.Dropdown>
         </Menu.Sub>
 
-        <Menu.Divider />
+        <Menu.Divider className={classes.menuDivider} />
 
-        <Menu.Item onClick={logout} leftSection={<IconLogout size={16} />}>
+        <Menu.Item onClick={logout} leftSection={<IconLogout size={16} className={classes.menuItemIcon} />} className={classes.menuItem}>
           {t("Logout")}
         </Menu.Item>
       </Menu.Dropdown>

@@ -1,0 +1,36 @@
+/* ─── Custom Avatar ─────────────────────────────────────────────────────── */
+
+.avatarWrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Orbital ring — same avatarRing / sidebarToggleRing / notifRing mechanic */
+.avatarRing {
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  border-top-color: rgba(167, 139, 250, 0.6);
+  border-right-color: rgba(167, 139, 250, 0.15);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+/* Ring appears on hover */
+.avatarWrapper:hover .avatarRing {
+  opacity: 1;
+  animation: avatarOrbit 2.4s linear infinite;
+}
+
+/* Faster animation on hover */
+.avatarWrapper:hover .avatarRing {
+  animation-duration: 1.2s;
+}
+
+@keyframes avatarOrbit {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}

@@ -8,6 +8,8 @@ import {
 } from "@mantine/core";
 import {
   IconArrowDown,
+  IconChevronLeft,
+  IconChevronRight,
   IconDots,
   IconFileExport,
   IconHome,
@@ -37,7 +39,10 @@ import PageImportModal from "@/features/page/components/page-import-modal.tsx";
 import { useTranslation } from "react-i18next";
 import { SwitchSpace } from "./switch-space";
 import ExportModal from "@/components/common/export-modal";
-import { mobileSidebarAtom } from "@/components/layouts/global/hooks/atoms/sidebar-atom.ts";
+import {
+  desktopSidebarAtom,
+  mobileSidebarAtom,
+} from "@/components/layouts/global/hooks/atoms/sidebar-atom.ts";
 import { useToggleSidebar } from "@/components/layouts/global/hooks/hooks/use-toggle-sidebar.ts";
 import { searchSpotlight } from "@/features/search/constants";
 
@@ -55,6 +60,9 @@ export function SpaceSidebar() {
 
   const spaceRules = space?.membership?.permissions;
   const spaceAbility = useSpaceAbility(spaceRules);
+
+  const [desktopSidebarOpened] = useAtom(desktopSidebarAtom);
+  const toggleDesktopSidebar = useToggleSidebar(desktopSidebarAtom);
 
   if (!space) {
     return <></>;
@@ -211,6 +219,24 @@ export function SpaceSidebar() {
               )}
             />
           </div>
+
+          {/* Sidebar Toggle Button */}
+          <button
+            className={`${classes.sidebarToggle} ${
+              desktopSidebarOpened ? "" : classes.sidebarToggleCollapsed
+            }`}
+            onClick={toggleDesktopSidebar}
+            aria-label={desktopSidebarOpened ? "Collapse sidebar" : "Expand sidebar"}
+          >
+            <div className={classes.sidebarToggleRing} />
+            <div className={classes.sidebarToggleIcon}>
+              {desktopSidebarOpened ? (
+                <IconChevronLeft size={11} />
+              ) : (
+                <IconChevronRight size={11} />
+              )}
+            </div>
+          </button>
         </div>
       </div>
 

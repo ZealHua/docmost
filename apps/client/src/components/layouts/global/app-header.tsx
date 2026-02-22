@@ -10,7 +10,6 @@ import {
   mobileSidebarAtom,
 } from "@/components/layouts/global/hooks/atoms/sidebar-atom.ts";
 import { useToggleSidebar } from "@/components/layouts/global/hooks/hooks/use-toggle-sidebar.ts";
-import SidebarToggle from "@/components/ui/sidebar-toggle-button.tsx";
 import { useTranslation } from "react-i18next";
 import useTrial from "@/ee/hooks/use-trial.tsx";
 import { isCloud } from "@/lib/config.ts";
@@ -24,7 +23,7 @@ import {
 } from "@/features/search/constants.ts";
 import { NotificationPopover } from "@/features/notification/components/notification-popover.tsx";
 
-const links = [{ link: APP_ROUTE.HOME, label: "Home" }];
+const links: { link: string; label: string }[] = [];
 
 export function AppHeader() {
   const { t } = useTranslation();
@@ -49,39 +48,9 @@ export function AppHeader() {
     <>
       <Group h="100%" px="md" justify="space-between" wrap={"nowrap"}>
         <Group wrap="nowrap">
-          {!hideSidebar && (
-            <>
-              <Tooltip label={t("Sidebar toggle")}>
-                <SidebarToggle
-                  aria-label={t("Sidebar toggle")}
-                  opened={mobileOpened}
-                  onClick={toggleMobile}
-                  hiddenFrom="sm"
-                  size="sm"
-                />
-              </Tooltip>
-
-              <Tooltip label={t("Sidebar toggle")}>
-                <SidebarToggle
-                  aria-label={t("Sidebar toggle")}
-                  opened={desktopOpened}
-                  onClick={toggleDesktop}
-                  visibleFrom="sm"
-                  size="sm"
-                />
-              </Tooltip>
-            </>
-          )}
-
-          <Text
-            size="lg"
-            fw={600}
-            style={{ cursor: "pointer", userSelect: "none" }}
-            component={Link}
-            to="/home"
-          >
-            Docmost
-          </Text>
+          <Link to="/home" className={classes.brandName}>
+            OpenMemo
+          </Link>
 
           <Group ml={50} gap={5} className={classes.links} visibleFrom="sm">
             {items}

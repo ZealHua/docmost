@@ -1,21 +1,18 @@
-/* ─── Header ─────────────────────────────────────────────────────────────── */
+/* ─── Header shell ───────────────────────────────────────────────────────── */
 
 .header {
   position: relative;
   height: 100%;
   margin-bottom: rem(120px);
 
-  /* Violet-tinted surface — same #0f0b1f family as input pill / thinking block */
   background: light-dark(
-    rgba(250, 248, 255, 0.92),   /* --quantum-surface-1 light */
-    rgba(13, 7, 32, 0.92)        /* --quantum-surface-1 dark  */
+    rgba(250, 248, 255, 0.92),
+    rgba(13, 7, 32, 0.92)
   );
 
-  /* Frosted glass — consistent with .inputPill backdrop-filter */
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 
-  /* Violet-tinted border instead of flat grey */
   border-bottom: 1px solid light-dark(
     rgba(147, 112, 255, 0.16),
     rgba(147, 112, 255, 0.12)
@@ -24,7 +21,30 @@
   padding-left: var(--mantine-spacing-md);
   padding-right: var(--mantine-spacing-md);
 
-  /* Bottom shimmer line — same .answer-card::before / .inputPill::before mechanic */
+  transition:
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+
+  /* ── Top violet ambient strip — mirrors empty-state icon glow ── */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(147, 112, 255, 0.5) 35%,
+      rgba(196, 176, 255, 0.7) 50%,
+      rgba(147, 112, 255, 0.5) 65%,
+      transparent 100%
+    );
+    pointer-events: none;
+  }
+
+  /* ── Bottom shimmer line — same .answer-card::before mechanic ── */
   &::after {
     content: '';
     position: absolute;
@@ -42,6 +62,91 @@
   }
 }
 
+/* ── Scrolled state — apply via JS when window.scrollY > 0 ── */
+/* Add class `styles.headerScrolled` to the header element on scroll */
+.headerScrolled {
+  border-bottom-color: light-dark(
+    rgba(147, 112, 255, 0.28),
+    rgba(147, 112, 255, 0.22)
+  );
+  box-shadow:
+    0 4px 24px rgba(109, 40, 217, 0.12),
+    0 1px 0 rgba(147, 112, 255, 0.1);
+}
+
+
+/* ─── Logo / brand slot ──────────────────────────────────────────────────── */
+/*
+  Wrap your logo/wordmark in <div className={styles.brand}>.
+  Reuses the aiLabel shimmer mechanic for the wordmark text.
+*/
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.brandMark {
+  /* Icon wrapper — same .emptyIcon radial surface */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: radial-gradient(
+    circle at 35% 32%,
+    #c4b5fd 0%,
+    #7c3aed 50%,
+    #4c1d95 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 2px 10px rgba(109, 40, 217, 0.4),
+    0 0 0 1px rgba(147, 112, 255, 0.25);
+  color: white;
+  transition: box-shadow 0.2s ease, transform 0.2s cubic-bezier(0.34, 1.4, 0.64, 1);
+
+  &:hover {
+    transform: scale(1.06);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.25),
+      0 4px 16px rgba(109, 40, 217, 0.55),
+      0 0 0 1px rgba(167, 139, 250, 0.4);
+  }
+}
+
+.brandName {
+  font-family: 'Sora', system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+
+  /* Same labelShimmer — but slower (5s) so it reads as a wordmark, not a badge */
+  background: linear-gradient(
+    90deg,
+    #7c3aed 0%,
+    #c4b5fd 40%,
+    #a78bfa 55%,
+    #7c3aed 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: brandShimmer 5s linear infinite;
+}
+
+@keyframes brandShimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+
 /* ─── Nav link ───────────────────────────────────────────────────────────── */
 
 .link {
@@ -49,7 +154,7 @@
   display: block;
   line-height: 1;
   padding: rem(8px) rem(12px);
-  border-radius: var(--mantine-radius-sm); /* 6px from our radius scale */
+  border-radius: var(--mantine-radius-sm);
   text-decoration: none;
   font-family: 'Sora', system-ui, sans-serif;
   font-size: var(--mantine-font-size-sm);
@@ -57,56 +162,65 @@
   letter-spacing: 0.01em;
 
   color: light-dark(
-    rgba(30, 10, 60, 0.65),        /* warm dark-violet text in light mode */
-    rgba(196, 176, 255, 0.55)      /* --quantum-text-muted in dark mode  */
+    rgba(30, 10, 60, 0.65),
+    rgba(196, 176, 255, 0.55)
   );
 
-  /* Smooth transitions — same timing as .node and .chip */
   transition:
     background 0.18s ease,
     color      0.18s ease,
     box-shadow 0.18s ease;
 
-  /* ── Hover ── */
+  /* Bottom indicator bar — horizontal variant of the left-bar used in navbar */
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 20%;
+    right: 20%;
+    height: 2px;
+    border-radius: 2px 2px 0 0;
+    background: transparent;
+    transition: background 0.2s ease, left 0.2s ease, right 0.2s ease;
+    pointer-events: none;
+  }
+
   @mixin hover {
     background: light-dark(
-      rgba(147, 112, 255, 0.07),   /* violet ghost — same .node:hover / .chip:hover */
+      rgba(147, 112, 255, 0.07),
       rgba(147, 112, 255, 0.09)
     );
 
     color: light-dark(
       rgba(109, 40, 217, 0.9),
-      rgba(220, 210, 255, 0.82)    /* --quantum-text-body */
+      rgba(220, 210, 255, 0.82)
     );
   }
 }
 
+
 /* ─── Active / current route ─────────────────────────────────────────────── */
-/*
-  Apply .linkActive (or data-active) in the JSX to mark the current page.
-  Uses the same left-bar + shimmer gradient as .node:global(.isSelected).
-*/
 
 .linkActive {
   background: light-dark(
-    rgba(147, 112, 255, 0.11),
-    rgba(109, 40, 217, 0.18)
+    rgba(147, 112, 255, 0.1),
+    rgba(109, 40, 217, 0.25)       /* stronger fill in dark mode */
   );
 
-  /* Left violet bar — same inset border as selected tree node */
-  box-shadow:
-    inset 2px 0 0 rgba(147, 112, 255, 0.7),
-    inset 0 0 10px rgba(109, 40, 217, 0.06);
+  /* Bottom indicator line (horizontal left-bar equivalent for top nav) */
+  &::after {
+    left: 15%;
+    right: 15%;
+    background: linear-gradient(90deg, transparent, #9370ff, transparent);
+  }
 
-  /* Shimmer text gradient — same nodeShimmer / labelShimmer mechanic */
+  /* ── Light mode: shimmer gradient text ── */
   background-clip: text;
   -webkit-background-clip: text;
-
-  /* Override color so gradient shows */
   color: transparent;
   background-image: light-dark(
     linear-gradient(90deg, #7c3aed 0%, #c4b5fd 45%, #a78bfa 60%, #7c3aed 100%),
-    linear-gradient(90deg, #9370ff 0%, #e9d5ff 45%, #c4b5fd 60%, #9370ff 100%)
+    none                           /* disabled in dark — see below */
   );
   background-size: 200% auto;
   animation: linkShimmer 3.5s linear infinite;
@@ -114,12 +228,92 @@
   @mixin hover {
     background: light-dark(
       rgba(147, 112, 255, 0.16),
-      rgba(109, 40, 217, 0.26)
+      rgba(109, 40, 217, 0.35)
     );
+  }
+}
+
+/* ── Dark mode active: drop the invisible gradient, use solid bright text ── */
+[data-mantine-color-scheme='dark'] .linkActive {
+  background-image: none;
+  -webkit-background-clip: unset;
+  background-clip: unset;
+  -webkit-text-fill-color: #e9d5ff;   /* bright lavender-white — same navbar fix */
+  color: #e9d5ff;
+  animation: none;
+
+  box-shadow:
+    0 2px 12px rgba(109, 40, 217, 0.2);
+
+  &::after {
+    background: linear-gradient(90deg, transparent, #c4b5fd, transparent);
   }
 }
 
 @keyframes linkShimmer {
   0%   { background-position: -200% center; }
   100% { background-position:  200% center; }
+}
+
+
+/* ─── Right-side header actions slot ────────────────────────────────────────*/
+/*
+  Wrap theme toggle, avatar, notification bell etc. in .headerActions.
+*/
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* Generic action icon button — violet-tinted version of Mantine ActionIcon */
+.actionIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+
+  color: light-dark(
+    rgba(147, 112, 255, 0.55),
+    rgba(167, 139, 250, 0.45)
+  );
+
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease;
+
+  &:hover {
+    background: light-dark(
+      rgba(147, 112, 255, 0.08),
+      rgba(147, 112, 255, 0.1)
+    );
+    border-color: light-dark(
+      rgba(147, 112, 255, 0.2),
+      rgba(147, 112, 255, 0.2)
+    );
+    color: light-dark(
+      rgba(109, 40, 217, 0.9),
+      rgba(220, 210, 255, 0.85)
+    );
+    box-shadow: 0 0 8px rgba(109, 40, 217, 0.15);
+  }
+}
+
+/* ─── Scrollbar (if header ever scrolls internally) ─────────────────────── */
+
+.header ::-webkit-scrollbar       { height: 3px; }
+.header ::-webkit-scrollbar-track { background: transparent; }
+.header ::-webkit-scrollbar-thumb {
+  background: rgba(147, 112, 255, 0.25);
+  border-radius: 2px;
 }

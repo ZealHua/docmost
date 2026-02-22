@@ -2,7 +2,6 @@ import { useState } from "react";
 import {
   ActionIcon,
   Group,
-  Indicator,
   Menu,
   Popover,
   ScrollArea,
@@ -15,6 +14,7 @@ import {
   IconChecks,
   IconDots,
   IconFilter,
+  IconRadar2,
 } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { NotificationList } from "./notification-list";
@@ -23,6 +23,7 @@ import {
   useMarkAllReadMutation,
   useUnreadCountQuery,
 } from "../queries/notification-query";
+import classes from "./notification-popover.module.css";
 
 export function NotificationPopover() {
   const { t } = useTranslation();
@@ -33,6 +34,7 @@ export function NotificationPopover() {
   const markAllRead = useMarkAllReadMutation();
 
   const unreadCount = unreadData?.count ?? 0;
+  const hasUnread = unreadCount > 0;
 
   const handleMarkAllRead = () => {
     markAllRead.mutate();
@@ -50,18 +52,17 @@ export function NotificationPopover() {
         <Tooltip label={t("Notifications")} withArrow>
           <ActionIcon
             variant="subtle"
-            color="dark"
+            color="violet"
             size="sm"
             onClick={() => setOpened((o) => !o)}
+            className={classes.actionIcon}
+            aria-label={t("Notifications")}
           >
-            <Indicator
-              offset={5}
-              color="red"
-              withBorder
-              disabled={unreadCount === 0}
-            >
-              <IconBell size={20} />
-            </Indicator>
+            <div className={`${classes.notifWrapper} ${hasUnread ? classes.hasUnread : ""}`}>
+              <div className={classes.notifRing} />
+              <IconRadar2 size={15} />
+              {hasUnread && <div className={classes.notifDot} />}
+            </div>
           </ActionIcon>
         </Tooltip>
       </Popover.Target>
@@ -78,7 +79,7 @@ export function NotificationPopover() {
             <Menu position="bottom-end" withArrow withinPortal={false}>
               <Menu.Target>
                 <Tooltip label={t("Filter")} withArrow>
-                  <ActionIcon variant="subtle" color="dark" size="sm">
+                  <ActionIcon variant="subtle" color="violet" size="sm">
                     <IconFilter size={16} />
                   </ActionIcon>
                 </Tooltip>
@@ -107,7 +108,7 @@ export function NotificationPopover() {
             <Menu position="bottom-end" withArrow withinPortal={false}>
               <Menu.Target>
                 <Tooltip label={t("More options")} withArrow>
-                  <ActionIcon variant="subtle" color="dark" size="sm">
+                  <ActionIcon variant="subtle" color="violet" size="sm">
                     <IconDots size={16} />
                   </ActionIcon>
                 </Tooltip>

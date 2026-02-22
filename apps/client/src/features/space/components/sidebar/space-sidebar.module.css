@@ -93,7 +93,7 @@
 
   color: light-dark(
     rgba(30, 10, 60, 0.65),
-    rgba(196, 176, 255, 0.52)      /* --quantum-text-muted dark */
+    rgba(220, 210, 255, 0.62)
   );
 
   transition:
@@ -176,7 +176,7 @@
 
   color: light-dark(
     rgba(30, 10, 60, 0.62),
-    rgba(196, 176, 255, 0.48)
+    rgba(220, 210, 255, 0.55)
   );
 
   transition:
@@ -199,23 +199,32 @@
 /* ─── Active state ───────────────────────────────────────────────────────── */
 /*
   Unified active class for both .menu and .pageLink rows.
-  Same left-bar + shimmer-text mechanic as .node:global(.isSelected)
-  and .linkActive in header.module.css.
+  Copied exactly from tree.module.css .node:global(.isSelected)
 */
 
-/* ─── Active state — REPLACEMENT ONLY ───────────────────────────────────── */
-
 .activeButton {
-  /* Light mode: subtle violet fill */
-  background: rgba(147, 112, 255, 0.11);
+  border-radius: 6px;
 
-  /* Left accent bar — primary selection signal in both modes */
+  background: light-dark(
+    rgba(147, 112, 255, 0.11),
+    rgba(109, 40, 217, 0.18)
+  );
+
+  color: light-dark(
+    rgba(109, 40, 217, 0.95),
+    rgba(220, 210, 255, 0.9)
+  );
+
+  /* Left accent bar — same as tree.module.css */
   box-shadow:
-    inset 2px 0 0 rgba(147, 112, 255, 0.65),
-    inset 0 0 10px rgba(109, 40, 217, 0.05);
+    inset 2px 0 0 rgba(147, 112, 255, 0.7),
+    inset 0 0 12px rgba(109, 40, 217, 0.06);
+}
 
-  /* Light mode: shimmer gradient text */
-  background-image: linear-gradient(
+/* Shimmer gradient text — exact copy from tree.module.css */
+.activeButton .menuItemInner,
+.activeButton .text {
+  background: linear-gradient(
     90deg,
     #7c3aed 0%,
     #c4b5fd 45%,
@@ -226,61 +235,34 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: navShimmer 3.5s linear infinite;
-
-  /* Keep icon visible despite text clip */
-  .menuItemIcon {
-    color: #9370ff;
-    -webkit-text-fill-color: initial;
-  }
-
-  &:hover {
-    background: rgba(147, 112, 255, 0.16);
-    box-shadow:
-      inset 2px 0 0 #9370ff,
-      0 0 0 1px rgba(147, 112, 255, 0.2),
-      0 2px 10px rgba(109, 40, 217, 0.18);
-  }
+  animation: nodeShimmer 3.5s linear infinite;
 }
 
-/* ─── Dark mode override — solid bright text, stronger glow ─────────────── */
-
-@media (prefers-color-scheme: dark) {
-  .activeButton {
-    /* Stronger violet surface so the row reads as clearly selected */
-    background: rgba(109, 40, 217, 0.28) !important;
-
-    /* Brighter left bar + outer ambient glow */
-    box-shadow:
-      inset 2px 0 0 #9370ff,
-      inset 0 0 16px rgba(109, 40, 217, 0.14),
-      0 0 12px rgba(109, 40, 217, 0.18) !important;
-
-    /* Drop text clip — use solid high-contrast colour instead */
-    background-image: none !important;
-    -webkit-background-clip: unset !important;
-    -webkit-text-fill-color: #e9d5ff !important; /* bright lavender white */
-    background-clip: unset !important;
-    animation: none !important;
-
-    .menuItemIcon {
-      color: #c4b5fd;
-    }
-
-    &:hover {
-      background: rgba(109, 40, 217, 0.38) !important;
-      -webkit-text-fill-color: #f5f0ff !important;
-      box-shadow:
-        inset 2px 0 0 #a78bfa,
-        inset 0 0 20px rgba(109, 40, 217, 0.2),
-        0 0 16px rgba(109, 40, 217, 0.25) !important;
-    }
-  }
+/* Icon color — exact copy from tree.module.css */
+.activeButton .menuItemIcon {
+  color: light-dark(#7c3aed, #a78bfa);
+  -webkit-text-fill-color: initial;
 }
 
-@keyframes navShimmer {
-  0%   { background-position: -200% center; }
-  100% { background-position:  200% center; }
+.activeButton:hover {
+  background: light-dark(
+    rgba(147, 112, 255, 0.16),
+    rgba(109, 40, 217, 0.26)
+  );
+  color: light-dark(
+    rgba(109, 40, 217, 1),
+    rgba(232, 222, 255, 0.95)
+  );
+  box-shadow:
+    inset 2px 0 0 #9370ff,
+    0 0 0 1px rgba(147, 112, 255, 0.22),
+    0 2px 12px rgba(109, 40, 217, 0.2),
+    inset 0 0 16px rgba(109, 40, 217, 0.08);
+}
+
+@keyframes nodeShimmer {
+ 0%   { background-position: -200% center; }
+ 100% { background-position:  200% center; }
 }
 
 /* ─── Scrollbar — same 3px violet thumb as textarea / treeContainer ─────── */
@@ -293,4 +275,153 @@
 }
 .navbar ::-webkit-scrollbar-thumb:hover {
   background: rgba(147, 112, 255, 0.48);
+}
+
+/* ─── Sidebar Toggle ─────────────────────────────────────────────────────── */
+
+.sidebarToggle {
+  /* Positioning — overlaps the navbar right edge */
+  position: absolute;
+  right: -13px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+
+  /* Reset button defaults */
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  background: transparent;
+  outline: none;
+
+  /* Layout */
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ── Radial surface — same .avatar.user / .brandMark treatment ── */
+.sidebarToggleIcon {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+
+  background: light-dark(
+    radial-gradient(circle at 35% 32%, #ede9fe 0%, #a78bfa 50%, #7c3aed 100%),
+    radial-gradient(circle at 35% 32%, #c4b5fd 0%, #7c3aed 50%, #4c1d95 100%)
+  );
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.12),
+    0 2px 10px rgba(109, 40, 217, 0.45),
+    0 0 0 1px rgba(147, 112, 255, 0.3);
+
+  color: white;
+
+  transition:
+    box-shadow 0.2s ease,
+    transform  0.2s cubic-bezier(0.34, 1.4, 0.64, 1);
+
+  /* Gloss sheen — same .sendButton.enabled::after */
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.18) 0%,
+      transparent 55%
+    );
+    pointer-events: none;
+  }
+}
+
+/* ── Orbital ring — same .avatarRing / .emptyIconRing mechanic ── */
+.sidebarToggleRing {
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  border-top-color: rgba(167, 139, 250, 0.6);
+  border-right-color: rgba(167, 139, 250, 0.15);
+  animation: toggleOrbit 3.5s linear infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+
+@keyframes toggleOrbit {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── Hover — same .sendButton.enabled:hover lift ── */
+.sidebarToggle:hover .sidebarToggleIcon {
+  transform: scale(1.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 4px 18px rgba(109, 40, 217, 0.6),
+    0 0 0 1px rgba(167, 139, 250, 0.45);
+}
+
+/* Speed up ring on hover — same thinking block hover acceleration */
+.sidebarToggle:hover .sidebarToggleRing {
+  animation-duration: 1.2s;
+}
+
+/* ── Active / pressed ── */
+.sidebarToggle:active .sidebarToggleIcon {
+  transform: scale(0.93);
+  transition-duration: 0.08s;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    0 1px 6px rgba(109, 40, 217, 0.35),
+    0 0 0 1px rgba(147, 112, 255, 0.25);
+}
+
+/* ── Collapsed state — chevron points right, ring pulses ── */
+.sidebarToggleCollapsed .sidebarToggleRing {
+  border-top-color: rgba(196, 176, 255, 0.8);
+  animation-duration: 2s;
+}
+
+.sidebarToggleCollapsed .sidebarToggleIcon {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 2px 14px rgba(109, 40, 217, 0.55),
+    0 0 0 1px rgba(167, 139, 250, 0.4);
+  animation: collapsedPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes collapsedPulse {
+  0%, 100% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.22),
+      0 2px 12px rgba(109, 40, 217, 0.4),
+      0 0 0 1px rgba(147, 112, 255, 0.3);
+  }
+  50% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.22),
+      0 4px 20px rgba(109, 40, 217, 0.65),
+      0 0 0 1px rgba(196, 176, 255, 0.5);
+  }
+}
+
+/* ── Focus ring (keyboard nav) — same .inputPill:focus-within ring ── */
+.sidebarToggle:focus-visible .sidebarToggleIcon {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 0 0 3px rgba(109, 40, 217, 0.25),
+    0 0 16px rgba(109, 40, 217, 0.4),
+    0 0 0 1px rgba(147, 112, 255, 0.5);
 }
