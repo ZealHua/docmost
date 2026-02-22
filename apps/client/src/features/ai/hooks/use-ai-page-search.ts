@@ -12,6 +12,7 @@ export interface AiPageSearchResult {
 interface PageSearchParams {
   query?: string;
   spaceId: string;
+  pageIds?: string[];
 }
 
 export function useAiPageSearch() {

@@ -39,4 +39,8 @@ export class AiChatDto {
   @IsOptional()
   @IsArray()
   selectedPageIds?: string[];
+
+  @IsOptional()
+  @IsBoolean()
+  isWebSearchEnabled?: boolean;
 }

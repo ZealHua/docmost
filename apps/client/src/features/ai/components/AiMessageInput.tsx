@@ -2,7 +2,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import { ActionIcon, Box, Select, Switch, Popover, TextInput, List, Badge, Button, Group } from '@mantine/core';
 import { IconPlayerStop, IconSend, IconPlus, IconSearch, IconAdjustments, IconX } from '@tabler/icons-react';
 import { useAtom, useAtomValue } from 'jotai';
-import { aiIsStreamingAtom, aiSelectedModelAtom, aiThinkingAtom, aiSelectedPagesAtom } from '../store/ai.atoms';
+import { aiIsStreamingAtom, aiSelectedModelAtom, aiThinkingAtom, aiSelectedPagesAtom, aiWebSearchEnabledAtom } from '../store/ai.atoms';
 import { useAiChat } from '../hooks/use-ai-chat';
 import { useAiPageSearch, AiPageSearchResult } from '../hooks/use-ai-page-search';
 import { useSpaceQuery } from '@/features/space/queries/space-query';
@@ -24,6 +24,7 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
   const isStreaming = useAtomValue(aiIsStreamingAtom);
   const [selectedModel, setSelectedModel] = useAtom(aiSelectedModelAtom);
   const [thinking, setThinking] = useAtom(aiThinkingAtom);
+  const [webSearchEnabled, setWebSearchEnabled] = useAtom(aiWebSearchEnabledAtom);
   const [selectedPages, setSelectedPages] = useAtom(aiSelectedPagesAtom);
   
   const { sendMessage, stopStream } = useAiChat(workspaceId);
@@ -217,6 +218,15 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
                       onChange={(e) => setThinking(e.currentTarget.checked)}
                       aria-label={t('Extended thinking')}
                       disabled={!supportsThinking}
+                    />
+                    </div>
+                  <div className={styles.settingsRow}>
+                    <span className={styles.settingsLabel}>{t('Web Search')}</span>
+                    <Switch
+                      size="xs"
+                      checked={webSearchEnabled}
+                      onChange={(e) => setWebSearchEnabled(e.currentTarget.checked)}
+                      aria-label={t('Enable Web Search')}
                     />
                   </div>
                 </div>

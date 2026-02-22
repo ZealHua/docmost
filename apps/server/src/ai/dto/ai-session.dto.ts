@@ -20,6 +20,7 @@ export class AiSessionResponseDto {
   title: string | null;
   createdAt: string;
   updatedAt: string;
+  selectedPageIds?: string[];
 }
 
 export class AiMessageResponseDto {

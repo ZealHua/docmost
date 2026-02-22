@@ -480,13 +480,15 @@ export class PageRepo {
       title: string;
       spaceId: string;
       workspaceId: string;
+      spaceSlug: string;
     }>
   > {
     return this.db
       .selectFrom('pages')
-      .select(['id', 'slugId', 'title', 'spaceId', 'workspaceId'])
-      .where('id', 'in', pageIds)
-      .where('deletedAt', 'is', null)
+      .innerJoin('spaces', 'spaces.id', 'pages.spaceId')
+      .select(['pages.id', 'pages.slugId', 'pages.title', 'pages.spaceId', 'pages.workspaceId', 'spaces.slug as spaceSlug'])
+      .where('pages.id', 'in', pageIds)
+      .where('pages.deletedAt', 'is', null)
       .execute();
   }
 

@@ -1,10 +1,19 @@
 import { useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSetAtom } from 'jotai';
 import api from '@/lib/api-client.ts';
 import { AiSession } from '../types/ai-chat.types';
+import { aiMemoriesAtom, aiMemoryLoadedAtom, Mem0Memory } from '../store/ai.atoms';
+
+interface CreateSessionResponse {
+  session: AiSession;
+  memories: Mem0Memory[];
+}
 
 export function useAiSessions(workspaceId: string | undefined) {
   const queryClient = useQueryClient();
+  const setMemories = useSetAtom(aiMemoriesAtom);
+  const setMemoryLoaded = useSetAtom(aiMemoryLoadedAtom);
 
   const sessionsQuery = useQuery({
     queryKey: ['ai-sessions', workspaceId],
@@ -18,14 +27,16 @@ export function useAiSessions(workspaceId: string | undefined) {
 
   const createSessionMutation = useMutation({
     mutationFn: async (pageId?: string) => {
-      const response = await api.post<AiSession>(`/ai/sessions`, { pageId });
+      const response = await api.post<CreateSessionResponse>(`/ai/sessions`, { pageId });
       return response.data;
     },
-    onSuccess: (newSession) => {
+    onSuccess: (data) => {
       queryClient.setQueryData<AiSession[]>(['ai-sessions', workspaceId], (old = []) => [
-        newSession,
+        data.session,
         ...old,
       ]);
+      setMemories(data.memories || []);
+      setMemoryLoaded(data.memories.length > 0);
     },
   });
 

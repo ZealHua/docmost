@@ -1,8 +1,23 @@
-.header, .navbar, .aside {
-  background-color: light-dark(#f6f7f9, var(--mantine-color-dark-8));
+/* ─── Layout surfaces ────────────────────────────────────────────────────── */
+/*
+  Replaces cold #f6f7f9 / dark-8 with the --quantum-surface family.
+  Each surface is 1 step deeper than the one above it, giving
+  a natural depth hierarchy: header → navbar/aside → content.
+*/
+
+.header,
+.navbar,
+.aside {
+  background: light-dark(
+    rgba(248, 245, 255, 0.97),    /* slightly warmer than pure white — light mode  */
+    rgba(11, 7, 26, 0.98)         /* #0b071a — 1 shade deeper than --quantum-surface-1 */
+  );
 }
 
-.navbar, .aside {
+/* ─── Responsive widths — unchanged logic, kept for completeness ─────────── */
+
+.navbar,
+.aside {
   @media (max-width: $mantine-breakpoint-sm) {
     width: 350px;
   }
@@ -14,6 +29,8 @@
   }
 }
 
+/* ─── Resize handle ──────────────────────────────────────────────────────── */
+
 .resizeHandle {
   width: 3px;
   cursor: col-resize;
@@ -22,10 +39,35 @@
   top: 0;
   bottom: 0;
 
-  &:hover, &:active {
+  /* Resting state: faint violet line — same gradient as section dividers */
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(147, 112, 255, 0.18) 20%,
+    rgba(147, 112, 255, 0.18) 80%,
+    transparent
+  );
+
+  transition:
+    width      0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &:hover,
+  &:active {
     width: 5px;
-    background: light-dark(var(--mantine-color-gray-4), var(--mantine-color-dark-5))
+
+    /* Brightens to the full violet accent — same #9370ff system */
+    background: linear-gradient(
+      180deg,
+      transparent,
+      rgba(147, 112, 255, 0.55) 15%,
+      #9370ff                   50%,
+      rgba(147, 112, 255, 0.55) 85%,
+      transparent
+    );
+
+    /* Ambient glow — same --quantum-violet-glow-sm */
+    box-shadow: 0 0 10px rgba(109, 40, 217, 0.35);
   }
 }
-
-

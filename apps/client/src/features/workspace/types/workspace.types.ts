@@ -24,6 +24,8 @@ export interface IWorkspace {
   enforceMfa?: boolean;
   aiSearch?: boolean;
   generativeAi?: boolean;
+  aiSoul?: string;
+  userProfile?: string;
   disablePublicSharing?: boolean;
 }
 
@@ -35,6 +37,8 @@ export interface IWorkspaceSettings {
 export interface IWorkspaceAiSettings {
   search?: boolean;
   generative?: boolean;
+  aiSoul?: string;
+  userProfile?: string;
 }
 
 export interface IWorkspaceSharingSettings {

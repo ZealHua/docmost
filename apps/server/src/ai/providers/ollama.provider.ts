@@ -1,7 +1,7 @@
 // Ollama is OpenAI-compatible via /v1/chat/completions.
 // We use @ai-sdk/openai-compatible pointing to ${ollamaUrl}/v1 for completions.
 // Embeddings use Ollama's native /api/embeddings endpoint directly.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { generateText as aiGenerateText, streamText as aiStreamText, embedMany, LanguageModel } from 'ai';
 import {
@@ -11,6 +11,7 @@ import {
 } from '../interfaces/ai-provider.interface';
 import { EnvironmentService } from '../../integrations/environment/environment.service';
 import { buildRagSystemPrompt } from '../utils/prompt.utils';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class OllamaProvider implements AiProvider {
@@ -19,8 +20,13 @@ export class OllamaProvider implements AiProvider {
   private readonly embeddingModel: any;
   private readonly ollamaBaseUrl: string;
   private readonly ollama: any;
+  private readonly logger = new Logger(OllamaProvider.name);
+  private readonly aiDebug: boolean;
 
-  constructor(private readonly env: EnvironmentService) {
+  constructor(
+    private readonly env: EnvironmentService,
+    private readonly configService: ConfigService,
+  ) {
     this.ollamaBaseUrl = env.getOllamaApiUrl() ?? 'http://localhost:11434';
     this.ollama = createOpenAICompatible({
       name: 'ollama',
@@ -31,6 +37,7 @@ export class OllamaProvider implements AiProvider {
     this.embeddingModel = this.ollama.textEmbeddingModel(
       env.getAiEmbeddingModel() ?? 'nomic-embed-text',
     );
+    this.aiDebug = this.configService.get<string>('AI_DEBUG') === 'true';
   }
 
   async generateText(
@@ -86,10 +93,27 @@ export class OllamaProvider implements AiProvider {
     _onThinking?: (thinking: string) => void,
     onError?: (error: Error) => void,
     signal?: AbortSignal,
+    aiSoul?: string,
+    userProfile?: string,
   ): Promise<void> {
     try {
-      const systemPrompt = buildRagSystemPrompt(ragContext);
+      const systemPrompt = buildRagSystemPrompt(ragContext, aiSoul, userProfile);
       const targetModel = model ? this.ollama(model) : this.languageModel;
+
+      // AI Debug: Log system prompt and messages
+      if (this.aiDebug) {
+        this.logger.debug('=== LLM REQUEST (Ollama) ===');
+        this.logger.debug(`Model: ${model || 'default'}`);
+        this.logger.debug(`AI Soul: ${aiSoul || 'none'}`);
+        this.logger.debug(`User Profile: ${userProfile || 'none'}`);
+        this.logger.debug(`--- SYSTEM PROMPT ---`);
+        this.logger.debug(systemPrompt);
+        this.logger.debug(`--- MESSAGES ---`);
+        messages.forEach((m, i) => {
+          this.logger.debug(`[${i}] ${m.role}: ${m.content.substring(0, 100)}...`);
+        });
+      }
+
       const result = aiStreamText({
         model: targetModel,
         system: systemPrompt,

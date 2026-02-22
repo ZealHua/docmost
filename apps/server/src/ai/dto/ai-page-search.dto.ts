@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsUUID } from 'class-validator';
+import { IsString, IsOptional, IsUUID, IsArray } from 'class-validator';
 
 export class AiPageSearchDto {
   @IsOptional()
@@ -8,6 +8,11 @@ export class AiPageSearchDto {
   @IsOptional()
   @IsUUID()
   spaceId?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsUUID('all', { each: true })
+  pageIds?: string[];
 }
 
 export class AiPageSearchResultDto {

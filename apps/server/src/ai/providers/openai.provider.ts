@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { createOpenAI } from '@ai-sdk/openai';
 import {
@@ -14,6 +14,7 @@ import {
 } from '../interfaces/ai-provider.interface';
 import { EnvironmentService } from '../../integrations/environment/environment.service';
 import { buildRagSystemPrompt } from '../utils/prompt.utils';
+import { ConfigService } from '@nestjs/config';
 
 interface ProviderConfig {
   baseURL: string;
@@ -25,10 +26,17 @@ export class OpenAiProvider implements AiProvider {
   private readonly defaultLanguageModel: LanguageModel;
   private readonly embeddingModel: any;
   private readonly defaultApiClient: any;
+  private readonly logger = new Logger(OpenAiProvider.name);
+  private readonly aiDebug: boolean;
 
-  constructor(private readonly env: EnvironmentService) {
+  constructor(
+    private readonly env: EnvironmentService,
+    private readonly configService: ConfigService,
+  ) {
     const driver = env.getAiDriver();
     const embeddingModelName = env.getAiEmbeddingModel() ?? 'embedding-3';
+
+    this.aiDebug = this.configService.get<string>('AI_DEBUG') === 'true';
 
     const defaultConfig = this.getProviderConfig(driver);
     this.defaultApiClient = createOpenAICompatible({
@@ -164,12 +172,29 @@ export class OpenAiProvider implements AiProvider {
     onThinking?: (thinking: string) => void,
     onError?: (error: Error) => void,
     signal?: AbortSignal,
+    aiSoul?: string,
+    userProfile?: string,
   ): Promise<void> {
     try {
-      const systemPrompt = buildRagSystemPrompt(ragContext);
+      const systemPrompt = buildRagSystemPrompt(ragContext, aiSoul, userProfile);
       const { model: targetModel } = this.getApiClientForModel(model);
       const modelId = model ?? this.env.getAiCompletionModel() ?? 'glm-4-flash';
       const thinkingOptions = this.getThinkingOptions(modelId, thinking);
+
+      // AI Debug: Log system prompt and messages
+      if (this.aiDebug) {
+        this.logger.debug('=== LLM REQUEST ===');
+        this.logger.debug(`Model: ${modelId}`);
+        this.logger.debug(`Thinking: ${thinking}`);
+        this.logger.debug(`AI Soul: ${aiSoul || 'none'}`);
+        this.logger.debug(`User Profile: ${userProfile || 'none'}`);
+        this.logger.debug(`--- SYSTEM PROMPT ---`);
+        this.logger.debug(systemPrompt);
+        this.logger.debug(`--- MESSAGES ---`);
+        messages.forEach((m, i) => {
+          this.logger.debug(`[${i}] ${m.role}: ${m.content.substring(0, 100)}...`);
+        });
+      }
 
       const result = await aiStreamText({
         model: targetModel,

@@ -52,6 +52,8 @@ export interface AiProvider {
     onThinking?: (thinking: string) => void,
     onError?: (error: Error) => void,
     signal?: AbortSignal,
+    aiSoul?: string,
+    userProfile?: string,
   ): Promise<void>;
 
   /**

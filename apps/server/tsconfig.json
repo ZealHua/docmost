@@ -22,7 +22,9 @@
     "paths": {
       "@docmost/db/*": ["./src/database/*"],
       "@docmost/transactional/*": ["./src/integrations/transactional/*"],
-      "@docmost/ee/*": ["./src/ee/*"]
+      "@docmost/ee/*": ["./src/ee/*"],
+      "@/mem0/*": ["./src/mem0/*"],
+      "@/config/*": ["./src/config/*"]
     }
   }
 }

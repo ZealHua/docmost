@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { AiController } from './ai.controller';
 import { AiOrchestratorService } from './services/ai-orchestrator.service';
+import { WebSearchService } from './services/web-search.service';
 import { EmbeddingService } from './services/embedding.service';
 import { RagService } from './services/rag.service';
 import { OpenAiProvider } from './providers/openai.provider';
@@ -30,6 +31,7 @@ import { QueueName } from '../integrations/queue/constants';
     // Services
     EmbeddingService,
     RagService,
+    WebSearchService,
     // Repos
     PageEmbeddingRepo,
     AiSessionRepo,
@@ -37,6 +39,6 @@ import { QueueName } from '../integrations/queue/constants';
     // Queue processor — registers itself with BullMQ.AI_QUEUE
     AiQueueProcessor,
   ],
-  exports: [AiOrchestratorService, EmbeddingService, RagService, AiSessionRepo, AiMessageRepo],
+  exports: [AiOrchestratorService, EmbeddingService, RagService, AiSessionRepo, AiMessageRepo, WebSearchService],
 })
 export class AiModule {}

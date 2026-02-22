@@ -72,13 +72,19 @@ export function AiCitationRenderer({ content, sources }: AiCitationRendererProps
                     {source.excerpt}
                   </Text>
                 )}
-                <Anchor
-                  component={Link}
-                  to={buildPageUrl(source.spaceSlug, source.slugId, source.title)}
-                  size="xs"
-                >
-                  Open page →
-                </Anchor>
+                {source.url ? (
+                  <Anchor href={source.url} target="_blank" rel="noopener noreferrer" size="xs">
+                    Open link ↗
+                  </Anchor>
+                ) : (
+                  <Anchor
+                    component={Link}
+                    to={buildPageUrl(source.spaceSlug, source.slugId, source.title)}
+                    size="xs"
+                  >
+                    Open page →
+                  </Anchor>
+                )}
               </Popover.Dropdown>
             </Popover>
           );

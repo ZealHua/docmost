@@ -1,23 +1,125 @@
+/* ─── Header ─────────────────────────────────────────────────────────────── */
+
 .header {
-    height: 100%;
-    margin-bottom: rem(120px);
-    background-color: var(--mantine-color-body);
-    border-bottom: rem(1px) solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4));
-    padding-left: var(--mantine-spacing-md);
-    padding-right: var(--mantine-spacing-md);
+  position: relative;
+  height: 100%;
+  margin-bottom: rem(120px);
+
+  /* Violet-tinted surface — same #0f0b1f family as input pill / thinking block */
+  background: light-dark(
+    rgba(250, 248, 255, 0.92),   /* --quantum-surface-1 light */
+    rgba(13, 7, 32, 0.92)        /* --quantum-surface-1 dark  */
+  );
+
+  /* Frosted glass — consistent with .inputPill backdrop-filter */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  /* Violet-tinted border instead of flat grey */
+  border-bottom: 1px solid light-dark(
+    rgba(147, 112, 255, 0.16),
+    rgba(147, 112, 255, 0.12)
+  );
+
+  padding-left: var(--mantine-spacing-md);
+  padding-right: var(--mantine-spacing-md);
+
+  /* Bottom shimmer line — same .answer-card::before / .inputPill::before mechanic */
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(167, 139, 250, 0.45),
+      transparent
+    );
+    pointer-events: none;
+  }
 }
 
-.link {
-    display: block;
-    line-height: 1;
-    padding: rem(8px) rem(12px);
-    border-radius: var(--mantine-radius-sm);
-    text-decoration: none;
-    color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0));
-    font-size: var(--mantine-font-size-sm);
-    font-weight: 500;
+/* ─── Nav link ───────────────────────────────────────────────────────────── */
 
-    @mixin hover {
-        background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6));
-    }
+.link {
+  position: relative;
+  display: block;
+  line-height: 1;
+  padding: rem(8px) rem(12px);
+  border-radius: var(--mantine-radius-sm); /* 6px from our radius scale */
+  text-decoration: none;
+  font-family: 'Sora', system-ui, sans-serif;
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+
+  color: light-dark(
+    rgba(30, 10, 60, 0.65),        /* warm dark-violet text in light mode */
+    rgba(196, 176, 255, 0.55)      /* --quantum-text-muted in dark mode  */
+  );
+
+  /* Smooth transitions — same timing as .node and .chip */
+  transition:
+    background 0.18s ease,
+    color      0.18s ease,
+    box-shadow 0.18s ease;
+
+  /* ── Hover ── */
+  @mixin hover {
+    background: light-dark(
+      rgba(147, 112, 255, 0.07),   /* violet ghost — same .node:hover / .chip:hover */
+      rgba(147, 112, 255, 0.09)
+    );
+
+    color: light-dark(
+      rgba(109, 40, 217, 0.9),
+      rgba(220, 210, 255, 0.82)    /* --quantum-text-body */
+    );
+  }
+}
+
+/* ─── Active / current route ─────────────────────────────────────────────── */
+/*
+  Apply .linkActive (or data-active) in the JSX to mark the current page.
+  Uses the same left-bar + shimmer gradient as .node:global(.isSelected).
+*/
+
+.linkActive {
+  background: light-dark(
+    rgba(147, 112, 255, 0.11),
+    rgba(109, 40, 217, 0.18)
+  );
+
+  /* Left violet bar — same inset border as selected tree node */
+  box-shadow:
+    inset 2px 0 0 rgba(147, 112, 255, 0.7),
+    inset 0 0 10px rgba(109, 40, 217, 0.06);
+
+  /* Shimmer text gradient — same nodeShimmer / labelShimmer mechanic */
+  background-clip: text;
+  -webkit-background-clip: text;
+
+  /* Override color so gradient shows */
+  color: transparent;
+  background-image: light-dark(
+    linear-gradient(90deg, #7c3aed 0%, #c4b5fd 45%, #a78bfa 60%, #7c3aed 100%),
+    linear-gradient(90deg, #9370ff 0%, #e9d5ff 45%, #c4b5fd 60%, #9370ff 100%)
+  );
+  background-size: 200% auto;
+  animation: linkShimmer 3.5s linear infinite;
+
+  @mixin hover {
+    background: light-dark(
+      rgba(147, 112, 255, 0.16),
+      rgba(109, 40, 217, 0.26)
+    );
+  }
+}
+
+@keyframes linkShimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
 }

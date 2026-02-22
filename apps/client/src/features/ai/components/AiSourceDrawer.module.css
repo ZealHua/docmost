@@ -1,0 +1,100 @@
+.drawerHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.headerIcon {
+  color: var(--ai-accent);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 20px;
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--ai-badge-bg);
+  color: var(--ai-badge-color);
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid var(--ai-card-border);
+}
+
+.sourcesList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 16px 24px;
+}
+
+.sourceCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--mantine-color-body);
+  border: 1px solid var(--ai-card-border);
+  border-radius: 12px;
+  padding: 14px;
+  transition: all 0.2s ease;
+}
+
+.sourceCard:hover {
+  background: var(--ai-card-bg);
+  border-color: var(--ai-accent-light);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.08);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.favicon {
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+}
+
+.internalIcon {
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  background: var(--ai-code-bg);
+  border: 1px solid var(--ai-card-border);
+}
+
+.cardTitle {
+  font-family: var(--mantine-font-family);
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.cardTitle a {
+  text-decoration: none;
+  color: var(--ai-strong);
+  transition: color 0.2s;
+}
+
+.cardTitle a:hover {
+  text-decoration: underline;
+  color: var(--ai-accent);
+}
+
+.cardExcerpt {
+  font-family: var(--mantine-font-family);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ai-text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

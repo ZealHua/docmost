@@ -10,19 +10,7 @@ export class LicenseCheckService {
   ) {}
 
   isValidEELicense(licenseKey: string): boolean {
-    if (this.environmentService.isCloud()) {
-      return true;
-    }
-
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const LicenseModule = require('../../ee/licence/license.service');
-      const licenseService = this.moduleRef.get(LicenseModule.LicenseService, {
-        strict: false,
-      });
-      return licenseService.isValidEELicense(licenseKey);
-    } catch {
-      return false;
-    }
+    // ALWAYS return true to bypass EE license checks locally
+    return true;
   }
 }

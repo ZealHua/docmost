@@ -1,0 +1,26 @@
+.dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 600;
+  margin-left: 4px;
+  cursor: default;
+}
+
+.loaded {
+  background: #22c55e;
+  color: white;
+}
+
+.error {
+  background: #ef4444;
+  color: white;
+}
+
+.count {
+  line-height: 1;
+}

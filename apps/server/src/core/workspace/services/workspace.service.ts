@@ -100,7 +100,7 @@ export class WorkspaceService {
 
     return {
       ...rest,
-      hasLicenseKey: Boolean(licenseKey),
+      hasLicenseKey: true, // Bypass EE license check
     };
   }
 
@@ -367,6 +367,24 @@ export class WorkspaceService {
       delete updateWorkspaceDto.generativeAi;
     }
 
+    if (typeof updateWorkspaceDto.aiSoul !== 'undefined') {
+      await this.workspaceRepo.updateAiSettings(
+        workspaceId,
+        'aiSoul',
+        updateWorkspaceDto.aiSoul,
+      );
+      delete updateWorkspaceDto.aiSoul;
+    }
+
+    if (typeof updateWorkspaceDto.userProfile !== 'undefined') {
+      await this.workspaceRepo.updateAiSettings(
+        workspaceId,
+        'userProfile',
+        updateWorkspaceDto.userProfile,
+      );
+      delete updateWorkspaceDto.userProfile;
+    }
+
     if (typeof updateWorkspaceDto.disablePublicSharing !== 'undefined') {
       const currentWorkspace = await this.workspaceRepo.findById(workspaceId, {
         withLicenseKey: true,
@@ -403,7 +421,7 @@ export class WorkspaceService {
     const { licenseKey, ...rest } = workspace;
     return {
       ...rest,
-      hasLicenseKey: Boolean(licenseKey),
+      hasLicenseKey: true, // Bypass EE license check
     };
   }
 

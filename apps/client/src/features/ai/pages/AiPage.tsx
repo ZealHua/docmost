@@ -10,8 +10,10 @@ import { workspaceAtom } from '@/features/user/atoms/current-user-atom';
 import { AiMessageList } from '../components/AiMessageList';
 import { AiMessageInput } from '../components/AiMessageInput';
 import { AiHistoryPanel } from '../components/AiHistoryPanel';
+import { AiSourceDrawer } from '../components/AiSourceDrawer';
 import { useAiSessions } from '../hooks/use-ai-sessions';
 import { useAiChat } from '../hooks/use-ai-chat';
+import { useAiPageSearch } from '../hooks/use-ai-page-search';
 import { aiActiveSessionAtom, aiMessagesAtom, aiSelectedPagesAtom } from '../store/ai.atoms';
 import { AiSession } from '../types/ai-chat.types';
 import styles from './AiPage.module.css';
@@ -31,22 +33,41 @@ export default function AiPage() {
 
   const [historyOpen, setHistoryOpen] = useState(false);
 
+  const pageSearch = useAiPageSearch();
+
+  const restoreSelectedPages = async (selectedPageIds: string[]) => {
+    if (!selectedPageIds || selectedPageIds.length === 0) {
+      setSelectedPages([]);
+      return;
+    }
+    try {
+      const pages = await pageSearch.mutateAsync({ pageIds: selectedPageIds, spaceId: '' });
+      setSelectedPages(pages);
+    } catch (error) {
+      console.error('Failed to restore selected pages:', error);
+      setSelectedPages([]);
+    }
+  };
+
+  const createLocalSession = (): AiSession => ({
+    id: `local-${crypto.randomUUID()}`,
+    workspaceId: workspaceId || '',
+    pageId: null,
+    userId: '',
+    title: 'New Chat',
+    selectedPageIds: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+
   useEffect(() => {
-    if (sessions.length > 0 && !activeSession) {
-      const latestSession = sessions[0];
-      setSession(latestSession);
-      loadSessionMessages(latestSession.id).then((data) => {
-        setMessages(
-          data.messages.map((m) => ({
-            id: m.id,
-            sessionId: m.sessionId,
-            role: m.role,
-            content: m.content,
-            sources: m.sources || [],
-            createdAt: m.createdAt,
-          })),
-        );
-      });
+    // Create a local-only session when visiting Intelligence page
+    // It won't be persisted until user sends a message
+    if (!activeSession) {
+      const localSession = createLocalSession();
+      setActiveSessionAtom(localSession);
+      setSelectedPages([]);
+      clearMessages();
     }
   }, [sessions, activeSession, setSession, loadSessionMessages, setMessages]);
 
@@ -56,17 +77,25 @@ export default function AiPage() {
   const handleNewChat = () => {
     // Don't create another session when the current one hasn't received any user input yet.
     if (isEmptySession) return;
-    createSession(undefined).then((newSession) => {
-      setActiveSessionAtom(newSession);
-      clearMessages();
-      setSelectedPages([]);
-      setHistoryOpen(false);
-    });
+    // Create a local session (will be persisted when user sends first message)
+    const newSession = createLocalSession();
+    setActiveSessionAtom(newSession);
+    clearMessages();
+    setSelectedPages([]);
+    setHistoryOpen(false);
   };
 
   const handleSelectSession = (session: AiSession) => {
     setSession(session);
     clearMessages();
+    
+    // Restore selected pages immediately from session data
+    if (session.selectedPageIds && session.selectedPageIds.length > 0) {
+      restoreSelectedPages(session.selectedPageIds);
+    } else {
+      setSelectedPages([]);
+    }
+    
     loadSessionMessages(session.id).then((data) => {
       setMessages(
         data.messages.map((m) => ({
@@ -159,6 +188,9 @@ export default function AiPage() {
             </div>
           </Box>
         </Box>
+        
+        {/* Global Overlays */}
+        <AiSourceDrawer />
       </Box>
     </>
   );

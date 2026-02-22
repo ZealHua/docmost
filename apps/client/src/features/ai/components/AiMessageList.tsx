@@ -10,9 +10,11 @@ import {
   aiStreamingThinkingAtom,
 } from "../store/ai.atoms";
 import { AiCitationRenderer } from "./AiCitationRenderer";
+import { AiSourcePreviewBar } from "./AiSourcePreviewBar";
 import { ThinkingBlock } from "./ThinkingBlock";
 import { AiInsightsIcon } from "./AiInsightsIcon";
 import { AiMessageCard } from "./AiMessageCard";
+import { AiMemoryStatus } from "./AiMemoryStatus";
 import { useTranslation } from "react-i18next";
 import styles from "./AiMessageList.module.css";
 import cardStyles from "./AiMessageCard.module.css";
@@ -67,7 +69,7 @@ export function AiMessageList() {
           <div className={styles.emptyChips}>
             <span className={styles.chip}>{t('Summarise a doc')}</span>
             <span className={styles.chip}>{t('Write some code')}</span>
-            <span className={styles.chip}>{t('Explain a concept')}</span>
+            <span className={styles.chip}>{t('Search Internet')}</span>
           </div>
         </div>
       </div>
@@ -101,11 +103,12 @@ export function AiMessageList() {
                 {msg.content}
               </div>
             ) : (
-              <AiMessageCard header={<AiInsightsIcon showLabel size={16} />}>
+              <AiMessageCard header={<><AiInsightsIcon showLabel size={16} /><AiMemoryStatus /></>}>
                 {msg.thinking && (
                   <ThinkingBlock thinking={msg.thinking} isStreaming={false} />
                 )}
                 <div className={cardStyles.body}>
+                  <AiSourcePreviewBar messageId={msg.id} sources={msg.sources} />
                   <AiCitationRenderer
                     content={msg.content}
                     sources={msg.sources}
@@ -122,12 +125,13 @@ export function AiMessageList() {
 
       {isStreaming && (
         <div className={`${styles.messageRow} ${styles.messageNew}`}>
-          <AiMessageCard header={<AiInsightsIcon showLabel size={16} />}>
+          <AiMessageCard header={<><AiInsightsIcon showLabel size={16} /><AiMemoryStatus /></>}>
             {streamingThinking && (
               <ThinkingBlock thinking={streamingThinking} isStreaming={true} />
             )}
             {streamingContent ? (
               <div className={cardStyles.body}>
+                <AiSourcePreviewBar messageId="streaming" sources={sources} />
                 <AiCitationRenderer
                   content={streamingContent}
                   sources={sources}

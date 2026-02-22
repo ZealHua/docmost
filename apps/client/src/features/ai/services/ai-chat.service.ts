@@ -6,6 +6,7 @@ interface StreamCallbacks {
   onThinking: (thinking: string) => void;
   onError: (error: string) => void;
   onComplete: () => void;
+  onMemory?: (memory: { enabled: boolean; loaded: boolean }) => void;
 }
 
 interface StreamOptions {
@@ -13,6 +14,7 @@ interface StreamOptions {
   model?: string;
   thinking?: boolean;
   selectedPageIds?: string[];
+  isWebSearchEnabled?: boolean;
 }
 
 /**
@@ -41,6 +43,7 @@ export async function streamAiChat(
         model: options?.model,
         thinking: options?.thinking,
         selectedPageIds: options?.selectedPageIds,
+        isWebSearchEnabled: options?.isWebSearchEnabled,
       }),
       signal: abortController.signal,
       credentials: 'include',
@@ -84,6 +87,9 @@ export async function streamAiChat(
               } else if (event.type === 'error') {
                 callbacks.onError(event.data as string);
                 return; // Stop processing on error
+              } else if (event.type === 'memory') {
+                const memoryData = event.data as { enabled?: boolean; loaded?: boolean };
+                callbacks.onMemory?.({ enabled: !!memoryData.enabled, loaded: !!memoryData.loaded });
               }
             } catch (parseError) {
               console.warn('Failed to parse SSE event:', raw, parseError);

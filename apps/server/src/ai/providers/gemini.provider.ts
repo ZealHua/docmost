@@ -1,4 +1,4 @@
-import { Injectable, NotImplementedException } from '@nestjs/common';
+import { Injectable, Logger, NotImplementedException } from '@nestjs/common';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { generateText as aiGenerateText, streamText as aiStreamText, LanguageModel } from 'ai';
 import {
@@ -8,17 +8,24 @@ import {
 } from '../interfaces/ai-provider.interface';
 import { EnvironmentService } from '../../integrations/environment/environment.service';
 import { buildRagSystemPrompt } from '../utils/prompt.utils';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class GeminiProvider implements AiProvider {
   private readonly languageModel: LanguageModel;
   private readonly google: any;
+  private readonly logger = new Logger(GeminiProvider.name);
+  private readonly aiDebug: boolean;
 
-  constructor(private readonly env: EnvironmentService) {
+  constructor(
+    private readonly env: EnvironmentService,
+    private readonly configService: ConfigService,
+  ) {
     this.google = createGoogleGenerativeAI({ apiKey: env.getGeminiApiKey() });
     this.languageModel = this.google(
       env.getAiCompletionModel() ?? 'gemini-1.5-flash',
     );
+    this.aiDebug = this.configService.get<string>('AI_DEBUG') === 'true';
   }
 
   async generateText(
@@ -74,10 +81,27 @@ export class GeminiProvider implements AiProvider {
     _onThinking?: (thinking: string) => void,
     onError?: (error: Error) => void,
     signal?: AbortSignal,
+    aiSoul?: string,
+    userProfile?: string,
   ): Promise<void> {
     try {
-      const systemPrompt = buildRagSystemPrompt(ragContext);
+      const systemPrompt = buildRagSystemPrompt(ragContext, aiSoul, userProfile);
       const targetModel = model ? this.google(model) : this.languageModel;
+
+      // AI Debug: Log system prompt and messages
+      if (this.aiDebug) {
+        this.logger.debug('=== LLM REQUEST (Gemini) ===');
+        this.logger.debug(`Model: ${model || 'default'}`);
+        this.logger.debug(`AI Soul: ${aiSoul || 'none'}`);
+        this.logger.debug(`User Profile: ${userProfile || 'none'}`);
+        this.logger.debug(`--- SYSTEM PROMPT ---`);
+        this.logger.debug(systemPrompt);
+        this.logger.debug(`--- MESSAGES ---`);
+        messages.forEach((m, i) => {
+          this.logger.debug(`[${i}] ${m.role}: ${m.content.substring(0, 100)}...`);
+        });
+      }
+
       const result = aiStreamText({
         model: targetModel,
         system: systemPrompt,

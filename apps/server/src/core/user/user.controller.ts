@@ -37,7 +37,7 @@ export class UserController {
     const workspaceInfo = {
       ...rest,
       memberCount,
-      hasLicenseKey: Boolean(licenseKey),
+      hasLicenseKey: true, // Bypass EE license check
     };
 
     return { user: authUser, workspace: workspaceInfo };

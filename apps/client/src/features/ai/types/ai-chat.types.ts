@@ -9,6 +9,7 @@ export interface RagSource {
   excerpt: string;
   similarity: number;
   chunkIndex: number;
+  url?: string;
 }
 
 export interface AiMessage {
@@ -31,6 +32,7 @@ export interface AiSession {
   title: string | null;
   createdAt: string;
   updatedAt: string;
+  selectedPageIds?: string[];
 }
 
 export interface AiStreamEvent {

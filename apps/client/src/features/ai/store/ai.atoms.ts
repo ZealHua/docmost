@@ -18,11 +18,23 @@ export const aiThinkingAtom = atomWithStorage<boolean>(
   false,
 );
 
+// Web Search enabled toggle (persisted to localStorage)
+export const aiWebSearchEnabledAtom = atomWithStorage<boolean>(
+  'docmost_ai_web_search',
+  false,
+);
+
 // Selected pages for AI chat (user explicitly selected for context)
 export const aiSelectedPagesAtom = atom<AiPageSearchResult[]>([]);
 
 // Messages for the active session (loaded from DB + live streaming)
 export const aiMessagesAtom = atom<AiMessage[]>([]);
+
+// ID of the message whose sources are being viewed in the sidebar
+export const aiActiveSourceMessageIdAtom = atom<string | null>(null);
+
+// Controls the visibility of the source sidebar
+export const aiSourceSidebarOpenAtom = atom<boolean>(false);
 
 // Sources returned by the LAST RAG call — used to resolve [^n] citations.
 // Reset at the start of each new user message.
@@ -39,3 +51,16 @@ export const aiStreamingThinkingAtom = atom<string>('');
 
 // Sessions list for the sidebar header/history view (populated in Step 12)
 export const aiSessionsAtom = atom<AiSession[]>([]);
+
+// Mem0 Memory atoms
+export interface Mem0Memory {
+  id: string;
+  memory: string;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export const aiMemoriesAtom = atom<Mem0Memory[]>([]);
+export const aiMemoryLoadedAtom = atom<boolean>(false);
+export const aiMemoryErrorAtom = atom<string | null>(null);

@@ -32,6 +32,14 @@ export class UpdateWorkspaceDto extends PartialType(CreateWorkspaceDto) {
   generativeAi: boolean;
 
   @IsOptional()
+  @IsString()
+  aiSoul: string;
+
+  @IsOptional()
+  @IsString()
+  userProfile: string;
+
+  @IsOptional()
   @IsBoolean()
   disablePublicSharing: boolean;
 }

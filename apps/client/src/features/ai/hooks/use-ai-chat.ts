@@ -11,6 +11,11 @@ import {
   aiSelectedModelAtom,
   aiThinkingAtom,
   aiSelectedPagesAtom,
+  aiWebSearchEnabledAtom,
+  aiMemoriesAtom,
+  aiMemoryLoadedAtom,
+  aiMemoryErrorAtom,
+  Mem0Memory,
 } from '../store/ai.atoms';
 import { streamAiChat } from '../services/ai-chat.service';
 import { MODEL_CONFIG } from '../lib/models.config';
@@ -27,25 +32,32 @@ export function useAiChat(workspaceId?: string) {
   const [, setStreamingThinking] = useAtom(aiStreamingThinkingAtom);
   const selectedModel = useAtomValue(aiSelectedModelAtom);
   const thinking = useAtomValue(aiThinkingAtom);
+  const isWebSearchEnabled = useAtomValue(aiWebSearchEnabledAtom);
   const selectedPages = useAtomValue(aiSelectedPagesAtom);
+  const [, setMemories] = useAtom(aiMemoriesAtom);
+  const [, setMemoryLoaded] = useAtom(aiMemoryLoadedAtom);
+  const [, setMemoryError] = useAtom(aiMemoryErrorAtom);
 
   const messagesRef = useRef(messages);
   messagesRef.current = messages;
   const abortRef = useRef<AbortController | null>(null);
 
   const ensureSession = useCallback(async (): Promise<string | undefined> => {
-    if (activeSession?.id) {
+    // If session exists and is already persisted (not a local temp session), use it
+    if (activeSession?.id && !activeSession.id.startsWith('local-')) {
       return activeSession.id;
     }
     if (!workspaceId) {
       return undefined;
     }
-    // Create a new session
-    const response = await api.post<AiSession>('/ai/sessions', {});
-    const newSession = response.data;
+    // Create a new persisted session
+    const response = await api.post<{ session: AiSession; memories: Mem0Memory[] }>('/ai/sessions', {});
+    const { session: newSession, memories } = response.data;
     setActiveSession(newSession);
+    setMemories(memories || []);
+    setMemoryLoaded(memories && memories.length > 0);
     return newSession.id;
-  }, [activeSession, workspaceId, setActiveSession]);
+  }, [activeSession, workspaceId, setActiveSession, setMemories, setMemoryLoaded]);
 
   const sendMessage = useCallback(
     async (content: string) => {
@@ -141,6 +153,11 @@ export function useAiChat(workspaceId?: string) {
               }
             }
           },
+          onMemory: (memory) => {
+            if (memory.enabled) {
+              setMemoryLoaded(memory.loaded);
+            }
+          },
         },
         { 
           sessionId: sessionId, 
@@ -148,11 +165,12 @@ export function useAiChat(workspaceId?: string) {
             ? MODEL_CONFIG[selectedModel].thinkingModel!
             : selectedModel,
           thinking, 
-          ...(selectedPages.length > 0 && { selectedPageIds: selectedPages.map(p => p.pageId) })
+          isWebSearchEnabled,
+          selectedPageIds: selectedPages.map(p => p.pageId)
         },
       );
     },
-    [setMessages, setSources, setIsStreaming, setStreamingContent, ensureSession, selectedModel, thinking, selectedPages],
+    [setMessages, setSources, setIsStreaming, setStreamingContent, setMemoryLoaded, setMemories, ensureSession, selectedModel, thinking, selectedPages],
   );
 
   const stopStream = useCallback(() => {

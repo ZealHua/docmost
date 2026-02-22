@@ -11,12 +11,15 @@ import {
   UseGuards,
   HttpCode,
   ParseUUIDPipe,
+  Logger,
 } from '@nestjs/common';
 import { ServiceUnavailableException, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { AuthUser } from '../common/decorators/auth-user.decorator';
 import { AuthWorkspace } from '../common/decorators/auth-workspace.decorator';
 import { AiOrchestratorService } from './services/ai-orchestrator.service';
+import { WebSearchService } from './services/web-search.service';
 import { RagService } from './services/rag.service';
 import { AiSessionRepo } from './repos/ai-session.repo';
 import { AiMessageRepo } from './repos/ai-message.repo';
@@ -26,17 +29,28 @@ import { AiChatDto } from './dto/ai-chat.dto';
 import { AiPageSearchDto } from './dto/ai-page-search.dto';
 import { CreateAiSessionDto, UpdateAiSessionTitleDto, AiSessionResponseDto, AiMessageResponseDto } from './dto/ai-session.dto';
 import { buildEditorSystemPrompt } from './utils/prompt.utils';
+import { Mem0Service } from '@/mem0/mem0.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('ai')
 export class AiController {
+  private readonly logger = new Logger(AiController.name);
+  private readonly debug: boolean;
+  private readonly aiDebug: boolean;
+
   constructor(
     private readonly orchestrator: AiOrchestratorService,
     private readonly ragService: RagService,
+    private readonly webSearchService: WebSearchService,
     private readonly sessionRepo: AiSessionRepo,
     private readonly messageRepo: AiMessageRepo,
     private readonly pageRepo: PageRepo,
-  ) {}
+    private readonly configService: ConfigService,
+    private readonly mem0Service: Mem0Service,
+  ) {
+    this.debug = this.configService.get<string>('SERPER_DEBUG') === 'true';
+    this.aiDebug = this.configService.get<string>('AI_DEBUG') === 'true';
+  }
 
   // ── Configuration guard helper ────────────────────────────────────────────
 
@@ -59,6 +73,7 @@ export class AiController {
       title: session.title,
       createdAt: session.createdAt.toISOString(),
       updatedAt: session.updatedAt.toISOString(),
+      selectedPageIds: session.selectedPageIds || [],
     };
   }
 
@@ -110,7 +125,7 @@ export class AiController {
     @Body() dto: CreateAiSessionDto,
     @AuthUser() user: any,
     @AuthWorkspace() workspace: any,
-  ): Promise<AiSessionResponseDto> {
+  ): Promise<{ session: AiSessionResponseDto; memories: any[] }> {
     const title = 'New Chat';
     const session = await this.sessionRepo.create({
       workspaceId: workspace.id,
@@ -118,7 +133,20 @@ export class AiController {
       pageId: dto.pageId,
       title,
     });
-    return this.mapSessionToResponse(session);
+
+    let memories: any[] = [];
+    if (this.mem0Service.isEnabled()) {
+      try {
+        memories = await this.mem0Service.getAllMemory(user.id);
+      } catch (error) {
+        this.logger.warn('Failed to load memories for session', error);
+      }
+    }
+
+    return {
+      session: this.mapSessionToResponse(session),
+      memories,
+    };
   }
 
   /**
@@ -340,24 +368,89 @@ export class AiController {
     try {
       // Step 1: retrieve relevant chunks - either from selected pages or RAG
       const lastMessage = dto.messages[dto.messages.length - 1];
-      let chunks;
+      let chunks = [];
 
-      if (dto.selectedPageIds && dto.selectedPageIds.length > 0) {
-        chunks = await this.ragService.retrieveSelectedPages(
-          dto.selectedPageIds,
-          workspace.id,
-        );
-      } else {
-        chunks = await this.ragService.retrieve(
-          lastMessage.content,
-          workspace.id,
-        );
+      // AI Debug: Log incoming messages
+      if (this.aiDebug) {
+        this.logger.debug('=== AI CHAT REQUEST ===');
+        this.logger.debug(`Session ID: ${dto.sessionId || 'none'}`);
+        this.logger.debug(`Model: ${dto.model || 'default'}`);
+        this.logger.debug(`Selected Page IDs: ${JSON.stringify(dto.selectedPageIds || [])}`);
+        this.logger.debug(`Web Search Enabled: ${dto.isWebSearchEnabled}`);
+        this.logger.debug(`Messages: ${JSON.stringify(dto.messages)}`);
+      }
+
+      // Web Search Layer
+      if (dto.isWebSearchEnabled) {
+        if (this.debug) this.logger.log('Web search is enabled');
+        const rewrittenQuery = await this.webSearchService.rewriteQuery(dto.messages);
+        
+        if (rewrittenQuery && rewrittenQuery !== 'NO_SEARCH') {
+          if (this.debug) this.logger.log(`Web search query: "${rewrittenQuery}"`);
+          const searchResponse = await this.webSearchService.search(rewrittenQuery);
+          
+          if (searchResponse.error) {
+            if (this.debug) this.logger.warn(`Web search failed: ${searchResponse.error}`);
+            chunks = [{
+              pageId: 'web-error',
+              title: 'Web Search Failed',
+              url: '',
+              excerpt: `Web search failed: ${searchResponse.error}. Falling back to internal knowledge base.`,
+              similarity: 1.0,
+              spaceSlug: '',
+              slugId: '',
+              chunkIndex: 0,
+            }];
+          } else if (searchResponse.results.length > 0) {
+            if (this.debug) this.logger.log(`Web search returned ${searchResponse.results.length} results`);
+            chunks = searchResponse.results.map((res: any, index: number) => ({
+              pageId: 'web',
+              title: res.title,
+              url: res.url,
+              excerpt: res.content,
+              similarity: 1.0,
+              spaceSlug: '',
+              slugId: '',
+              chunkIndex: index,
+            }));
+          } else {
+            if (this.debug) this.logger.log('Web search returned no results');
+          }
+        } else {
+          if (this.debug) this.logger.log('Query rewrite returned NO_SEARCH, skipping web search');
+        }
+      }
+
+      // Fallback to internal RAG if no web search chunks found
+      if (chunks.length === 0) {
+        if (this.debug) this.logger.log('Falling back to internal RAG');
+        if (dto.selectedPageIds && dto.selectedPageIds.length > 0) {
+          chunks = await this.ragService.retrieveSelectedPages(
+            dto.selectedPageIds,
+            workspace.id,
+          );
+        } else {
+          // Semantic search disabled - only use explicitly selected pages
+          // Previously: chunks = await this.ragService.retrieve(lastMessage.content, workspace.id);
+          // This returned top 5 similar pages based on query, which is not the expected behavior
+          chunks = [];
+        }
+      }
+
+      // AI Debug: Log retrieved chunks
+      if (this.aiDebug) {
+        this.logger.debug(`=== RETRIEVED CHUNKS (${chunks.length}) ===`);
+        chunks.forEach((c: any, i: number) => {
+          this.logger.debug(`[${i + 1}] ${c.title} (similarity: ${c.similarity?.toFixed(4)})`);
+          this.logger.debug(`    excerpt: ${c.excerpt?.substring(0, 200)}...`);
+        });
       }
 
       // Store sources for persistence
       collectedSources = chunks.map((c: any) => ({
         pageId: c.pageId,
         title: c.title,
+        url: c.url,
         slugId: c.slugId,
         spaceSlug: c.spaceSlug,
         excerpt: c.excerpt,
@@ -369,7 +462,17 @@ export class AiController {
         `data: ${JSON.stringify({ type: 'sources', data: chunks })}\n\n`,
       );
 
+      // Emit memory status (memory was loaded at session creation)
+      const memoryEnabled = this.mem0Service.isEnabled();
+      res.write(
+        `data: ${JSON.stringify({ type: 'memory', data: { enabled: memoryEnabled, loaded: memoryEnabled } })}\n\n`,
+      );
+
       // Step 3: stream the LLM answer
+      const aiSettings = workspace.settings?.ai;
+      const aiSoul = aiSettings?.aiSoul;
+      const userProfile = aiSettings?.userProfile;
+
       await this.orchestrator.getProvider(dto.model).streamChat(
         dto.messages,
         chunks,
@@ -413,6 +516,22 @@ export class AiController {
                 }
                 // Touch session to update updatedAt
                 await this.sessionRepo.touch(dto.sessionId);
+
+                // Save to Mem0 (fire and forget)
+                if (this.mem0Service.isEnabled()) {
+                  try {
+                    await this.mem0Service.addMemory(
+                      [
+                        { role: 'user', content: lastMessage.content },
+                        { role: 'assistant', content: collectedContent },
+                      ],
+                      user.id,
+                    );
+                    this.logger.debug('Memory saved successfully');
+                  } catch (memoryError: any) {
+                    this.logger.warn('Failed to save memory:', memoryError);
+                  }
+                }
               }
             } catch (persistError: any) {
               // Log but don't fail the response
@@ -435,6 +554,8 @@ export class AiController {
           console.error('AI stream error:', error);
         },
         req.raw.signal,
+        aiSoul,
+        userProfile,
       );
     } catch (err: any) {
       // Only send error event if we haven't already sent sources
@@ -508,14 +629,19 @@ export class AiController {
     @AuthUser() user: any,
     @AuthWorkspace() workspace: any,
   ) {
-    if (!dto.spaceId) {
+    if (!dto.spaceId && !dto.pageIds) {
       return [];
     }
 
-    const pages = await this.pageRepo.findInSpaceByTitle(
-      dto.spaceId,
-      dto.query || '',
-    );
+    let pages;
+    if (dto.pageIds && dto.pageIds.length > 0) {
+      pages = await this.pageRepo.findByIds(dto.pageIds);
+    } else {
+      pages = await this.pageRepo.findInSpaceByTitle(
+        dto.spaceId,
+        dto.query || '',
+      );
+    }
 
     return pages.map((p) => ({
       pageId: p.id,

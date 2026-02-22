@@ -58,7 +58,10 @@ export class RagService {
       LIMIT ${topK}
     `.execute(this.db);
 
-    return rows.rows;
+    return rows.rows.map((row: any) => ({
+      ...row,
+      excerpt: (row.excerpt && row.excerpt !== 'null') ? row.excerpt : '',
+    }));
   }
 
   /**
@@ -92,7 +95,7 @@ export class RagService {
       title: row.title,
       slugId: row.slugId,
       spaceSlug: row.spaceSlug,
-      excerpt: row.textContent || '',
+      excerpt: (row.textContent && row.textContent !== 'null') ? row.textContent : '',
       similarity: 1,
       chunkIndex: index,
     }));

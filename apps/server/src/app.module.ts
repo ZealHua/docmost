@@ -20,6 +20,7 @@ import { RedisModule } from '@nestjs-labs/nestjs-ioredis';
 import { RedisConfigService } from './integrations/redis/redis-config.service';
 import { LoggerModule } from './common/logger/logger.module';
 import { AiModule } from './ai/ai.module';
+import { Mem0Module } from './mem0/mem0.module';
 
 const enterpriseModules = [];
 try {
@@ -61,6 +62,7 @@ try {
     SecurityModule,
     TelemetryModule,
     AiModule,
+    Mem0Module,
     ...enterpriseModules,
   ],
   controllers: [AppController],

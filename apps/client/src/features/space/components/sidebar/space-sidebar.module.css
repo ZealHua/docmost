@@ -1,96 +1,296 @@
+/* ─── Navbar shell ───────────────────────────────────────────────────────── */
+
 .navbar {
-    /*background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-8));*/
-    height: 100%;
-    width: 100%;
-    padding: var(--mantine-spacing-md);
-    padding-top: 0;
-    display: flex;
-    flex-direction: column;
-    user-select: none;
+  height: 100%;
+  width: 100%;
+  padding: var(--mantine-spacing-md);
+  padding-top: 0;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+
+  /* Violet-tinted dark surface — same .inputPill / thinking block background */
+  background: light-dark(
+    rgba(250, 248, 255, 0.96),
+    rgba(11, 7, 26, 0.97)
+  );
+
+  /* Right-edge shimmer border — mirrors header bottom shimmer, rotated 90° */
+  position: relative;
+  &::after {
+    content: '';
+    position: absolute;
+    top: 12%;
+    bottom: 12%;
+    right: 0;
+    width: 1px;
+    background: linear-gradient(
+      180deg,
+      transparent,
+      rgba(147, 112, 255, 0.3) 35%,
+      rgba(147, 112, 255, 0.3) 65%,
+      transparent
+    );
+    pointer-events: none;
+  }
 }
 
-.section {
-    margin-left: calc(var(--mantine-spacing-md) * -1);
-    margin-right: calc(var(--mantine-spacing-md) * -1);
-    margin-bottom: var(--mantine-spacing-md);
+/* ─── Section dividers ───────────────────────────────────────────────────── */
 
-    &:not(:last-of-type) {
-        border-bottom: rem(1px) solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4));
-    }
+.section {
+  margin-left: calc(var(--mantine-spacing-md) * -1);
+  margin-right: calc(var(--mantine-spacing-md) * -1);
+  margin-bottom: var(--mantine-spacing-md);
+
+  /* Violet gradient divider — same .divider mechanic used everywhere */
+  &:not(:last-of-type) {
+    border-bottom: 1px solid transparent;
+    background-image: linear-gradient(
+      90deg,
+      transparent,
+      rgba(147, 112, 255, 0.22) 25%,
+      rgba(147, 112, 255, 0.22) 75%,
+      transparent
+    );
+    background-repeat: no-repeat;
+    background-position: bottom;
+    background-size: 100% 1px;
+    padding-bottom: 0;
+  }
 }
 
 .sectionPages {
-    margin-bottom: 0;
-    overflow-y: hidden;
+  margin-bottom: 0;
+  overflow-y: hidden;
 
-    .pages {
-        height: 100%;
-        padding-bottom: 26px;
-    }
+  .pages {
+    height: 100%;
+    padding-bottom: 26px;
+  }
 }
+
+/* ─── Menu item wrapper ──────────────────────────────────────────────────── */
 
 .menuItems {
-    padding-left: calc(var(--mantine-spacing-md) - var(--mantine-spacing-xs));
-    padding-right: calc(var(--mantine-spacing-md) - var(--mantine-spacing-xs));
-    padding-bottom: var(--mantine-spacing-md);
+  padding-left: calc(var(--mantine-spacing-md) - var(--mantine-spacing-xs));
+  padding-right: calc(var(--mantine-spacing-md) - var(--mantine-spacing-xs));
+  padding-bottom: var(--mantine-spacing-md);
 }
 
-.menu {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    font-size: var(--mantine-font-size-sm);
-    padding: rem(4px) var(--mantine-spacing-xs);
-    border-radius: var(--mantine-radius-sm);
-    font-weight: 500;
-    color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0));
+/* ─── Menu item row ──────────────────────────────────────────────────────── */
 
-    &:hover {
-        background-color: light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-6));
-        color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0));
+.menu {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  font-family: 'Sora', system-ui, sans-serif;
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  padding: rem(6px) var(--mantine-spacing-xs);
+  border-radius: 6px;
+
+  color: light-dark(
+    rgba(30, 10, 60, 0.65),
+    rgba(196, 176, 255, 0.52)      /* --quantum-text-muted dark */
+  );
+
+  transition:
+    background 0.18s ease,
+    color      0.18s ease,
+    box-shadow 0.18s ease;
+
+  &:hover {
+    background: light-dark(
+      rgba(147, 112, 255, 0.07),   /* same .node:hover / .chip:hover ghost */
+      rgba(147, 112, 255, 0.09)
+    );
+    color: light-dark(
+      rgba(109, 40, 217, 0.9),
+      rgba(220, 210, 255, 0.82)
+    );
+
+    /* Icon brightens on row hover — see .menuItemIcon:hover below */
+    .menuItemIcon {
+      color: light-dark(
+        rgba(109, 40, 217, 0.8),
+        rgba(196, 176, 255, 0.8)
+      );
     }
+  }
 }
 
 .menuItemInner {
-    display: flex;
-    align-items: center;
-    flex: 1;
+  display: flex;
+  align-items: center;
+  flex: 1;
 }
 
 .menuItemIcon {
-    margin-right: var(--mantine-spacing-sm);
-    color: light-dark(var(--mantine-color-gray-6), var(--mantine-color-dark-2));
+  margin-right: var(--mantine-spacing-sm);
+  color: light-dark(
+    rgba(147, 112, 255, 0.5),     /* violet-tinted, not grey */
+    rgba(167, 139, 250, 0.45)
+  );
+  transition: color 0.18s ease;
 }
 
+/* ─── Pages section ──────────────────────────────────────────────────────── */
+
 .pages {
-    padding-left: calc(var(--mantine-spacing-md) - rem(6px));
-    padding-right: calc(var(--mantine-spacing-md) - rem(6px));
-    padding-bottom: var(--mantine-spacing-md);
+  padding-left: calc(var(--mantine-spacing-md) - rem(6px));
+  padding-right: calc(var(--mantine-spacing-md) - rem(6px));
+  padding-bottom: var(--mantine-spacing-md);
 }
 
 .pagesHeader {
-    padding-left: calc(var(--mantine-spacing-md) + rem(2px));
-    padding-right: var(--mantine-spacing-md);
-    margin-bottom: rem(5px);
+  padding-left: calc(var(--mantine-spacing-md) + rem(2px));
+  padding-right: var(--mantine-spacing-md);
+  margin-bottom: rem(5px);
+
+  /* Section label — same .citations-title styling */
+  font-family: 'Sora', system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: light-dark(
+    rgba(147, 112, 255, 0.45),
+    rgba(167, 139, 250, 0.3)
+  );
 }
+
+/* ─── Page link ──────────────────────────────────────────────────────────── */
 
 .pageLink {
-    display: block;
-    padding: rem(8px) var(--mantine-spacing-xs);
-    text-decoration: none;
-    border-radius: var(--mantine-radius-sm);
-    font-size: var(--mantine-font-size-xs);
-    color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0));
-    line-height: 1;
-    font-weight: 500;
+  display: block;
+  padding: rem(7px) var(--mantine-spacing-xs);
+  text-decoration: none;
+  border-radius: 6px;
+  font-family: 'Sora', system-ui, sans-serif;
+  font-size: var(--mantine-font-size-xs);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1;
 
-    &:hover {
-        background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6));
-        color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0));
-    }
+  color: light-dark(
+    rgba(30, 10, 60, 0.62),
+    rgba(196, 176, 255, 0.48)
+  );
+
+  transition:
+    background 0.18s ease,
+    color      0.18s ease,
+    box-shadow 0.18s ease;
+
+  &:hover {
+    background: light-dark(
+      rgba(147, 112, 255, 0.07),
+      rgba(147, 112, 255, 0.09)
+    );
+    color: light-dark(
+      rgba(109, 40, 217, 0.9),
+      rgba(220, 210, 255, 0.82)
+    );
+  }
 }
 
+/* ─── Active state ───────────────────────────────────────────────────────── */
+/*
+  Unified active class for both .menu and .pageLink rows.
+  Same left-bar + shimmer-text mechanic as .node:global(.isSelected)
+  and .linkActive in header.module.css.
+*/
+
+/* ─── Active state — REPLACEMENT ONLY ───────────────────────────────────── */
+
 .activeButton {
-    background-color: light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-6));
-    color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0));
+  /* Light mode: subtle violet fill */
+  background: rgba(147, 112, 255, 0.11);
+
+  /* Left accent bar — primary selection signal in both modes */
+  box-shadow:
+    inset 2px 0 0 rgba(147, 112, 255, 0.65),
+    inset 0 0 10px rgba(109, 40, 217, 0.05);
+
+  /* Light mode: shimmer gradient text */
+  background-image: linear-gradient(
+    90deg,
+    #7c3aed 0%,
+    #c4b5fd 45%,
+    #a78bfa 60%,
+    #7c3aed 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: navShimmer 3.5s linear infinite;
+
+  /* Keep icon visible despite text clip */
+  .menuItemIcon {
+    color: #9370ff;
+    -webkit-text-fill-color: initial;
+  }
+
+  &:hover {
+    background: rgba(147, 112, 255, 0.16);
+    box-shadow:
+      inset 2px 0 0 #9370ff,
+      0 0 0 1px rgba(147, 112, 255, 0.2),
+      0 2px 10px rgba(109, 40, 217, 0.18);
+  }
+}
+
+/* ─── Dark mode override — solid bright text, stronger glow ─────────────── */
+
+@media (prefers-color-scheme: dark) {
+  .activeButton {
+    /* Stronger violet surface so the row reads as clearly selected */
+    background: rgba(109, 40, 217, 0.28) !important;
+
+    /* Brighter left bar + outer ambient glow */
+    box-shadow:
+      inset 2px 0 0 #9370ff,
+      inset 0 0 16px rgba(109, 40, 217, 0.14),
+      0 0 12px rgba(109, 40, 217, 0.18) !important;
+
+    /* Drop text clip — use solid high-contrast colour instead */
+    background-image: none !important;
+    -webkit-background-clip: unset !important;
+    -webkit-text-fill-color: #e9d5ff !important; /* bright lavender white */
+    background-clip: unset !important;
+    animation: none !important;
+
+    .menuItemIcon {
+      color: #c4b5fd;
+    }
+
+    &:hover {
+      background: rgba(109, 40, 217, 0.38) !important;
+      -webkit-text-fill-color: #f5f0ff !important;
+      box-shadow:
+        inset 2px 0 0 #a78bfa,
+        inset 0 0 20px rgba(109, 40, 217, 0.2),
+        0 0 16px rgba(109, 40, 217, 0.25) !important;
+    }
+  }
+}
+
+@keyframes navShimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+/* ─── Scrollbar — same 3px violet thumb as textarea / treeContainer ─────── */
+
+.navbar ::-webkit-scrollbar       { width: 3px; }
+.navbar ::-webkit-scrollbar-track { background: transparent; }
+.navbar ::-webkit-scrollbar-thumb {
+  background: rgba(147, 112, 255, 0.22);
+  border-radius: 2px;
+}
+.navbar ::-webkit-scrollbar-thumb:hover {
+  background: rgba(147, 112, 255, 0.48);
 }
