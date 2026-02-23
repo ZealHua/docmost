@@ -150,6 +150,19 @@ export const mantineCssResolver: CSSVariablesResolver = (theme) => ({
     "--quantum-dur-shimmer":    "3.5s",
     "--quantum-dur-orbit-slow": "3.5s",
     "--quantum-dur-orbit-fast": "2.4s",
+
+    // ── Scrollbar ─────────────────────────────────────────────────────────────
+    "--quantum-scrollbar-thumb":       "rgba(147, 112, 255, 0.22)",
+    "--quantum-scrollbar-thumb-hover": "rgba(147, 112, 255, 0.48)",
+
+    // ── Sidebar positioning ───────────────────────────────────────────────────
+    "--quantum-sidebar-toggle-offset": "-13px",
+    "--quantum-sidebar-border-inset":  "12%",
+
+    // ── Glass / Frosted effect ────────────────────────────────────────────────
+    "--quantum-glass-blur":     "16px",
+    "--quantum-glass-bg-light": "rgba(253, 251, 255, 0.85)",
+    "--quantum-glass-bg-dark":  "rgba(11, 7, 26, 0.85)",
   },
 
   light: {

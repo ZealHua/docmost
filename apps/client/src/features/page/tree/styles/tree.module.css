@@ -250,9 +250,28 @@
 .treeContainer ::-webkit-scrollbar       { width: 3px; height: 3px; }
 .treeContainer ::-webkit-scrollbar-track { background: transparent; }
 .treeContainer ::-webkit-scrollbar-thumb {
-  background: rgba(147, 112, 255, 0.25);
+  background: var(--quantum-scrollbar-thumb, rgba(147, 112, 255, 0.25));
   border-radius: 2px;
 }
 .treeContainer ::-webkit-scrollbar-thumb:hover {
-  background: rgba(147, 112, 255, 0.5);
+  background: var(--quantum-scrollbar-thumb-hover, rgba(147, 112, 255, 0.5));
+}
+
+/* ─── Reduced Motion ──────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .node:global(.isSelected) .text,
+  .row:focus .node:global(.isFocused) .text {
+    animation: none;
+  }
+
+  .node,
+  .icon,
+  .arrow {
+    transition-duration: 0.01ms !important;
+  }
+
+  .node:global(.willReceiveDrop) {
+    animation: none;
+  }
 }

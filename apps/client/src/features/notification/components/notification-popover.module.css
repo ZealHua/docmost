@@ -1,3 +1,63 @@
+/* ─── Menu Button Variant ──────────────────────────────────────────────────── */
+
+.menuButton {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  font-family: 'Sora', system-ui, sans-serif;
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  padding: rem(6px) var(--mantine-spacing-xs);
+  border-radius: 6px;
+
+  color: light-dark(
+    rgba(30, 10, 60, 0.65),
+    rgba(220, 210, 255, 0.62)
+  );
+
+  transition:
+    background 0.18s ease,
+    color      0.18s ease,
+    box-shadow 0.18s ease;
+
+  &:hover {
+    background: light-dark(
+      rgba(147, 112, 255, 0.07),
+      rgba(147, 112, 255, 0.09)
+    );
+    color: light-dark(
+      rgba(109, 40, 217, 0.9),
+      rgba(220, 210, 255, 0.82)
+    );
+  }
+}
+
+.menuItemInner {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.menuItemIcon {
+  margin-right: var(--mantine-spacing-sm);
+  color: light-dark(
+    rgba(147, 112, 255, 0.5),
+    rgba(167, 139, 250, 0.45)
+  );
+  transition: color 0.18s ease;
+}
+
+.unreadDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #e9d5ff, #7c3aed);
+  box-shadow: 0 0 6px rgba(109, 40, 217, 0.7);
+  margin-left: auto;
+}
+
 /* ─── Action Icon ───────────────────────────────────────────────────────── */
 
 .actionIcon {

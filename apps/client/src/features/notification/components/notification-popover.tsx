@@ -7,6 +7,7 @@ import {
   ScrollArea,
   Text,
   Tooltip,
+  UnstyledButton,
 } from "@mantine/core";
 import {
   IconBell,
@@ -14,7 +15,6 @@ import {
   IconChecks,
   IconDots,
   IconFilter,
-  IconRadar2,
 } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { NotificationList } from "./notification-list";
@@ -25,7 +25,11 @@ import {
 } from "../queries/notification-query";
 import classes from "./notification-popover.module.css";
 
-export function NotificationPopover() {
+interface NotificationPopoverProps {
+  variant?: "icon" | "menu";
+}
+
+export function NotificationPopover({ variant = "icon" }: NotificationPopoverProps) {
   const { t } = useTranslation();
   const [opened, setOpened] = useState(false);
   const [filter, setFilter] = useState<NotificationFilter>("all");
@@ -39,6 +43,103 @@ export function NotificationPopover() {
   const handleMarkAllRead = () => {
     markAllRead.mutate();
   };
+
+  if (variant === "menu") {
+    return (
+      <Popover
+        position="bottom-end"
+        shadow="lg"
+        opened={opened}
+        onChange={setOpened}
+        withArrow
+      >
+        <Popover.Target>
+          <UnstyledButton
+            className={classes.menuButton}
+            onClick={() => setOpened((o) => !o)}
+          >
+            <div className={classes.menuItemInner}>
+              <IconBell size={18} stroke={2} className={classes.menuItemIcon} />
+              <span>{t("Notification")}</span>
+            </div>
+            {hasUnread && <span className={classes.unreadDot} />}
+          </UnstyledButton>
+        </Popover.Target>
+
+        <Popover.Dropdown
+          p={0}
+          style={{ width: "min(420px, calc(100vw - 24px))" }}
+        >
+          <Group justify="space-between" px="md" py="sm">
+            <Text fw={600} size="sm">
+              {t("Notifications")}
+            </Text>
+            <Group gap={4}>
+              <Menu position="bottom-end" withArrow withinPortal={false}>
+                <Menu.Target>
+                  <Tooltip label={t("Filter")} withArrow>
+                    <ActionIcon variant="subtle" color="violet" size="sm">
+                      <IconFilter size={16} />
+                    </ActionIcon>
+                  </Tooltip>
+                </Menu.Target>
+                <Menu.Dropdown>
+                  <Menu.Label>{t("Filter")}</Menu.Label>
+                  <Menu.Item
+                    onClick={() => setFilter("all")}
+                    rightSection={
+                      filter === "all" ? <IconCheck size={14} /> : null
+                    }
+                  >
+                    {t("All notifications")}
+                  </Menu.Item>
+                  <Menu.Item
+                    onClick={() => setFilter("unread")}
+                    rightSection={
+                      filter === "unread" ? <IconCheck size={14} /> : null
+                    }
+                  >
+                    {t("Unread only")}
+                  </Menu.Item>
+                </Menu.Dropdown>
+              </Menu>
+
+              <Menu position="bottom-end" withArrow withinPortal={false}>
+                <Menu.Target>
+                  <Tooltip label={t("More options")} withArrow>
+                    <ActionIcon variant="subtle" color="violet" size="sm">
+                      <IconDots size={16} />
+                    </ActionIcon>
+                  </Tooltip>
+                </Menu.Target>
+                <Menu.Dropdown>
+                  <Menu.Item
+                    leftSection={<IconChecks size={16} />}
+                    onClick={handleMarkAllRead}
+                    disabled={unreadCount === 0}
+                  >
+                    {t("Mark all as read")}
+                  </Menu.Item>
+                </Menu.Dropdown>
+              </Menu>
+            </Group>
+          </Group>
+
+          <ScrollArea.Autosize
+            mah={500}
+            type="auto"
+            offsetScrollbars
+            scrollbarSize={6}
+          >
+            <NotificationList
+              filter={filter}
+              onNavigate={() => setOpened(false)}
+            />
+          </ScrollArea.Autosize>
+        </Popover.Dropdown>
+      </Popover>
+    );
+  }
 
   return (
     <Popover
@@ -60,7 +161,7 @@ export function NotificationPopover() {
           >
             <div className={`${classes.notifWrapper} ${hasUnread ? classes.hasUnread : ""}`}>
               <div className={classes.notifRing} />
-              <IconRadar2 size={15} />
+              <IconBell size={15} />
               {hasUnread && <div className={classes.notifDot} />}
             </div>
           </ActionIcon>

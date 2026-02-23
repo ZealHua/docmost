@@ -10,7 +10,6 @@ import {
   sidebarWidthAtom,
 } from "@/components/layouts/global/hooks/atoms/sidebar-atom.ts";
 import { SpaceSidebar } from "@/features/space/components/sidebar/space-sidebar.tsx";
-import { AppHeader } from "@/components/layouts/global/app-header.tsx";
 import Aside from "@/components/layouts/global/aside.tsx";
 import classes from "./app-shell.module.css";
 import { useTrialEndAction } from "@/ee/hooks/use-trial-end-action.tsx";
@@ -79,7 +78,6 @@ export default function GlobalAppShell({
 
   return (
     <AppShell
-      header={{ height: 45 }}
       navbar={
         !hideSidebar && {
           width: isSpaceRoute ? sidebarWidth : 300,
@@ -99,9 +97,6 @@ export default function GlobalAppShell({
       }
       padding="md"
     >
-      <AppShell.Header px="md" className={classes.header}>
-        <AppHeader />
-      </AppShell.Header>
       {!hideSidebar && (
         <AppShell.Navbar
           className={classes.navbar}

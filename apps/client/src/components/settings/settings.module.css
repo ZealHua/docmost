@@ -1,56 +1,135 @@
+/* ─── Navbar shell ───────────────────────────────────────────────────────── */
+
 .navbar {
-    height: 100%;
-    width: 100%;
-    padding: var(--mantine-spacing-md);
-    display: flex;
-    flex-direction: column;
+  height: 100%;
+  width: 100%;
+  padding: var(--mantine-spacing-md);
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+
+  background: light-dark(
+    rgba(250, 248, 255, 0.96),
+    rgba(11, 7, 26, 0.97)
+  );
+
+  position: relative;
+  &::after {
+    content: '';
+    position: absolute;
+    top: 12%;
+    bottom: 12%;
+    right: 0;
+    width: 1px;
+    background: linear-gradient(
+      180deg,
+      transparent,
+      rgba(147, 112, 255, 0.3) 35%,
+      rgba(147, 112, 255, 0.3) 65%,
+      transparent
+    );
+    pointer-events: none;
+  }
 }
 
 .title {
-    padding-bottom: var(--mantine-spacing-sm);
-    border-bottom: rem(1px) solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4));
+  padding-bottom: var(--mantine-spacing-sm);
+  border-bottom: 1px solid transparent;
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    rgba(147, 112, 255, 0.22) 25%,
+    rgba(147, 112, 255, 0.22) 75%,
+    transparent
+  );
+  background-repeat: no-repeat;
+  background-position: bottom;
+  background-size: 100% 1px;
 }
 
 .link {
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    text-decoration: none;
-    font-size: var(--mantine-font-size-sm);
-    color: light-dark(
-      rgba(30, 10, 60, 0.7),
-      rgba(220, 210, 255, 0.7)
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  font-family: 'Sora', system-ui, sans-serif;
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: light-dark(
+    rgba(30, 10, 60, 0.7),
+    rgba(220, 210, 255, 0.7)
+  );
+  padding-left: var(--mantine-spacing-xs);
+  min-height: 30px;
+  border-radius: 6px;
+  user-select: none;
+  transition:
+    background 0.18s ease,
+    color      0.18s ease,
+    box-shadow 0.18s ease;
+
+  @mixin hover {
+    background: light-dark(
+      rgba(147, 112, 255, 0.07),
+      rgba(147, 112, 255, 0.09)
     );
-    padding-left: var(--mantine-spacing-xs);
-    min-height: 30px;
-    border-radius: var(--mantine-radius-sm);
-    font-weight: 500;
-    user-select: none;
+    color: light-dark(
+      rgba(109, 40, 217, 0.9),
+      rgba(220, 210, 255, 0.85)
+    );
 
-    @mixin hover {
-        background: light-dark(
-          rgba(147, 112, 255, 0.07),
-          rgba(147, 112, 255, 0.09)
-        );
-        color: light-dark(
-          rgba(109, 40, 217, 0.9),
-          rgba(220, 210, 255, 0.85)
-        );
+    .linkIcon {
+      color: light-dark(
+        rgba(109, 40, 217, 0.8),
+        rgba(196, 176, 255, 0.8)
+      );
+    }
+  }
+
+  &[data-active] {
+    background: light-dark(
+      rgba(147, 112, 255, 0.11),
+      rgba(109, 40, 217, 0.18)
+    );
+    color: light-dark(
+      rgba(109, 40, 217, 0.95),
+      rgba(220, 210, 255, 0.9)
+    );
+    box-shadow:
+      inset 2px 0 0 rgba(147, 112, 255, 0.7),
+      inset 0 0 12px rgba(109, 40, 217, 0.06);
+
+    span {
+      background: linear-gradient(
+        90deg,
+        #7c3aed 0%,
+        #c4b5fd 45%,
+        #a78bfa 60%,
+        #7c3aed 100%
+      );
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: linkShimmer 3.5s linear infinite;
     }
 
-    &[data-active] {
-        &,
-        & :hover {
-            background: light-dark(
-              rgba(147, 112, 255, 0.11),
-              rgba(109, 40, 217, 0.18)
-            );
-            color: light-dark(
-              rgba(109, 40, 217, 0.95),
-              rgba(220, 210, 255, 0.9)
-            );
-        }
+    .linkIcon {
+      color: light-dark(#7c3aed, #a78bfa);
+      -webkit-text-fill-color: initial;
     }
+  }
+
+  &[data-disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+@keyframes linkShimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
 }
 
 .linkIcon {
@@ -71,21 +150,47 @@
 }
 
 .linkHeader {
-    padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
-    font-size: var(--mantine-font-size-sm);
-    color: light-dark(
-      rgba(147, 112, 255, 0.5),
-      rgba(167, 139, 250, 0.4)
-    );
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+  font-family: 'Sora', system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: light-dark(
+    rgba(147, 112, 255, 0.45),
+    rgba(167, 139, 250, 0.3)
+  );
+  cursor: pointer;
+  display: flex;
+  align-items: center;
 }
 
 .text {
-    padding-left: var(--mantine-spacing-xs);
-    padding-top: 10px;
+  padding-left: var(--mantine-spacing-xs);
+  padding-top: 10px;
+}
+
+/* ─── Scrollbar ────────────────────────────────────────────────────────────── */
+
+.navbar ::-webkit-scrollbar       { width: 3px; }
+.navbar ::-webkit-scrollbar-track { background: transparent; }
+.navbar ::-webkit-scrollbar-thumb {
+  background: var(--quantum-scrollbar-thumb, rgba(147, 112, 255, 0.22));
+  border-radius: 2px;
+}
+.navbar ::-webkit-scrollbar-thumb:hover {
+  background: var(--quantum-scrollbar-thumb-hover, rgba(147, 112, 255, 0.48));
+}
+
+/* ─── Reduced Motion ────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .link[data-active] span {
+    animation: none;
+  }
+
+  .link,
+  .linkIcon {
+    transition-duration: 0.01ms !important;
+  }
 }

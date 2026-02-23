@@ -37,6 +37,7 @@ import {
 } from "@/features/space/permissions/permissions.type.ts";
 import PageImportModal from "@/features/page/components/page-import-modal.tsx";
 import { useTranslation } from "react-i18next";
+import { SwitchSpace } from "./switch-space";
 import ExportModal from "@/components/common/export-modal";
 import {
   desktopSidebarAtom,
@@ -45,6 +46,7 @@ import {
 import { useToggleSidebar } from "@/components/layouts/global/hooks/hooks/use-toggle-sidebar.ts";
 import { searchSpotlight } from "@/features/search/constants";
 import { SidebarBottomNav } from "./sidebar-bottom-nav";
+import { NotificationPopover } from "@/features/notification/components/notification-popover.tsx";
 
 export function SpaceSidebar() {
   const { t } = useTranslation();
@@ -77,6 +79,18 @@ export function SpaceSidebar() {
       <div className={classes.navbar}>
         <div className={classes.section}>
           <div className={classes.menuItems}>
+            {/* Brand / Home link */}
+            <Link to="/home" className={classes.brand}>
+              <div className={classes.brandMark}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                  <path d="M2 17l10 5 10-5"/>
+                  <path d="M2 12l10 5 10-5"/>
+                </svg>
+              </div>
+              <span className={classes.brandName}>OpenMemo</span>
+            </Link>
+
             <UnstyledButton
               component={Link}
               to={getSpaceUrl(spaceSlug)}
@@ -109,6 +123,7 @@ export function SpaceSidebar() {
                 />
                 <span>{t("Search")}</span>
               </div>
+              <span className={classes.menuItemShortcut}>Ctrl + K</span>
             </UnstyledButton>
 
             <UnstyledButton
@@ -131,40 +146,7 @@ export function SpaceSidebar() {
               </div>
             </UnstyledButton>
 
-            <UnstyledButton className={classes.menu} onClick={openSettings}>
-              <div className={classes.menuItemInner}>
-                <IconSettings
-                  size={18}
-                  className={classes.menuItemIcon}
-                  stroke={2}
-                />
-                <span>{t("Space settings")}</span>
-              </div>
-            </UnstyledButton>
-
-            {spaceAbility.can(
-              SpaceCaslAction.Manage,
-              SpaceCaslSubject.Page,
-            ) && (
-              <UnstyledButton
-                className={classes.menu}
-                onClick={() => {
-                  handleCreatePage();
-                  if (mobileSidebarOpened) {
-                    toggleMobileSidebar();
-                  }
-                }}
-              >
-                <div className={classes.menuItemInner}>
-                  <IconPlus
-                    size={18}
-                    className={classes.menuItemIcon}
-                    stroke={2}
-                  />
-                  <span>{t("New page")}</span>
-                </div>
-              </UnstyledButton>
-            )}
+            <NotificationPopover variant="menu" />
           </div>
         </div>
 

@@ -1,4 +1,4 @@
-import { Group, ActionIcon, Tooltip, Menu, UnstyledButton, Popover, Button, Text } from "@mantine/core";
+import { Group, ActionIcon, Tooltip, Menu, Button, Popover } from "@mantine/core";
 import {
   IconChevronDown,
   IconChevronUp,
@@ -43,7 +43,6 @@ export function SidebarBottomNav({ spaceName, spaceSlug, spaceLogo }: SidebarBot
   const [spaceSelectOpened, { close: closeSpaceSelect, toggle: toggleSpaceSelect }] = useDisclosure(false);
 
   const user = currentUser?.user;
-  const workspace = currentUser?.workspace;
 
   const handleSpaceSelect = (space: { slug: string }) => {
     if (space?.slug) {
@@ -54,10 +53,131 @@ export function SidebarBottomNav({ spaceName, spaceSlug, spaceLogo }: SidebarBot
 
   return (
     <div className={classes.bottomNav}>
-      <Group justify="flex-start" gap="xs" wrap="nowrap">
-        {/* Workspace Switcher */}
+      {/* User Avatar — Left Aligned */}
+      <Menu position="top-start" withArrow shadow="lg" offset={22} classNames={{ dropdown: classes.menu }}>
+        <Menu.Target>
+          <Tooltip label={user?.name} withArrow position="top">
+            <div className={classes.userAvatarWrapper}>
+              <CustomAvatar
+                avatarUrl={user?.avatarUrl}
+                name={user?.name}
+                variant="filled"
+                size={24}
+              />
+            </div>
+          </Tooltip>
+        </Menu.Target>
+
+        <Menu.Dropdown>
+          <Menu.Label className={classes.menuLabel}>{t("Workspace")}</Menu.Label>
+
+          <Menu.Item
+            component={Link}
+            to={APP_ROUTE.SETTINGS.WORKSPACE.GENERAL}
+            leftSection={<IconSettings size={16} className={classes.menuItemIcon} />}
+            className={classes.menuItem}
+          >
+            {t("Workspace settings")}
+          </Menu.Item>
+
+          <Menu.Item
+            component={Link}
+            to={APP_ROUTE.SETTINGS.WORKSPACE.MEMBERS}
+            leftSection={<IconUsers size={16} className={classes.menuItemIcon} />}
+            className={classes.menuItem}
+          >
+            {t("Manage members")}
+          </Menu.Item>
+
+          <Menu.Divider className={classes.menuDivider} />
+
+          <Menu.Label className={classes.menuLabel}>{t("Account")}</Menu.Label>
+
+          <Menu.Item component={Link} to={APP_ROUTE.SETTINGS.ACCOUNT.PROFILE} className={classes.menuItem}>
+            <Group wrap={"nowrap"}>
+              <CustomAvatar
+                size={"sm"}
+                avatarUrl={user?.avatarUrl}
+                name={user?.name}
+              />
+              <div className={classes.userInfo}>
+                <span className={classes.userName}>{user?.name}</span>
+                <span className={classes.userEmail}>{user?.email}</span>
+              </div>
+            </Group>
+          </Menu.Item>
+
+          <Menu.Item
+            component={Link}
+            to={APP_ROUTE.SETTINGS.ACCOUNT.PROFILE}
+            leftSection={<IconUserCircle size={16} className={classes.menuItemIcon} />}
+            className={classes.menuItem}
+          >
+            {t("My profile")}
+          </Menu.Item>
+
+          <Menu.Item
+            component={Link}
+            to={APP_ROUTE.SETTINGS.ACCOUNT.PREFERENCES}
+            leftSection={<IconBrush size={16} className={classes.menuItemIcon} />}
+            className={classes.menuItem}
+          >
+            {t("My preferences")}
+          </Menu.Item>
+
+          <Menu.Sub>
+            <Menu.Sub.Target>
+              <Menu.Sub.Item leftSection={<IconBrightnessFilled size={16} className={classes.themeIcon} />} className={classes.themeItem}>
+                {t("Theme")}
+              </Menu.Sub.Item>
+            </Menu.Sub.Target>
+
+            <Menu.Sub.Dropdown>
+              <Menu.Item
+                onClick={() => setColorScheme("light")}
+                leftSection={<IconSun size={16} className={classes.themeIcon} />}
+                rightSection={
+                  colorScheme === "light" ? <IconCheck size={16} className={classes.checkIcon} /> : null
+                }
+                className={classes.themeItem}
+              >
+                {t("Light")}
+              </Menu.Item>
+              <Menu.Item
+                onClick={() => setColorScheme("dark")}
+                leftSection={<IconMoon size={16} className={classes.themeIcon} />}
+                rightSection={
+                  colorScheme === "dark" ? <IconCheck size={16} className={classes.checkIcon} /> : null
+                }
+                className={classes.themeItem}
+              >
+                {t("Dark")}
+              </Menu.Item>
+              <Menu.Item
+                onClick={() => setColorScheme("auto")}
+                leftSection={<IconDeviceDesktop size={16} className={classes.themeIcon} />}
+                rightSection={
+                  colorScheme === "auto" ? <IconCheck size={16} className={classes.checkIcon} /> : null
+                }
+                className={classes.themeItem}
+              >
+                {t("System settings")}
+              </Menu.Item>
+            </Menu.Sub.Dropdown>
+          </Menu.Sub>
+
+          <Menu.Divider className={classes.menuDivider} />
+
+          <Menu.Item onClick={logout} leftSection={<IconLogout size={16} className={classes.menuItemIcon} />} className={classes.menuItem}>
+            {t("Logout")}
+          </Menu.Item>
+        </Menu.Dropdown>
+      </Menu>
+
+      {/* Workspace Switcher — Compact Pill */}
+      <div className={classes.workspaceSection}>
         <Popover
-          width={300}
+          width={220}
           position="top"
           withArrow
           shadow="md"
@@ -67,7 +187,7 @@ export function SidebarBottomNav({ spaceName, spaceSlug, spaceLogo }: SidebarBot
           <Popover.Target>
             <Button
               variant="subtle"
-              size="sm"
+              size="xs"
               fullWidth
               justify="flex-start"
               leftSection={
@@ -80,13 +200,17 @@ export function SidebarBottomNav({ spaceName, spaceSlug, spaceLogo }: SidebarBot
                   size={20}
                 />
               }
-              rightSection={spaceSelectOpened ? <IconChevronUp size={16} /> : <IconChevronDown size={16} />}
+              rightSection={
+                spaceSelectOpened ? (
+                  <IconChevronUp size={14} />
+                ) : (
+                  <IconChevronDown size={14} />
+                )
+              }
               onClick={toggleSpaceSelect}
-              className={classes.workspaceButton}
+              className={classes.workspacePill}
             >
-              <Text size="sm" lineClamp={1} className={classes.workspaceName}>
-                {spaceName}
-              </Text>
+              <span className={classes.workspaceName}>{spaceName}</span>
             </Button>
           </Popover.Target>
           <Popover.Dropdown>
@@ -94,140 +218,12 @@ export function SidebarBottomNav({ spaceName, spaceSlug, spaceLogo }: SidebarBot
               label={spaceName}
               value={spaceSlug}
               onChange={handleSpaceSelect}
-              width={300}
+              width={220}
               opened={true}
             />
           </Popover.Dropdown>
         </Popover>
-
-        {/* User Menu */}
-        <Menu position="top-start" withArrow shadow="lg" classNames={{ dropdown: classes.menu }}>
-          <Menu.Target>
-            <Tooltip label={user?.name} withArrow position="top">
-              <ActionIcon
-                variant="subtle"
-                color="violet"
-                size="sm"
-                className={classes.menuButton}
-                aria-label={t("User menu")}
-              >
-                <CustomAvatar
-                  avatarUrl={user?.avatarUrl}
-                  name={user?.name}
-                  variant="filled"
-                  size={20}
-                />
-              </ActionIcon>
-            </Tooltip>
-          </Menu.Target>
-          <Menu.Dropdown>
-            <Menu.Label className={classes.menuLabel}>{t("Workspace")}</Menu.Label>
-
-            <Menu.Item
-              component={Link}
-              to={APP_ROUTE.SETTINGS.WORKSPACE.GENERAL}
-              leftSection={<IconSettings size={16} className={classes.menuItemIcon} />}
-              className={classes.menuItem}
-            >
-              {t("Workspace settings")}
-            </Menu.Item>
-
-            <Menu.Item
-              component={Link}
-              to={APP_ROUTE.SETTINGS.WORKSPACE.MEMBERS}
-              leftSection={<IconUsers size={16} className={classes.menuItemIcon} />}
-              className={classes.menuItem}
-            >
-              {t("Manage members")}
-            </Menu.Item>
-
-            <Menu.Divider className={classes.menuDivider} />
-
-            <Menu.Label className={classes.menuLabel}>{t("Account")}</Menu.Label>
-            <Menu.Item component={Link} to={APP_ROUTE.SETTINGS.ACCOUNT.PROFILE} className={classes.menuItem}>
-              <Group wrap={"nowrap"}>
-                <CustomAvatar
-                  size={"sm"}
-                  avatarUrl={user?.avatarUrl}
-                  name={user?.name}
-                />
-
-                <div className={classes.userInfo}>
-                  <span className={classes.userName}>{user?.name}</span>
-                  <span className={classes.userEmail}>{user?.email}</span>
-                </div>
-              </Group>
-            </Menu.Item>
-            <Menu.Item
-              component={Link}
-              to={APP_ROUTE.SETTINGS.ACCOUNT.PROFILE}
-              leftSection={<IconUserCircle size={16} className={classes.menuItemIcon} />}
-              className={classes.menuItem}
-            >
-              {t("My profile")}
-            </Menu.Item>
-
-            <Menu.Item
-              component={Link}
-              to={APP_ROUTE.SETTINGS.ACCOUNT.PREFERENCES}
-              leftSection={<IconBrush size={16} className={classes.menuItemIcon} />}
-              className={classes.menuItem}
-            >
-              {t("My preferences")}
-            </Menu.Item>
-
-            <Menu.Sub>
-              <Menu.Sub.Target>
-                <Menu.Sub.Item leftSection={<IconBrightnessFilled size={16} className={classes.themeIcon} />} className={classes.themeItem}>
-                  {t("Theme")}
-                </Menu.Sub.Item>
-              </Menu.Sub.Target>
-
-              <Menu.Sub.Dropdown>
-                <Menu.Item
-                  onClick={() => setColorScheme("light")}
-                  leftSection={<IconSun size={16} className={classes.themeIcon} />}
-                  rightSection={
-                    colorScheme === "light" ? <IconCheck size={16} /> : null
-                  }
-                  className={classes.themeItem}
-                >
-                  {t("Light")}
-                </Menu.Item>
-                <Menu.Item
-                  onClick={() => setColorScheme("dark")}
-                  leftSection={<IconMoon size={16} className={classes.themeIcon} />}
-                  rightSection={
-                    colorScheme === "dark" ? <IconCheck size={16} /> : null
-                  }
-                  className={classes.themeItem}
-                >
-                  {t("Dark")}
-                </Menu.Item>
-                <Menu.Item
-                  onClick={() => setColorScheme("auto")}
-                  leftSection={<IconDeviceDesktop size={16} className={classes.themeIcon} />}
-                  rightSection={
-                    colorScheme === "auto" ? <IconCheck size={16} /> : null
-                  }
-                  className={classes.themeItem}
-                >
-                  {t("System settings")}
-                </Menu.Item>
-              </Menu.Sub.Dropdown>
-            </Menu.Sub>
-
-            <Menu.Divider className={classes.menuDivider} />
-
-            <Menu.Item onClick={logout} leftSection={<IconLogout size={16} className={classes.menuItemIcon} />} className={classes.menuItem}>
-              {t("Logout")}
-            </Menu.Item>
-          </Menu.Dropdown>
-        </Menu>
-
-        {/* Notifications */}
-        <NotificationPopover />
-      </Group>
+      </div>
     </div>
   );
 }

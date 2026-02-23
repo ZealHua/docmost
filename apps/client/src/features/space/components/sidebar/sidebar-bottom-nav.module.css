@@ -1,81 +1,199 @@
+/* ═══════════════════════════════════════════════════════════════════════════════
+   QUANTUM GLASS BOTTOM NAV — World-Class Sidebar Footer
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Container — Frosted Glass Base ────────────────────────────────────────── */
+
 .bottomNav {
-  padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
-  margin-top: auto;
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px 8px 0;
+  margin-top: auto;
   flex-shrink: 0;
   z-index: 10;
 
-  /* Top border divider - same violet gradient as sidebar sections */
+  /* Frosted glass background */
+  background: light-dark(
+    linear-gradient(
+      180deg,
+      rgba(253, 251, 255, 0.75) 0%,
+      rgba(250, 248, 255, 0.92) 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(15, 11, 31, 0.75) 0%,
+      rgba(11, 7, 26, 0.92) 100%
+    )
+  );
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+
+  /* Subtle inner glow borders */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -1px 0 rgba(147, 112, 255, 0.03);
+
+  /* Luminous top divider */
   &::before {
     content: '';
     position: absolute;
     top: 0;
-    left: calc(var(--mantine-spacing-md) * -1);
-    right: calc(var(--mantine-spacing-md) * -1);
+    left: 0;
+    right: 0;
     height: 1px;
-    background-image: linear-gradient(
+    background: linear-gradient(
       90deg,
-      transparent,
-      rgba(147, 112, 255, 0.22) 25%,
-      rgba(147, 112, 255, 0.22) 75%,
-      transparent
+      transparent 0%,
+      rgba(147, 112, 255, 0.2) 15%,
+      rgba(147, 112, 255, 0.5) 50%,
+      rgba(147, 112, 255, 0.2) 85%,
+      transparent 100%
     );
-    background-repeat: no-repeat;
-    background-position: top;
-    background-size: 100% 1px;
+    box-shadow: 0 0 12px rgba(147, 112, 255, 0.25);
     pointer-events: none;
   }
 }
 
-.workspaceButton {
-  border-radius: 6px;
-  transition:
-    background 0.18s ease,
-    box-shadow 0.18s ease;
+/* ─── User Avatar — Left Aligned ─────────────────────────────────────────────── */
+
+.userAvatarWrapper {
+  position: relative;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  &:hover {
+    box-shadow: 0 0 12px rgba(147, 112, 255, 0.25);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+/* ─── Workspace Pill — Compact ────────────────────────────────────────────────── */
+
+.workspaceSection {
   flex: 1;
-  max-width: 160px;
+  min-width: 0;
+}
+
+.workspacePill {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px 6px 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+  background: light-dark(
+    linear-gradient(135deg, rgba(147, 112, 255, 0.1) 0%, rgba(147, 112, 255, 0.04) 100%),
+    linear-gradient(135deg, rgba(109, 40, 217, 0.18) 0%, rgba(109, 40, 217, 0.08) 100%)
+  );
+  border: 1px solid light-dark(
+    rgba(147, 112, 255, 0.15),
+    rgba(147, 112, 255, 0.2)
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 1px 3px rgba(109, 40, 217, 0.08);
+  transition: all 0.2s ease;
 
   &:hover {
     background: light-dark(
-      rgba(147, 112, 255, 0.07),
-      rgba(147, 112, 255, 0.09)
+      linear-gradient(135deg, rgba(147, 112, 255, 0.15) 0%, rgba(147, 112, 255, 0.08) 100%),
+      linear-gradient(135deg, rgba(109, 40, 217, 0.25) 0%, rgba(109, 40, 217, 0.12) 100%)
     );
+    border-color: light-dark(
+      rgba(147, 112, 255, 0.25),
+      rgba(147, 112, 255, 0.3)
+    );
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      0 2px 8px rgba(109, 40, 217, 0.15),
+      0 0 0 1px rgba(147, 112, 255, 0.1);
+
+    .workspaceChevron {
+      transform: translateY(1px);
+    }
+  }
+
+  &:active {
+    transform: scale(0.98);
   }
 }
 
 .workspaceName {
-  font-weight: 500;
+  font-family: 'Sora', system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   color: light-dark(
-    rgba(30, 10, 60, 0.85),
-    rgba(220, 210, 255, 0.85)
+    rgba(30, 10, 60, 0.9),
+    rgba(220, 210, 255, 0.9)
   );
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
 }
 
-.menuButton {
-  border-radius: 6px;
-  transition:
-    background 0.18s ease,
-    box-shadow 0.18s ease;
-
-  &:hover {
-    background: light-dark(
-      rgba(147, 112, 255, 0.07),
-      rgba(147, 112, 255, 0.09)
-    );
-  }
+.workspaceChevron {
+  color: light-dark(
+    rgba(147, 112, 255, 0.5),
+    rgba(167, 139, 250, 0.5)
+  );
+  transition: transform 0.2s cubic-bezier(0.34, 1.4, 0.64, 1);
+  flex-shrink: 0;
 }
 
-/* ─── Menu Dropdown Styling ───────────────────────────────────────────────── */
+/* ─── Notification Button ────────────────────────────────────────────────────── */
+
+.notificationWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ─── Menu Dropdown Styling ────────────────────────────────────────────────── */
 
 .menu {
   background: light-dark(
-    rgba(250, 248, 255, 0.98),
+    rgba(253, 251, 255, 0.98),
     rgba(11, 7, 26, 0.98)
   ) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid light-dark(
-    rgba(147, 112, 255, 0.15),
-    rgba(147, 112, 255, 0.2)
+    rgba(147, 112, 255, 0.18),
+    rgba(147, 112, 255, 0.22)
   ) !important;
+  box-shadow:
+    0 8px 32px rgba(109, 40, 217, 0.15),
+    0 0 0 1px rgba(147, 112, 255, 0.1) !important;
+  border-radius: 12px !important;
+  animation: menuEnter 0.2s cubic-bezier(0.34, 1.4, 0.64, 1);
+  transform-origin: bottom left;
+}
+
+@keyframes menuEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .menuLabel {
@@ -98,6 +216,8 @@
   ) !important;
   margin: var(--mantine-spacing-xs) 0 !important;
 }
+
+/* ─── Menu Items ───────────────────────────────────────────────────────────── */
 
 .menuItem {
   font-family: 'Sora', system-ui, sans-serif;
@@ -165,7 +285,17 @@
   }
 }
 
-/* ─── User Info ───────────────────────────────────────────────────────────── */
+/* ─── User Info Card ────────────────────────────────────────────────────────── */
+
+.userCard {
+  padding: 10px 12px;
+  margin: 4px 8px;
+  border-radius: 8px;
+  background: light-dark(
+    rgba(147, 112, 255, 0.05),
+    rgba(109, 40, 217, 0.1)
+  );
+}
 
 .userInfo {
   display: flex;
@@ -194,4 +324,36 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ─── Check Icon Animation ──────────────────────────────────────────────────── */
+
+.checkIcon {
+  color: light-dark(
+    rgba(109, 40, 217, 0.9),
+    rgba(167, 139, 250, 0.9)
+  );
+  animation: checkPop 0.2s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+@keyframes checkPop {
+  0% { transform: scale(0.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ─── Reduced Motion ────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .workspacePill,
+  .userAvatarWrapper,
+  .menu,
+  .workspaceChevron,
+  .checkIcon {
+    transition-duration: 0.01ms !important;
+    animation: none !important;
+  }
+
+  .menu {
+    animation: none;
+  }
 }

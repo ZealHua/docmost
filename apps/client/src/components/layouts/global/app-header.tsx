@@ -48,10 +48,6 @@ export function AppHeader() {
     <>
       <Group h="100%" px="md" justify="space-between" wrap={"nowrap"}>
         <Group wrap="nowrap">
-          <Link to="/home" className={classes.brandName}>
-            OpenMemo
-          </Link>
-
           <Group ml={50} gap={5} className={classes.links} visibleFrom="sm">
             {items}
           </Group>
