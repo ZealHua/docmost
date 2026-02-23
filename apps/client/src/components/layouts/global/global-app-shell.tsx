@@ -109,8 +109,10 @@ export default function GlobalAppShell({
           ref={sidebarRef}
         >
           <div className={classes.resizeHandle} onMouseDown={startResizing} />
-          {isSpaceRoute && <SpaceSidebar />}
-          {isSettingsRoute && <SettingsSidebar />}
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            {isSpaceRoute && <SpaceSidebar />}
+            {isSettingsRoute && <SettingsSidebar />}
+          </div>
         </AppShell.Navbar>
       )}
       <AppShell.Main>

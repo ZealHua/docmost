@@ -37,7 +37,6 @@ import {
 } from "@/features/space/permissions/permissions.type.ts";
 import PageImportModal from "@/features/page/components/page-import-modal.tsx";
 import { useTranslation } from "react-i18next";
-import { SwitchSpace } from "./switch-space";
 import ExportModal from "@/components/common/export-modal";
 import {
   desktopSidebarAtom,
@@ -45,6 +44,7 @@ import {
 } from "@/components/layouts/global/hooks/atoms/sidebar-atom.ts";
 import { useToggleSidebar } from "@/components/layouts/global/hooks/hooks/use-toggle-sidebar.ts";
 import { searchSpotlight } from "@/features/search/constants";
+import { SidebarBottomNav } from "./sidebar-bottom-nav";
 
 export function SpaceSidebar() {
   const { t } = useTranslation();
@@ -75,21 +75,6 @@ export function SpaceSidebar() {
   return (
     <>
       <div className={classes.navbar}>
-        <div
-          className={classes.section}
-          style={{
-            border: "none",
-            marginTop: 2,
-            marginBottom: 3,
-          }}
-        >
-          <SwitchSpace
-            spaceName={space?.name}
-            spaceSlug={space?.slug}
-            spaceIcon={space?.logo}
-          />
-        </div>
-
         <div className={classes.section}>
           <div className={classes.menuItems}>
             <UnstyledButton
@@ -219,25 +204,31 @@ export function SpaceSidebar() {
               )}
             />
           </div>
-
-          {/* Sidebar Toggle Button */}
-          <button
-            className={`${classes.sidebarToggle} ${
-              desktopSidebarOpened ? "" : classes.sidebarToggleCollapsed
-            }`}
-            onClick={toggleDesktopSidebar}
-            aria-label={desktopSidebarOpened ? "Collapse sidebar" : "Expand sidebar"}
-          >
-            <div className={classes.sidebarToggleRing} />
-            <div className={classes.sidebarToggleIcon}>
-              {desktopSidebarOpened ? (
-                <IconChevronLeft size={11} />
-              ) : (
-                <IconChevronRight size={11} />
-              )}
-            </div>
-          </button>
         </div>
+
+        <SidebarBottomNav
+          spaceName={space?.name}
+          spaceSlug={space?.slug}
+          spaceLogo={space?.logo}
+        />
+
+        {/* Sidebar Toggle Button */}
+        <button
+          className={`${classes.sidebarToggle} ${
+            desktopSidebarOpened ? "" : classes.sidebarToggleCollapsed
+          }`}
+          onClick={toggleDesktopSidebar}
+          aria-label={desktopSidebarOpened ? "Collapse sidebar" : "Expand sidebar"}
+        >
+          <div className={classes.sidebarToggleRing} />
+          <div className={classes.sidebarToggleIcon}>
+            {desktopSidebarOpened ? (
+              <IconChevronLeft size={11} />
+            ) : (
+              <IconChevronRight size={11} />
+            )}
+          </div>
+        </button>
       </div>
 
       <SpaceSettingsModal
