@@ -1,0 +1,43 @@
+.panelGroup {
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+
+.chatPanel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.artifactPanel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--mantine-color-body);
+  border-left: 1px solid light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-4));
+}
+
+.artifactContent {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.handle {
+  width: 4px;
+  background: light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-4));
+  cursor: col-resize;
+  transition: background-color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.handle:hover {
+  background: light-dark(var(--mantine-color-blue-5), var(--mantine-color-blue-4));
+}
+
+.handleHidden {
+  pointer-events: none;
+  opacity: 0;
+}

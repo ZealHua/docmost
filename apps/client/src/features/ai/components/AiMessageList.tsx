@@ -8,6 +8,8 @@ import {
   aiSourcesAtom,
   aiStreamingContentAtom,
   aiStreamingThinkingAtom,
+  aiDesignModeAtom,
+  aiDesignClarifyingAtom,
 } from "../store/ai.atoms";
 import { AiCitationRenderer } from "./AiCitationRenderer";
 import { AiSourcePreviewBar } from "./AiSourcePreviewBar";
@@ -36,6 +38,8 @@ export function AiMessageList() {
   const streamingContent = useAtomValue(aiStreamingContentAtom);
   const streamingThinking = useAtomValue(aiStreamingThinkingAtom);
   const sources = useAtomValue(aiSourcesAtom);
+  const designMode = useAtomValue(aiDesignModeAtom);
+  const designClarifying = useAtomValue(aiDesignClarifyingAtom);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [newMessageId, setNewMessageId] = useState<string | null>(null);
 
@@ -122,6 +126,14 @@ export function AiMessageList() {
           </div>
         );
       })}
+
+      {designMode && designClarifying && (
+        <div className={`${styles.messageRow} ${styles.messageNew}`}>
+          <AiMessageCard header={<><IconSparkles size={16} /><span style={{ marginLeft: 4 }}>Clarifying Objective</span></>}>
+            <ThinkingBlock thinking={designClarifying} isStreaming={true} />
+          </AiMessageCard>
+        </div>
+      )}
 
       {isStreaming && (
         <div className={`${styles.messageRow} ${styles.messageNew}`}>

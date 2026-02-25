@@ -292,6 +292,45 @@
   color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0));
 }
 
+.iconButtonActive {
+  background: rgba(147, 112, 255, 0.15);
+  color: #9370ff;
+}
+
+.iconButtonActive:hover {
+  background: rgba(147, 112, 255, 0.25);
+  color: #7c3aed;
+}
+
+.designButton {
+  display: flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(147, 112, 255, 0.3);
+  background: transparent;
+  color: rgba(147, 112, 255, 0.8);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.designButton:hover {
+  background: rgba(147, 112, 255, 0.15);
+  border-color: rgba(147, 112, 255, 0.5);
+  color: #9370ff;
+}
+
+.designPill {
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.designPill:hover {
+  filter: brightness(0.95);
+}
+
 .settingsDropdown {
   display: flex;
   flex-direction: column;

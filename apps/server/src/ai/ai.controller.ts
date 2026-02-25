@@ -28,6 +28,7 @@ import { AiGenerateDto } from './dto/ai-generate.dto';
 import { AiChatDto } from './dto/ai-chat.dto';
 import { AiPageSearchDto } from './dto/ai-page-search.dto';
 import { CreateAiSessionDto, UpdateAiSessionTitleDto, AiSessionResponseDto, AiMessageResponseDto } from './dto/ai-session.dto';
+import { ClarifyObjectiveDto, ClarifyObjectiveResponseDto } from './dto/ai-clarify.dto';
 import { buildEditorSystemPrompt } from './utils/prompt.utils';
 import { Mem0Service } from '@/mem0/mem0.service';
 
@@ -272,6 +273,66 @@ export class AiController {
     await this.sessionRepo.touch(id);
 
     return this.mapMessageToResponse(message);
+  }
+
+  // ── Design mode: Objective clarification ─────────────────────────────────
+
+  /**
+   * Clarify the user's objective for design mode.
+   * Uses AI to refine and clarify the user's intent before sending to LangGraph.
+   */
+  @Post('clarify-objective')
+  async clarifyObjective(
+    @Body() dto: ClarifyObjectiveDto,
+  ): Promise<ClarifyObjectiveResponseDto> {
+    console.log('[Design] Backend: Received clarify-objective request:', dto.message);
+
+    const prompt = `You are an AI design assistant. The user wants to create a website or web application.
+Analyze their request and provide a clear, actionable objective statement.
+If the request is already clear, refine it to be more specific and actionable.
+Focus on the end goal and key requirements.
+
+User's message: ${dto.message}
+
+Respond with a JSON object containing:
+{
+  "objective": "A clear, actionable objective statement"
+}
+
+Only respond with the JSON object, nothing else.`;
+
+    try {
+      console.log('[Design] Backend: Calling AI provider for clarification...');
+      const provider = this.orchestrator.getProvider('glm-4.5');
+      const result = await provider.generateText(prompt, dto.message, 'glm-4.5');
+
+      let objective = result.trim();
+      console.log('[Design] Backend: Raw AI response:', objective);
+      
+      // Try to parse JSON from response
+      try {
+        const parsed = JSON.parse(objective);
+        objective = parsed.objective || objective;
+      } catch {
+        // If not valid JSON, use the raw response
+        // Remove any markdown code blocks if present
+        objective = objective.replace(/```json|```/g, '').trim();
+      }
+
+      console.log('[Design] Backend: Returning objective:', objective);
+
+      return {
+        objective,
+        originalMessage: dto.message,
+      };
+    } catch (error) {
+      console.error('[Design] Backend: Error during clarification:', error);
+      // Fallback: return original message if clarification fails
+      return {
+        objective: dto.message,
+        originalMessage: dto.message,
+      };
+    }
   }
 
   // ── Editor actions ───────────────────────────────────────────────────────

@@ -64,3 +64,12 @@ export interface Mem0Memory {
 export const aiMemoriesAtom = atom<Mem0Memory[]>([]);
 export const aiMemoryLoadedAtom = atom<boolean>(false);
 export const aiMemoryErrorAtom = atom<string | null>(null);
+
+// Design mode for agentic flow
+export const aiDesignModeAtom = atom<boolean>(false);
+
+// Thinking content during objective clarification (design mode)
+export const aiDesignClarifyingAtom = atom<string>('');
+
+// LangGraph thread ID for design flow
+export const aiThreadIdAtom = atom<string | null>(null);

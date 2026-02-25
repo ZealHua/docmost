@@ -18,6 +18,7 @@ export class AiSessionResponseDto {
   pageId: string | null;
   userId: string;
   title: string | null;
+  threadId?: string;
   createdAt: string;
   updatedAt: string;
   selectedPageIds?: string[];

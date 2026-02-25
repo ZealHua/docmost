@@ -30,6 +30,7 @@ export interface AiSession {
   pageId: string | null;
   userId: string;
   title: string | null;
+  threadId?: string; // LangGraph thread ID for agentic flows
   createdAt: string;
   updatedAt: string;
   selectedPageIds?: string[];

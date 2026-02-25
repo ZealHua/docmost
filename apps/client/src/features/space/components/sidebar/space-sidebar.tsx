@@ -169,6 +169,7 @@ export function SpaceSidebar() {
                     size={18}
                     onClick={handleCreatePage}
                     aria-label={t("Create page")}
+                    className={classes.headerActionButton}
                   >
                     <IconPlus />
                   </ActionIcon>
@@ -247,6 +248,7 @@ function SpaceMenu({ spaceId, onSpaceSettings }: SpaceMenuProps) {
               variant="default"
               size={18}
               aria-label={t("Space menu")}
+              className={classes.headerActionButton}
             >
               <IconDots />
             </ActionIcon>

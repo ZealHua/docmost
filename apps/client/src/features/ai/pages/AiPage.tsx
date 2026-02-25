@@ -11,6 +11,9 @@ import { AiMessageList } from '../components/AiMessageList';
 import { AiMessageInput } from '../components/AiMessageInput';
 import { AiHistoryPanel } from '../components/AiHistoryPanel';
 import { AiSourceDrawer } from '../components/AiSourceDrawer';
+import { ArtifactPanel } from '../components/artifacts/artifact-panel';
+import { ArtifactHeaderButton } from '../components/artifacts/artifact-header';
+import { ArtifactsProvider } from '../context/artifacts-context';
 import { useAiSessions } from '../hooks/use-ai-sessions';
 import { useAiChat } from '../hooks/use-ai-chat';
 import { useAiPageSearch } from '../hooks/use-ai-page-search';
@@ -137,61 +140,67 @@ export default function AiPage() {
         <title>AI - {getAppName()}</title>
       </Helmet>
 
-      <Box className={styles.container}>
-        {/* Header */}
-        <Box className={styles.header}>
-          <div className={styles.headerControls}>
-            <button
-              className={styles.iconButton}
-              onClick={handleNewChat}
-              title={t('New chat')}
-              disabled={isEmptySession}
-              style={isEmptySession ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
-            >
-              <IconPlus size={18} />
-            </button>
+      <ArtifactsProvider>
+        <Box className={styles.container}>
+          {/* Header */}
+          <Box className={styles.header}>
+            <div className={styles.headerControls}>
+              <button
+                className={styles.iconButton}
+                onClick={handleNewChat}
+                title={t('New chat')}
+                disabled={isEmptySession}
+                style={isEmptySession ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
+              >
+                <IconPlus size={18} />
+              </button>
 
-            <button
-              className={styles.iconButton}
-              onClick={() => setHistoryOpen((o) => !o)}
-              title={t('History')}
-            >
-              <IconHistory size={18} />
-            </button>
+              <button
+                className={styles.iconButton}
+                onClick={() => setHistoryOpen((o) => !o)}
+                title={t('History')}
+              >
+                <IconHistory size={18} />
+              </button>
 
-            <AiHistoryPanel
-              open={historyOpen}
-              onClose={() => setHistoryOpen(false)}
-              sessions={sessions}
-              activeSessionId={activeSession?.id}
-              onSelectSession={handleSelectSession}
-              onNewChat={handleNewChat}
-              onDeleteSession={handleDeleteSession}
-              onRenameSession={handleRenameSession}
-            />
-          </div>
-        </Box>
+              <ArtifactHeaderButton />
 
-        {/* Scrollable message list */}
-        <Box className={styles.messageArea}>
-          <Box className={styles.messageAreaInner}>
-            <AiMessageList />
-          </Box>
-        </Box>
-
-        {/* Input bar */}
-        <Box className={styles.inputArea}>
-          <Box className={styles.inputInner}>
-            <AiMessageInput workspaceId={workspaceId} />
-            <div className={styles.footerNote}>
-              {t('AI may make mistakes. Always verify important information.')}
+              <AiHistoryPanel
+                open={historyOpen}
+                onClose={() => setHistoryOpen(false)}
+                sessions={sessions}
+                activeSessionId={activeSession?.id}
+                onSelectSession={handleSelectSession}
+                onNewChat={handleNewChat}
+                onDeleteSession={handleDeleteSession}
+                onRenameSession={handleRenameSession}
+              />
             </div>
           </Box>
+
+          <ArtifactPanel sessionId={activeSession?.id || ''}>
+            {/* Scrollable message list */}
+            <Box className={styles.messageArea}>
+              <Box className={styles.messageAreaInner}>
+                <AiMessageList />
+              </Box>
+            </Box>
+
+            {/* Input bar */}
+            <Box className={styles.inputArea}>
+              <Box className={styles.inputInner}>
+                <AiMessageInput workspaceId={workspaceId} />
+                <div className={styles.footerNote}>
+                  {t('AI may make mistakes. Always verify important information.')}
+                </div>
+              </Box>
+            </Box>
+          </ArtifactPanel>
+          
+          {/* Global Overlays */}
+          <AiSourceDrawer />
         </Box>
-        
-        {/* Global Overlays */}
-        <AiSourceDrawer />
-      </Box>
+      </ArtifactsProvider>
     </>
   );
 }

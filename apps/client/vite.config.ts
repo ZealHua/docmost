@@ -16,6 +16,10 @@ export default defineConfig(({ mode }) => {
     BILLING_TRIAL_DAYS,
     POSTHOG_HOST,
     POSTHOG_KEY,
+    NEXT_PUBLIC_LANGGRAPH_BASE_URL,
+    LANGGRAPH_ASSISTANT_ID,
+    LANGGRAPH_MODEL_NAME,
+    LANGGRAPH_THINKING_ENABLED,
   } = loadEnv(mode, envPath, "");
 
   return {
@@ -31,6 +35,10 @@ export default defineConfig(({ mode }) => {
         BILLING_TRIAL_DAYS,
         POSTHOG_HOST,
         POSTHOG_KEY,
+        NEXT_PUBLIC_LANGGRAPH_BASE_URL,
+        LANGGRAPH_ASSISTANT_ID,
+        LANGGRAPH_MODEL_NAME,
+        LANGGRAPH_THINKING_ENABLED,
       },
       APP_VERSION: JSON.stringify(process.env.npm_package_version),
     },

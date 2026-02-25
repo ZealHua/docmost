@@ -1,9 +1,10 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { ActionIcon, Box, Select, Switch, Popover, TextInput, List, Badge, Button, Group } from '@mantine/core';
-import { IconPlayerStop, IconSend, IconPlus, IconSearch, IconAdjustments, IconX } from '@tabler/icons-react';
+import { IconPlayerStop, IconSend, IconPlus, IconSearch, IconAdjustments, IconX, IconSparkles } from '@tabler/icons-react';
 import { useAtom, useAtomValue } from 'jotai';
-import { aiIsStreamingAtom, aiSelectedModelAtom, aiThinkingAtom, aiSelectedPagesAtom, aiWebSearchEnabledAtom } from '../store/ai.atoms';
+import { aiIsStreamingAtom, aiSelectedModelAtom, aiThinkingAtom, aiSelectedPagesAtom, aiWebSearchEnabledAtom, aiDesignModeAtom, aiDesignClarifyingAtom } from '../store/ai.atoms';
 import { useAiChat } from '../hooks/use-ai-chat';
+import { useDesignChat } from '../hooks/use-design-chat';
 import { useAiPageSearch, AiPageSearchResult } from '../hooks/use-ai-page-search';
 import { useSpaceQuery } from '@/features/space/queries/space-query';
 import { useParams } from 'react-router-dom';
@@ -26,8 +27,11 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
   const [thinking, setThinking] = useAtom(aiThinkingAtom);
   const [webSearchEnabled, setWebSearchEnabled] = useAtom(aiWebSearchEnabledAtom);
   const [selectedPages, setSelectedPages] = useAtom(aiSelectedPagesAtom);
+  const [designMode, setDesignMode] = useAtom(aiDesignModeAtom);
+  const [designClarifying, setDesignClarifying] = useAtom(aiDesignClarifyingAtom);
   
   const { sendMessage, stopStream } = useAiChat(workspaceId);
+  const { sendDesignMessage, isStreaming: designStreaming } = useDesignChat();
   const [value, setValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
@@ -59,10 +63,21 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
 
   const handleSend = useCallback(() => {
     const trimmed = value.trim();
-    if (!trimmed || isStreaming) return;
-    sendMessage(trimmed);
+    console.log('[Input] handleSend: designMode=', designMode, 'isStreaming=', isStreaming, 'designStreaming=', designStreaming, 'value=', trimmed.slice(0, 50));
+    if (!trimmed || isStreaming || designStreaming) {
+      console.log('[Input] Blocked — empty:', !trimmed, 'streaming:', isStreaming, 'designStreaming:', designStreaming);
+      return;
+    }
+
+    if (designMode) {
+      console.log('[Input] Routing to design flow');
+      sendDesignMessage(trimmed);
+    } else {
+      console.log('[AI] Calling regular chat flow...');
+      sendMessage(trimmed);
+    }
     setValue('');
-  }, [value, isStreaming, sendMessage]);
+  }, [value, isStreaming, designStreaming, designMode, sendMessage, sendDesignMessage]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -186,6 +201,32 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
                 </Box>
               </Popover.Dropdown>
             </Popover>
+
+            {designMode ? (
+              <Badge
+                variant="light"
+                color="violet"
+                size="sm"
+                className={styles.designPill}
+                onClick={() => {
+                  console.log('[Design] Deactivating design mode');
+                  setDesignMode(false);
+                }}
+                style={{ cursor: 'pointer' }}
+              >
+                Web Design ✕
+              </Badge>
+            ) : (
+              <button
+                className={styles.designButton}
+                onClick={() => {
+                  console.log('[Design] Activating design mode');
+                  setDesignMode(true);
+                }}
+              >
+                Web Design
+              </button>
+            )}
           </div>
 
           <div className={styles.toolbarRight}>

@@ -241,6 +241,22 @@
   );
 }
 
+.headerActionButton {
+  transition: all 0.18s ease;
+  
+  &:hover {
+    background: light-dark(
+      rgba(147, 112, 255, 0.08),
+      rgba(147, 112, 255, 0.12)
+    );
+    border-color: light-dark(
+      rgba(147, 112, 255, 0.3),
+      rgba(147, 112, 255, 0.3)
+    );
+    box-shadow: 0 0 8px rgba(147, 112, 255, 0.15);
+  }
+}
+
 /* ─── Page link ──────────────────────────────────────────────────────────── */
 
 .pageLink {
