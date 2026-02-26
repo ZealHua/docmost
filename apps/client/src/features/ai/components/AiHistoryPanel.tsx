@@ -230,16 +230,16 @@ export function AiHistoryPanel({
                             onClick={(e) => e.stopPropagation()}
                           />
                         ) : (
-                          <>
-                            <div className={styles.sessionTitle}>
+                          <div className={styles.sessionTitleRow}>
+                            <span className={styles.sessionTitle}>
                               {session.title || t('New chat')}
-                            </div>
-                            <div className={styles.sessionTime}>
+                            </span>
+                            <span className={styles.sessionTime}>
                               {category === 'older' 
                                 ? formatSessionDate(session.updatedAt) 
                                 : formatRelativeTime(session.updatedAt, t)}
-                            </div>
-                          </>
+                            </span>
+                          </div>
                         )}
                       </div>
                       <div className={styles.sessionActions}>
