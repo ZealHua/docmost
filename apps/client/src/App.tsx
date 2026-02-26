@@ -83,6 +83,7 @@ export default function App() {
           <Route path={"/s/:spaceSlug"} element={<SpaceHome />} />
           <Route path={"/s/:spaceSlug/trash"} element={<SpaceTrash />} />
           <Route path={"/s/:spaceSlug/ai"} element={<AiPage />} />
+          <Route path={"/s/:spaceSlug/ai/:sessionId"} element={<AiPage />} />
           <Route
             path={"/s/:spaceSlug/p/:pageSlug"}
             element={<Page />}

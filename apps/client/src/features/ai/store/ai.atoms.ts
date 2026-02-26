@@ -1,6 +1,6 @@
 import { atom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
-import { AiMessage, AiSession, RagSource } from '../types/ai-chat.types';
+import { AiMessage, AiSession, RagSource, Todo, SubtaskEvent } from '../types/ai-chat.types';
 import { AiPageSearchResult } from '../hooks/use-ai-page-search';
 
 // Active session (writable atom)
@@ -68,8 +68,11 @@ export const aiMemoryErrorAtom = atom<string | null>(null);
 // Design mode for agentic flow
 export const aiDesignModeAtom = atom<boolean>(false);
 
-// Thinking content during objective clarification (design mode)
-export const aiDesignClarifyingAtom = atom<string>('');
-
 // LangGraph thread ID for design flow
 export const aiThreadIdAtom = atom<string | null>(null);
+
+// LangGraph agent todos (from thread state)
+export const aiTodosAtom = atom<Todo[]>([]);
+
+// Real-time subtask progress from custom SSE events
+export const aiSubtaskProgressAtom = atom<SubtaskEvent[]>([]);

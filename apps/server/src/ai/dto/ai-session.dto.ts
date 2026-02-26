@@ -12,6 +12,12 @@ export class UpdateAiSessionTitleDto {
   title: string;
 }
 
+export class UpdateAiSessionThreadIdDto {
+  @IsString()
+  @IsNotEmpty()
+  threadId: string;
+}
+
 export class AiSessionResponseDto {
   id: string;
   workspaceId: string;

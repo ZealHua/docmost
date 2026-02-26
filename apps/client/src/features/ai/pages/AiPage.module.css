@@ -1,11 +1,12 @@
 .container {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: calc(100dvh - 2 * var(--app-shell-padding));
   margin: 0 auto;
   width: 100%;
   max-width: 100%;
   position: relative;
+  overflow: hidden;
 }
 
 .header {
@@ -48,6 +49,8 @@
 
 .messageArea {
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   position: relative;
   z-index: 1;
   padding: 2rem 1.75rem 1.5rem;
@@ -55,6 +58,7 @@
 
 .messageAreaInner {
   max-width: 100%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -70,6 +74,7 @@
 
 .inputInner {
   max-width: 100%;
+  min-width: 0;
 }
 
 .footerNote {

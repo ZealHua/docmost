@@ -85,4 +85,12 @@ export class AiSessionRepo {
       .where('id', '=', id)
       .execute();
   }
+
+  async updateThreadId(id: string, threadId: string): Promise<void> {
+    await this.db
+      .updateTable('aiSessions')
+      .set({ threadId, updatedAt: new Date() })
+      .where('id', '=', id)
+      .execute();
+  }
 }

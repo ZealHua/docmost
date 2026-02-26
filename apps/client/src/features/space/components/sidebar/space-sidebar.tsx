@@ -131,7 +131,7 @@ export function SpaceSidebar() {
               to={`/s/${spaceSlug}/ai`}
               className={clsx(
                 classes.menu,
-                location.pathname === `/s/${spaceSlug}/ai`
+                location.pathname.startsWith(`/s/${spaceSlug}/ai`)
                   ? classes.activeButton
                   : "",
               )}

@@ -24,40 +24,41 @@ interface StreamOptions {
  *   { type: 'chunk',   data: string }        — text delta
  *   { type: 'error',   data: string }        — error message
  *
- * Returns an AbortController — call .abort() to cancel the stream.
+ * Returns an AbortController immediately — call .abort() to cancel the stream.
  */
-export async function streamAiChat(
+export function streamAiChat(
   messages: Array<{ role: 'user' | 'assistant'; content: string }>,
   callbacks: StreamCallbacks,
   options?: StreamOptions,
-): Promise<AbortController> {
+): AbortController {
   const abortController = new AbortController();
 
-  try {
-    const response = await fetch('/api/ai/chat/stream', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messages,
-        sessionId: options?.sessionId,
-        model: options?.model,
-        thinking: options?.thinking,
-        selectedPageIds: options?.selectedPageIds,
-        isWebSearchEnabled: options?.isWebSearchEnabled,
-      }),
-      signal: abortController.signal,
-      credentials: 'include',
-    });
+  // Fire-and-forget the stream processing — we return the controller synchronously
+  (async () => {
+    try {
+      const response = await fetch('/api/ai/chat/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages,
+          sessionId: options?.sessionId,
+          model: options?.model,
+          thinking: options?.thinking,
+          selectedPageIds: options?.selectedPageIds,
+          isWebSearchEnabled: options?.isWebSearchEnabled,
+        }),
+        signal: abortController.signal,
+        credentials: 'include',
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => response.statusText);
-      throw new Error(`HTTP ${response.status}: ${errorText}`);
-    }
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => response.statusText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
 
-    const reader = response.body?.getReader();
-    const decoder = new TextDecoder();
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
 
-    const processStream = async () => {
       let buffer = '';
       try {
         while (true) {
@@ -86,7 +87,7 @@ export async function streamAiChat(
                 callbacks.onThinking(event.data as string);
               } else if (event.type === 'error') {
                 callbacks.onError(event.data as string);
-                return; // Stop processing on error
+                return;
               } else if (event.type === 'memory') {
                 const memoryData = event.data as { enabled?: boolean; loaded?: boolean };
                 callbacks.onMemory?.({ enabled: !!memoryData.enabled, loaded: !!memoryData.loaded });
@@ -101,17 +102,17 @@ export async function streamAiChat(
           console.error('Stream error:', err);
           callbacks.onError(err.message);
         }
+        // AbortError → user cancelled, no callback needed
       } finally {
         reader?.releaseLock();
       }
-    };
-
-    // Await the stream processing to ensure errors are caught
-    await processStream();
-  } catch (err: any) {
-    console.error('Fetch error:', err);
-    callbacks.onError(err.message);
-  }
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        console.error('Fetch error:', err);
+        callbacks.onError(err.message);
+      }
+    }
+  })();
 
   return abortController;
 }

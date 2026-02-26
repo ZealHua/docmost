@@ -27,8 +27,8 @@ import { PageRepo } from '@docmost/db/repos/page/page.repo';
 import { AiGenerateDto } from './dto/ai-generate.dto';
 import { AiChatDto } from './dto/ai-chat.dto';
 import { AiPageSearchDto } from './dto/ai-page-search.dto';
-import { CreateAiSessionDto, UpdateAiSessionTitleDto, AiSessionResponseDto, AiMessageResponseDto } from './dto/ai-session.dto';
-import { ClarifyObjectiveDto, ClarifyObjectiveResponseDto } from './dto/ai-clarify.dto';
+import { CreateAiSessionDto, UpdateAiSessionTitleDto, UpdateAiSessionThreadIdDto, AiSessionResponseDto, AiMessageResponseDto } from './dto/ai-session.dto';
+
 import { buildEditorSystemPrompt } from './utils/prompt.utils';
 import { Mem0Service } from '@/mem0/mem0.service';
 
@@ -72,6 +72,7 @@ export class AiController {
       pageId: session.pageId,
       userId: session.userId,
       title: session.title,
+      threadId: session.threadId || undefined,
       createdAt: session.createdAt.toISOString(),
       updatedAt: session.updatedAt.toISOString(),
       selectedPageIds: session.selectedPageIds || [],
@@ -207,6 +208,25 @@ export class AiController {
   }
 
   /**
+   * Update session thread ID (LangGraph thread).
+   */
+  @Patch('sessions/:id/thread')
+  async updateSessionThreadId(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateAiSessionThreadIdDto,
+    @AuthUser() user: any,
+    @AuthWorkspace() workspace: any,
+  ): Promise<AiSessionResponseDto> {
+    const session = await this.sessionRepo.findById(id);
+    if (!session || session.workspaceId !== workspace.id || session.userId !== user.id) {
+      throw new NotFoundException('Session not found');
+    }
+    await this.sessionRepo.updateThreadId(id, dto.threadId);
+    const updated = await this.sessionRepo.findById(id);
+    return this.mapSessionToResponse(updated);
+  }
+
+  /**
    * Automatically generate and update session title.
    */
   @Post('sessions/:id/auto-title')
@@ -275,65 +295,7 @@ export class AiController {
     return this.mapMessageToResponse(message);
   }
 
-  // ── Design mode: Objective clarification ─────────────────────────────────
 
-  /**
-   * Clarify the user's objective for design mode.
-   * Uses AI to refine and clarify the user's intent before sending to LangGraph.
-   */
-  @Post('clarify-objective')
-  async clarifyObjective(
-    @Body() dto: ClarifyObjectiveDto,
-  ): Promise<ClarifyObjectiveResponseDto> {
-    console.log('[Design] Backend: Received clarify-objective request:', dto.message);
-
-    const prompt = `You are an AI design assistant. The user wants to create a website or web application.
-Analyze their request and provide a clear, actionable objective statement.
-If the request is already clear, refine it to be more specific and actionable.
-Focus on the end goal and key requirements.
-
-User's message: ${dto.message}
-
-Respond with a JSON object containing:
-{
-  "objective": "A clear, actionable objective statement"
-}
-
-Only respond with the JSON object, nothing else.`;
-
-    try {
-      console.log('[Design] Backend: Calling AI provider for clarification...');
-      const provider = this.orchestrator.getProvider('glm-4.5');
-      const result = await provider.generateText(prompt, dto.message, 'glm-4.5');
-
-      let objective = result.trim();
-      console.log('[Design] Backend: Raw AI response:', objective);
-      
-      // Try to parse JSON from response
-      try {
-        const parsed = JSON.parse(objective);
-        objective = parsed.objective || objective;
-      } catch {
-        // If not valid JSON, use the raw response
-        // Remove any markdown code blocks if present
-        objective = objective.replace(/```json|```/g, '').trim();
-      }
-
-      console.log('[Design] Backend: Returning objective:', objective);
-
-      return {
-        objective,
-        originalMessage: dto.message,
-      };
-    } catch (error) {
-      console.error('[Design] Backend: Error during clarification:', error);
-      // Fallback: return original message if clarification fails
-      return {
-        objective: dto.message,
-        originalMessage: dto.message,
-      };
-    }
-  }
 
   // ── Editor actions ───────────────────────────────────────────────────────
 

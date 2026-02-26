@@ -10,8 +10,19 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
+  gap: 8px;
   border-bottom: 1px solid light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-4));
   background: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6));
+  flex-wrap: wrap;
+}
+
+.headerLeft {
+  flex: 1;
+  min-width: 0;
+}
+
+.headerRight {
+  flex-shrink: 0;
 }
 
 .content {

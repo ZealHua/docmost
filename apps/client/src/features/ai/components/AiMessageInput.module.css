@@ -4,6 +4,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  min-width: 0;
   border-radius: 18px;
   border: 1px solid light-dark(rgba(147, 112, 255, 0.18), rgba(147, 112, 255, 0.14));
   background: light-dark(rgba(250, 248, 255, 0.9), rgba(15, 11, 31, 0.85));
@@ -156,6 +157,7 @@
   padding: 4px 4px 0;
   position: relative;
   z-index: 1;
+  min-width: 0;
 }
 
 /* Toolbar top-divider — same .divider gradient */
@@ -271,6 +273,7 @@
 
 .inputWrapper {
   position: relative;
+  min-width: 0;
 }
 
 .iconButton {
@@ -374,10 +377,14 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  min-width: 0;
+  flex-shrink: 1;
 }
 
 .toolbarRight {
   display: flex;
   align-items: center;
   gap: 4px;
+  min-width: 0;
+  flex-shrink: 0;
 }

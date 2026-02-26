@@ -134,6 +134,8 @@
   display: flex;
   align-items: flex-end;
   gap: 10px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .messageRow.user {
@@ -225,6 +227,7 @@
 
 .bubble {
   max-width: 68%;
+  min-width: 0;
   padding: 13px 17px;
   border-radius: 18px;
   font-size: 14px;
@@ -468,3 +471,40 @@
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+/* ─── Present Files group ───────────────────────────────────────────────── */
+
+.filesList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.fileChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: var(--mantine-font-family-monospace);
+  background: light-dark(rgba(147, 112, 255, 0.07), rgba(147, 112, 255, 0.12));
+  border: 1px solid light-dark(rgba(147, 112, 255, 0.2), rgba(147, 112, 255, 0.25));
+  color: light-dark(rgba(109, 40, 217, 0.8), rgba(196, 176, 255, 0.7));
+}
+
+/* ─── Clarification badge ───────────────────────────────────────────────── */
+
+.clarificationBadge {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: light-dark(rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.15));
+  color: light-dark(rgb(180, 120, 10), rgb(245, 200, 100));
+  border: 1px solid light-dark(rgba(245, 158, 11, 0.25), rgba(245, 158, 11, 0.3));
+}
+

@@ -29,7 +29,7 @@ export function ArtifactsProvider({ children }: ArtifactsProviderProps) {
   const [artifacts, setArtifacts] = useState<string[]>([]);
   const [selectedArtifact, setSelectedArtifact] = useState<string | null>(null);
   const [autoSelect, setAutoSelect] = useState(true);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const [autoOpen, setAutoOpen] = useState(true);
 
   const artifactPanelOpen = useMemo(() => {

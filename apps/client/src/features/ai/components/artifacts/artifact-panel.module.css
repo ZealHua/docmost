@@ -1,6 +1,7 @@
 .panelGroup {
   display: flex;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   width: 100%;
 }
 
@@ -8,6 +9,7 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  overflow: hidden;
 }
 
 .artifactPanel {
@@ -16,13 +18,55 @@
   min-width: 0;
   background: var(--mantine-color-body);
   border-left: 1px solid light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-4));
+  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+.artifactPanelHidden {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .artifactContent {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+}
+
+.closeButton {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 30;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 20px;
+}
+
+.listContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding-top: 8px;
+}
+
+.listHeader {
+  flex-shrink: 0;
+  padding: 8px 16px;
+}
+
+.listBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 12px;
 }
 
 .handle {

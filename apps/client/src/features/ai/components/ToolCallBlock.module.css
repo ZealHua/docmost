@@ -1,0 +1,100 @@
+.container {
+  border: 1px solid var(--mantine-color-dark-4);
+  border-radius: 6px;
+  margin: 4px 0;
+  overflow: hidden;
+  background: var(--mantine-color-dark-7);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  width: 100%;
+  border: none;
+  background: none;
+  color: var(--mantine-color-dimmed);
+  cursor: pointer;
+  font-size: 12px;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.header:hover {
+  background: var(--mantine-color-dark-6);
+}
+
+.toolIcon {
+  color: var(--mantine-color-violet-5);
+  flex-shrink: 0;
+}
+
+.toolName {
+  font-family: var(--mantine-font-family-monospace);
+  font-weight: 500;
+  color: var(--mantine-color-gray-3);
+}
+
+.chevron {
+  margin-left: auto;
+  color: var(--mantine-color-dimmed);
+}
+
+.spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--mantine-color-dark-4);
+  border-top-color: var(--mantine-color-violet-5);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.successIcon {
+  color: var(--mantine-color-green-5);
+}
+
+.errorIcon {
+  color: var(--mantine-color-red-5);
+}
+
+.details {
+  border-top: 1px solid var(--mantine-color-dark-4);
+  padding: 8px 10px;
+}
+
+.section {
+  margin-bottom: 6px;
+}
+
+.section:last-child {
+  margin-bottom: 0;
+}
+
+.sectionLabel {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--mantine-color-dimmed);
+  margin-bottom: 4px;
+}
+
+.code {
+  font-family: var(--mantine-font-family-monospace);
+  font-size: 11px;
+  color: var(--mantine-color-gray-4);
+  background: var(--mantine-color-dark-8);
+  padding: 6px 8px;
+  border-radius: 4px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 0;
+  max-height: 200px;
+  overflow-y: auto;
+}

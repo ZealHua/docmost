@@ -1,5 +1,15 @@
 import { useMemo, useState, useCallback } from 'react';
-import { Box, Group, ActionIcon, Text, ScrollArea, Tooltip, Loader } from '@mantine/core';
+import {
+  Box,
+  Group,
+  ActionIcon,
+  Text,
+  ScrollArea,
+  Tooltip,
+  Loader,
+  Select,
+  SegmentedControl,
+} from '@mantine/core';
 import {
   IconX,
   IconCopy,
@@ -19,6 +29,7 @@ import {
   urlOfArtifact,
 } from '../../lib/artifact-utils';
 import { useArtifacts } from '../../context/artifacts-context';
+import { useArtifactContent } from '../../hooks/use-artifact-content';
 
 import styles from './artifact-file-detail.module.css';
 
@@ -28,10 +39,8 @@ interface ArtifactFileDetailProps {
 
 export function ArtifactFileDetail({ sessionId }: ArtifactFileDetailProps) {
   const { t } = useTranslation();
-  const { selectedArtifact, deselect } = useArtifacts();
+  const { selectedArtifact, deselect, artifacts, select } = useArtifacts();
   const [copied, setCopied] = useState(false);
-  const [content, setContent] = useState<string>('');
-  const [loading, setLoading] = useState(false);
 
   const filepath = selectedArtifact;
 
@@ -69,15 +78,29 @@ export function ArtifactFileDetail({ sessionId }: ArtifactFileDetailProps) {
     return isPreviewable(filepath) && !isWriteFile;
   }, [filepath, isWriteFile]);
 
-  const viewMode = useMemo(() => {
-    if (previewable) return 'preview';
-    return 'code';
-  }, [previewable]);
+  // View mode: user-toggleable for previewable files
+  const [viewMode, setViewMode] = useState<'code' | 'preview'>('preview');
+
+  // Reset view mode when file changes
+  useMemo(() => {
+    setViewMode(previewable ? 'preview' : 'code');
+  }, [filepath, previewable]);
 
   const artifactUrl = useMemo(() => {
     if (!actualPath || !sessionId) return '';
     return urlOfArtifact({ filepath: actualPath, sessionId });
   }, [actualPath, sessionId]);
+
+  // Fetch content via React Query
+  const {
+    content,
+    isLoading: loading,
+    error,
+  } = useArtifactContent({
+    filepath: actualPath || '',
+    sessionId,
+    enabled: !!actualPath && viewMode === 'code',
+  });
 
   const handleCopy = useCallback(async () => {
     if (!content) return;
@@ -99,12 +122,20 @@ export function ArtifactFileDetail({ sessionId }: ArtifactFileDetailProps) {
     }
   }, [actualPath, sessionId]);
 
+  // File selector data for the dropdown
+  const selectorData = useMemo(() => {
+    return artifacts.map((f) => ({
+      value: f,
+      label: getFileName(f),
+    }));
+  }, [artifacts]);
+
   if (!filepath || !actualPath) {
     return (
       <Box className={styles.container}>
         <Box className={styles.empty}>
           <Text size="sm" c="dimmed">
-            Select a file to preview
+            {t('Select a file to preview')}
           </Text>
         </Box>
       </Box>
@@ -114,16 +145,44 @@ export function ArtifactFileDetail({ sessionId }: ArtifactFileDetailProps) {
   return (
     <Box className={styles.container}>
       <Box className={styles.header}>
-        <Group gap="xs">
-          <Text size="sm" fw={500} lineClamp={1}>
-            {getFileName(actualPath)}
-          </Text>
+        <Group gap="xs" className={styles.headerLeft}>
+          {/* File selector dropdown */}
+          {artifacts.length > 1 ? (
+            <Select
+              data={selectorData}
+              value={filepath}
+              onChange={(val) => val && select(val)}
+              size="xs"
+              w={180}
+              comboboxProps={{ withinPortal: false }}
+              styles={{
+                input: { fontWeight: 500 },
+              }}
+            />
+          ) : (
+            <Text size="sm" fw={500} lineClamp={1}>
+              {getFileName(actualPath)}
+            </Text>
+          )}
           <Text size="xs" c="dimmed">
             {language}
           </Text>
         </Group>
 
-        <Group gap={4}>
+        <Group gap={4} className={styles.headerRight}>
+          {/* Code / Preview toggle for previewable files */}
+          {previewable && (
+            <SegmentedControl
+              size="xs"
+              data={[
+                { label: t('Preview'), value: 'preview' },
+                { label: t('Code'), value: 'code' },
+              ]}
+              value={viewMode}
+              onChange={(val) => setViewMode(val as 'code' | 'preview')}
+            />
+          )}
+
           <Tooltip label={t('Open in new tab')}>
             <ActionIcon variant="subtle" size="sm" onClick={handleOpenInNewTab}>
               <IconExternalLink size={16} />
@@ -159,18 +218,19 @@ export function ArtifactFileDetail({ sessionId }: ArtifactFileDetailProps) {
           </Box>
         )}
 
-        {!loading && viewMode === 'code' && (
-          <CodeViewer
-            content={content}
-            language={language}
-            onContentLoad={setContent}
-            onLoadStart={() => setLoading(true)}
-            onLoadEnd={() => setLoading(false)}
-            url={artifactUrl}
-          />
+        {error && (
+          <Box className={styles.loading}>
+            <Text size="sm" c="red">
+              {t('Failed to load artifact')}
+            </Text>
+          </Box>
         )}
 
-        {!loading && viewMode === 'preview' && (
+        {!loading && !error && viewMode === 'code' && (
+          <CodeViewer content={content} language={language} />
+        )}
+
+        {!loading && !error && viewMode === 'preview' && (
           <PreviewViewer url={artifactUrl} language={language} />
         )}
       </ScrollArea>
@@ -181,28 +241,10 @@ export function ArtifactFileDetail({ sessionId }: ArtifactFileDetailProps) {
 interface CodeViewerProps {
   content: string;
   language: string;
-  url: string;
-  onContentLoad: (content: string) => void;
-  onLoadStart: () => void;
-  onLoadEnd: () => void;
 }
 
-function CodeViewer({ content, language, url, onContentLoad, onLoadStart, onLoadEnd }: CodeViewerProps) {
+function CodeViewer({ content, language }: CodeViewerProps) {
   const isMarkdown = language === 'markdown';
-
-  if (!content && url) {
-    return (
-      <Box className={styles.codeWrapper}>
-        <iframe
-          src={url}
-          className={styles.iframe}
-          sandbox="allow-same-origin"
-          title="Code preview"
-          onLoad={() => onLoadEnd()}
-        />
-      </Box>
-    );
-  }
 
   if (isMarkdown) {
     return (

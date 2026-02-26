@@ -56,8 +56,10 @@ export function useAiChat(workspaceId?: string) {
     setActiveSession(newSession);
     setMemories(memories || []);
     setMemoryLoaded(memories && memories.length > 0);
+    // Invalidate sessions cache so history panel shows the new session
+    queryClient.invalidateQueries({ queryKey: ['ai-sessions'] });
     return newSession.id;
-  }, [activeSession, workspaceId, setActiveSession, setMemories, setMemoryLoaded]);
+  }, [activeSession, workspaceId, setActiveSession, setMemories, setMemoryLoaded, queryClient]);
 
   const sendMessage = useCallback(
     async (content: string) => {
@@ -88,7 +90,7 @@ export function useAiChat(workspaceId?: string) {
       let collectedContent = '';
       let collectedThinking = '';
 
-      abortRef.current = await streamAiChat(
+      abortRef.current = streamAiChat(
         history,
         {
           onSources: (sources) => {
@@ -118,6 +120,9 @@ export function useAiChat(workspaceId?: string) {
             setMessages((prev) => [...prev, errorMessage]);
           },
           onComplete: async () => {
+            // Guard: if user pressed stop, don't add the partial message
+            if (abortRef.current?.signal.aborted) return;
+
             const assistantMessage: AiMessage = {
               id: crypto.randomUUID(),
               role: 'assistant',
@@ -176,7 +181,9 @@ export function useAiChat(workspaceId?: string) {
   const stopStream = useCallback(() => {
     abortRef.current?.abort();
     setIsStreaming(false);
-  }, [setIsStreaming]);
+    setStreamingContent('');
+    setStreamingThinking('');
+  }, [setIsStreaming, setStreamingContent, setStreamingThinking]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);

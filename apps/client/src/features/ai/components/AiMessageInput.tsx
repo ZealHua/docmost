@@ -2,7 +2,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import { ActionIcon, Box, Select, Switch, Popover, TextInput, List, Badge, Button, Group } from '@mantine/core';
 import { IconPlayerStop, IconSend, IconPlus, IconSearch, IconAdjustments, IconX, IconSparkles } from '@tabler/icons-react';
 import { useAtom, useAtomValue } from 'jotai';
-import { aiIsStreamingAtom, aiSelectedModelAtom, aiThinkingAtom, aiSelectedPagesAtom, aiWebSearchEnabledAtom, aiDesignModeAtom, aiDesignClarifyingAtom } from '../store/ai.atoms';
+import { aiIsStreamingAtom, aiSelectedModelAtom, aiThinkingAtom, aiSelectedPagesAtom, aiWebSearchEnabledAtom, aiDesignModeAtom } from '../store/ai.atoms';
 import { useAiChat } from '../hooks/use-ai-chat';
 import { useDesignChat } from '../hooks/use-design-chat';
 import { useAiPageSearch, AiPageSearchResult } from '../hooks/use-ai-page-search';
@@ -28,10 +28,10 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
   const [webSearchEnabled, setWebSearchEnabled] = useAtom(aiWebSearchEnabledAtom);
   const [selectedPages, setSelectedPages] = useAtom(aiSelectedPagesAtom);
   const [designMode, setDesignMode] = useAtom(aiDesignModeAtom);
-  const [designClarifying, setDesignClarifying] = useAtom(aiDesignClarifyingAtom);
+
   
   const { sendMessage, stopStream } = useAiChat(workspaceId);
-  const { sendDesignMessage, isStreaming: designStreaming } = useDesignChat();
+  const { sendDesignMessage, stop: stopDesign, isStreaming: designStreaming } = useDesignChat();
   const [value, setValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
@@ -63,17 +63,11 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
 
   const handleSend = useCallback(() => {
     const trimmed = value.trim();
-    console.log('[Input] handleSend: designMode=', designMode, 'isStreaming=', isStreaming, 'designStreaming=', designStreaming, 'value=', trimmed.slice(0, 50));
-    if (!trimmed || isStreaming || designStreaming) {
-      console.log('[Input] Blocked — empty:', !trimmed, 'streaming:', isStreaming, 'designStreaming:', designStreaming);
-      return;
-    }
+    if (!trimmed || isStreaming || designStreaming) return;
 
     if (designMode) {
-      console.log('[Input] Routing to design flow');
       sendDesignMessage(trimmed);
     } else {
-      console.log('[AI] Calling regular chat flow...');
       sendMessage(trimmed);
     }
     setValue('');
@@ -208,10 +202,7 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
                 color="violet"
                 size="sm"
                 className={styles.designPill}
-                onClick={() => {
-                  console.log('[Design] Deactivating design mode');
-                  setDesignMode(false);
-                }}
+                onClick={() => setDesignMode(false)}
                 style={{ cursor: 'pointer' }}
               >
                 Web Design ✕
@@ -219,10 +210,7 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
             ) : (
               <button
                 className={styles.designButton}
-                onClick={() => {
-                  console.log('[Design] Activating design mode');
-                  setDesignMode(true);
-                }}
+                onClick={() => setDesignMode(true)}
               >
                 Web Design
               </button>
@@ -274,10 +262,13 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
               </Popover.Dropdown>
             </Popover>
 
-            {isStreaming ? (
+            {(isStreaming || designStreaming) ? (
               <ActionIcon
                 className={`${styles.sendButton} ${styles.stop}`}
-                onClick={stopStream}
+                onClick={() => {
+                  if (designStreaming) stopDesign();
+                  else stopStream();
+                }}
                 aria-label={t('Stop generating')}
                 size="lg"
                 radius="xl"

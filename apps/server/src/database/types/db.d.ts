@@ -40,6 +40,7 @@ export interface AiSessions {
   id: Generated<string>;
   pageId: string | null;
   selectedPageIds: Generated<Json | null>;
+  threadId: string | null;
   title: string | null;
   updatedAt: Generated<Timestamp>;
   userId: string;
