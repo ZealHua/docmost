@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Box } from "@mantine/core";
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import { Box, ActionIcon } from "@mantine/core";
+import { IconChevronDown, IconChevronUp } from "@tabler/icons-react";
 import { useAtomValue } from "jotai";
 import {
   aiIsStreamingAtom,
@@ -33,6 +34,60 @@ function TypingIndicator() {
   );
 }
 
+const MAX_LINES = 5;
+const LINE_HEIGHT = 22; // Approximate line height in pixels
+
+function UserMessageBubble({
+  content,
+  messageId,
+}: {
+  content: string;
+  messageId: string;
+}) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [shouldShowExpand, setShouldShowExpand] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (contentRef.current) {
+      const height = contentRef.current.scrollHeight;
+      const maxHeight = MAX_LINES * LINE_HEIGHT;
+      setShouldShowExpand(height > maxHeight);
+    }
+  }, [content]);
+
+  const toggleExpand = useCallback(() => {
+    setIsExpanded((prev) => !prev);
+  }, []);
+
+  return (
+    <div className={`${styles.bubble} ${styles.user}`}>
+      <span className={styles.bubbleShimmer} />
+      <div
+        ref={contentRef}
+        className={`${styles.bubbleContent} ${!isExpanded && shouldShowExpand ? styles.collapsed : ""}`}
+      >
+        {content}
+      </div>
+      {shouldShowExpand && (
+        <ActionIcon
+          size="xs"
+          variant="subtle"
+          onClick={toggleExpand}
+          className={styles.expandButton}
+          aria-label={isExpanded ? "Collapse" : "Expand"}
+        >
+          {isExpanded ? (
+            <IconChevronUp size={14} />
+          ) : (
+            <IconChevronDown size={14} />
+          )}
+        </ActionIcon>
+      )}
+    </div>
+  );
+}
+
 function RenderHumanGroup({
   group,
   user,
@@ -58,10 +113,7 @@ function RenderHumanGroup({
               />
             </div>
           </div>
-          <div className={`${styles.bubble} ${styles.user}`}>
-            <span className={styles.bubbleShimmer} />
-            {msg.content}
-          </div>
+          <UserMessageBubble content={msg.content} messageId={msg.id} />
         </div>
       ))}
     </>
