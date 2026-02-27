@@ -295,6 +295,30 @@ export class AiController {
     return this.mapMessageToResponse(message);
   }
 
+  /**
+   * Truncate messages from a specific message onwards.
+   * Used when editing a message to remove it and all subsequent messages.
+   */
+  @Delete('sessions/:id/messages/:messageId/truncate')
+  @HttpCode(204)
+  async truncateSessionMessages(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('messageId', ParseUUIDPipe) messageId: string,
+    @AuthUser() user: any,
+    @AuthWorkspace() workspace: any,
+  ): Promise<void> {
+    const session = await this.sessionRepo.findById(id);
+    if (!session || session.workspaceId !== workspace.id || session.userId !== user.id) {
+      throw new NotFoundException('Session not found');
+    }
+    const messages = await this.messageRepo.findBySessionId(id);
+    const targetMessage = messages.find((m) => m.id === messageId);
+    if (!targetMessage) {
+      throw new NotFoundException('Message not found');
+    }
+    await this.messageRepo.deleteFromTimestamp(id, targetMessage.createdAt);
+  }
+
 
 
   // ── Editor actions ───────────────────────────────────────────────────────

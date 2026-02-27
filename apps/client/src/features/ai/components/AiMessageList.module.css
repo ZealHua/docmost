@@ -140,6 +140,7 @@
 
 .messageRow.user {
   flex-direction: row-reverse;
+  position: relative;
 }
 
 .avatar {
@@ -241,7 +242,6 @@
 
 .bubble.user {
   position: relative;
-  overflow: hidden;
   max-width: 72%;
 
   /* Deep violet — same #0f0b1f family but inverted for a filled surface */
@@ -291,7 +291,17 @@
 /* Gloss sheen layer — same shimmer-pass concept as .label shimmer */
 .bubbleShimmer {
   position: absolute;
-  top: 0; left: -75%;
+  inset: 0; /* Cover entire bubble */
+  border-radius: inherit; /* Match bubble's border-radius */
+  overflow: hidden; /* Clip shimmer to bubble shape */
+  pointer-events: none;
+}
+
+.bubbleShimmer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -75%;
   width: 50%;
   height: 100%;
   background: linear-gradient(
@@ -301,7 +311,6 @@
     transparent 60%
   );
   animation: sheenPass 4s ease-in-out infinite 0.6s;
-  pointer-events: none;
 }
 
 @keyframes sheenPass {
@@ -537,5 +546,65 @@
   background: light-dark(rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.15));
   color: light-dark(rgb(180, 120, 10), rgb(245, 200, 100));
   border: 1px solid light-dark(rgba(245, 158, 11, 0.25), rgba(245, 158, 11, 0.3));
+}
+
+/* ─── Hover actions for user messages ────────────────────────────────────── */
+
+/* Hover actions - positioned outside the bubble on the left */
+.hoverActions {
+  position: absolute;
+  right: 100%;
+  top: 0;
+  margin-right: 6px; /* gap between actions and bubble */
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+  z-index: 10;
+}
+
+.bubble.user:hover .hoverActions,
+.messageRow.user:hover .hoverActions {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+}
+
+.actionButton {
+  background: light-dark(rgba(255, 255, 255, 0.9), rgba(30, 27, 75, 0.9)) !important;
+  color: #7c3aed !important;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid light-dark(rgba(147, 112, 255, 0.2), rgba(147, 112, 255, 0.3));
+  transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.actionButton:hover {
+  background: light-dark(#fff, rgba(50, 45, 100, 0.95)) !important;
+  transform: scale(1.08);
+  box-shadow: 0 2px 8px rgba(109, 40, 217, 0.25);
+}
+
+/* Edit mode container */
+.editContainer {
+  width: 100%;
+}
+
+.editTextarea {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 8px !important;
+  color: inherit !important;
+  font-size: inherit !important;
+  font-family: inherit !important;
+  line-height: 1.5 !important;
+}
+
+.editTextarea:focus {
+  border-color: rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1) !important;
 }
 

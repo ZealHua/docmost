@@ -47,4 +47,12 @@ export class AiMessageRepo {
       .where('sessionId', '=', sessionId)
       .execute();
   }
+
+  async deleteFromTimestamp(sessionId: string, fromCreatedAt: Date): Promise<void> {
+    await this.db
+      .deleteFrom('aiMessages')
+      .where('sessionId', '=', sessionId)
+      .where('createdAt', '>=', fromCreatedAt)
+      .execute();
+  }
 }

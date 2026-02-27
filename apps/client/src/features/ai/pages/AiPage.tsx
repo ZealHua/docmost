@@ -43,7 +43,7 @@ export default function AiPage() {
     renameSession,
     loadSessionMessages,
   } = useAiSessions(workspaceId);
-  const { stopStream, clearMessages, setSession, activeSession } =
+  const { stopStream, clearMessages, setSession, activeSession, editAndResendMessage } =
     useAiChat(workspaceId);
   const [messages, setMessages] = useAtom(aiMessagesAtom);
   const [, setActiveSessionAtom] = useAtom(aiActiveSessionAtom) as readonly [
@@ -322,7 +322,7 @@ export default function AiPage() {
             {/* Scrollable message list */}
             <Box className={styles.messageArea}>
               <Box className={styles.messageAreaInner}>
-                <AiMessageList />
+                <AiMessageList onEditAndResend={editAndResendMessage} />
               </Box>
             </Box>
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { Box, ActionIcon } from "@mantine/core";
-import { IconChevronDown, IconChevronUp } from "@tabler/icons-react";
+import { Box, ActionIcon, Tooltip, Textarea, Button, Group } from "@mantine/core";
+import { IconChevronDown, IconChevronUp, IconCopy, IconPencil } from "@tabler/icons-react";
 import { useAtomValue } from "jotai";
 import {
   aiIsStreamingAtom,
@@ -40,13 +40,23 @@ const LINE_HEIGHT = 22; // Approximate line height in pixels
 function UserMessageBubble({
   content,
   messageId,
+  isLatest,
+  onEditAndResend,
+  isHovered,
 }: {
   content: string;
   messageId: string;
+  isLatest?: boolean;
+  onEditAndResend?: (messageId: string, newContent: string) => void;
+  isHovered?: boolean;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [shouldShowExpand, setShouldShowExpand] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(content);
+  const [copied, setCopied] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (contentRef.current) {
@@ -56,33 +66,137 @@ function UserMessageBubble({
     }
   }, [content]);
 
+  useEffect(() => {
+    if (isEditing && textareaRef.current) {
+      textareaRef.current.focus();
+      textareaRef.current.setSelectionRange(
+        textareaRef.current.value.length,
+        textareaRef.current.value.length,
+      );
+    }
+  }, [isEditing]);
+
   const toggleExpand = useCallback(() => {
     setIsExpanded((prev) => !prev);
   }, []);
 
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [content]);
+
+  const handleStartEdit = useCallback(() => {
+    setEditContent(content);
+    setIsEditing(true);
+  }, [content]);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditContent(content);
+    setIsEditing(false);
+  }, [content]);
+
+  const handleSaveEdit = useCallback(() => {
+    if (editContent.trim() && editContent !== content) {
+      onEditAndResend?.(messageId, editContent);
+    }
+    setIsEditing(false);
+  }, [editContent, content, messageId, onEditAndResend]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        handleSaveEdit();
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        handleCancelEdit();
+      }
+    },
+    [handleSaveEdit, handleCancelEdit],
+  );
+
   return (
     <div className={`${styles.bubble} ${styles.user}`}>
       <span className={styles.bubbleShimmer} />
-      <div
-        ref={contentRef}
-        className={`${styles.bubbleContent} ${!isExpanded && shouldShowExpand ? styles.collapsed : ""}`}
-      >
-        {content}
-      </div>
-      {shouldShowExpand && (
-        <ActionIcon
-          size="xs"
-          variant="subtle"
-          onClick={toggleExpand}
-          className={styles.expandButton}
-          aria-label={isExpanded ? "Collapse" : "Expand"}
-        >
-          {isExpanded ? (
-            <IconChevronUp size={14} />
-          ) : (
-            <IconChevronDown size={14} />
+
+      {/* Hover actions - positioned outside the bubble on the left */}
+      {isHovered && !isEditing && (
+        <div className={styles.hoverActions}>
+          <Tooltip label={copied ? "Copied!" : "Copy"} withArrow position="top">
+            <ActionIcon
+              size="xs"
+              variant="subtle"
+              onClick={handleCopy}
+              className={styles.actionButton}
+              aria-label="Copy message"
+            >
+              <IconCopy size={14} />
+            </ActionIcon>
+          </Tooltip>
+          {isLatest && onEditAndResend && (
+            <Tooltip label="Edit & Resend" withArrow position="top">
+              <ActionIcon
+                size="xs"
+                variant="subtle"
+                onClick={handleStartEdit}
+                className={styles.actionButton}
+                aria-label="Edit and resend"
+              >
+                <IconPencil size={14} />
+              </ActionIcon>
+            </Tooltip>
           )}
-        </ActionIcon>
+        </div>
+      )}
+
+      {isEditing ? (
+        <div className={styles.editContainer}>
+          <Textarea
+            ref={textareaRef}
+            value={editContent}
+            onChange={(e) => setEditContent(e.target.value)}
+            onKeyDown={handleKeyDown}
+            autosize
+            minRows={2}
+            maxRows={8}
+            className={styles.editTextarea}
+          />
+          <Group gap={8} mt={8} justify="flex-end">
+            <Button size="xs" variant="subtle" onClick={handleCancelEdit}>
+              Cancel
+            </Button>
+            <Button size="xs" onClick={handleSaveEdit}>
+              Send
+            </Button>
+          </Group>
+        </div>
+      ) : (
+        <>
+          <div
+            ref={contentRef}
+            className={`${styles.bubbleContent} ${!isExpanded && shouldShowExpand ? styles.collapsed : ""}`}
+          >
+            {content}
+          </div>
+
+          {shouldShowExpand && (
+            <ActionIcon
+              size="xs"
+              variant="subtle"
+              onClick={toggleExpand}
+              className={styles.expandButton}
+              aria-label={isExpanded ? "Collapse" : "Expand"}
+            >
+              {isExpanded ? (
+                <IconChevronUp size={14} />
+              ) : (
+                <IconChevronDown size={14} />
+              )}
+            </ActionIcon>
+          )}
+        </>
       )}
     </div>
   );
@@ -91,16 +205,24 @@ function UserMessageBubble({
 function RenderHumanGroup({
   group,
   user,
+  latestUserMessageId,
+  onEditAndResend,
 }: {
   group: Extract<MessageGroup, { type: "human" }>;
   user?: { name?: string; avatarUrl?: string } | null;
+  latestUserMessageId?: string;
+  onEditAndResend?: (messageId: string, newContent: string) => void;
 }) {
+  const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
+
   return (
     <>
       {group.messages.map((msg) => (
         <div
           key={msg.id}
           className={`${styles.messageRow} ${styles.user} ${styles.messageNew}`}
+          onMouseEnter={() => setHoveredMessageId(msg.id)}
+          onMouseLeave={() => setHoveredMessageId(null)}
         >
           <div className={`${styles.avatarWrapper} ${styles.user}`}>
             <div className={styles.avatarRing} />
@@ -113,7 +235,13 @@ function RenderHumanGroup({
               />
             </div>
           </div>
-          <UserMessageBubble content={msg.content} messageId={msg.id} />
+          <UserMessageBubble
+            content={msg.content}
+            messageId={msg.id}
+            isLatest={msg.id === latestUserMessageId}
+            onEditAndResend={onEditAndResend}
+            isHovered={hoveredMessageId === msg.id}
+          />
         </div>
       ))}
     </>
@@ -291,14 +419,25 @@ function RenderGroup({
   group,
   formatTime,
   user,
+  latestUserMessageId,
+  onEditAndResend,
 }: {
   group: MessageGroup;
   formatTime: (d: string) => string;
   user?: { name?: string; avatarUrl?: string } | null;
+  latestUserMessageId?: string;
+  onEditAndResend?: (messageId: string, newContent: string) => void;
 }) {
   switch (group.type) {
     case "human":
-      return <RenderHumanGroup group={group} user={user} />;
+      return (
+        <RenderHumanGroup
+          group={group}
+          user={user}
+          latestUserMessageId={latestUserMessageId}
+          onEditAndResend={onEditAndResend}
+        />
+      );
     case "assistant:message":
       return (
         <RenderAssistantMessageGroup group={group} formatTime={formatTime} />
@@ -322,7 +461,11 @@ function RenderGroup({
   }
 }
 
-export function AiMessageList() {
+export function AiMessageList({
+  onEditAndResend,
+}: {
+  onEditAndResend?: (messageId: string, newContent: string) => void;
+} = {}) {
   const { t } = useTranslation();
   const messages = useAtomValue(aiMessagesAtom);
   const isStreaming = useAtomValue(aiIsStreamingAtom);
@@ -349,6 +492,11 @@ export function AiMessageList() {
     const date = new Date(dateString);
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
+
+  // Find the latest user message ID
+  const latestUserMessageId = [...messages]
+    .reverse()
+    .find((m) => m.role === "user")?.id;
 
   // Group messages for richer rendering
   const groups = groupMessages(messages);
@@ -382,6 +530,8 @@ export function AiMessageList() {
           group={group}
           formatTime={formatTime}
           user={currentUser?.user}
+          latestUserMessageId={latestUserMessageId}
+          onEditAndResend={onEditAndResend}
         />
       ))}
 

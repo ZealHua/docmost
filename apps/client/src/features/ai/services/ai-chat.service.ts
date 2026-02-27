@@ -1,4 +1,5 @@
 import { AiStreamEvent, RagSource } from "../types/ai-chat.types";
+import api from "@/lib/api-client";
 
 interface StreamCallbacks {
   onSources: (sources: RagSource[]) => void;
@@ -15,6 +16,17 @@ interface StreamOptions {
   thinking?: boolean;
   selectedPageIds?: string[];
   isWebSearchEnabled?: boolean;
+}
+
+/**
+ * Truncate messages from a specific message onwards.
+ * Used when editing a message to remove it and all subsequent messages.
+ */
+export async function truncateMessages(
+  sessionId: string,
+  fromMessageId: string,
+): Promise<void> {
+  await api.delete(`/ai/sessions/${sessionId}/messages/${fromMessageId}/truncate`);
 }
 
 /**
