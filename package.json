@@ -1,6 +1,6 @@
 {
-  "name": "docmost",
-  "homepage": "https://docmost.com",
+  "name": "openmemo",
+  "homepage": "https://www.openmemo.com.cn",
   "version": "0.25.3",
   "private": true,
   "scripts": {

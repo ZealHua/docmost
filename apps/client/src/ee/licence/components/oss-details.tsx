@@ -12,7 +12,7 @@ export default function OssDetails() {
       >
         <Table.Caption>
           To unlock enterprise features like AI, SSO, MFA, Resolve comments,
-          contact sales@docmost.com.
+          contact support@openmemo.com.cn.
         </Table.Caption>
         <Table.Tbody>
           <Table.Tr>

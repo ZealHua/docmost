@@ -37,7 +37,7 @@ export default function AiSettings() {
           mb="lg"
         >
           {t(
-            "AI is only available in the Docmost enterprise edition. Contact sales@docmost.com.",
+            "AI is only available in the OpenMemo enterprise edition. Contact support@openmemo.com.cn.",
           )}
         </Alert>
       )}

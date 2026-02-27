@@ -307,9 +307,9 @@ export default function SettingsSidebar() {
             size="sm"
             c="dimmed"
             component="a"
-            href="mailto:help@docmost.com"
+            href="mailto:support@openmemo.com.cn"
           >
-            help@docmost.com
+            support@openmemo.com.cn
           </Text>
         </div>
       )}

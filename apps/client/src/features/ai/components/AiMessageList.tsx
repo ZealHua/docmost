@@ -652,12 +652,6 @@ export function AiMessageList({
           <div className={styles.emptyDescription}>
             {t("Ask me anything — I'll think it through with you.")}
           </div>
-
-          <div className={styles.emptyChips}>
-            <span className={styles.chip}>{t("Summarise a doc")}</span>
-            <span className={styles.chip}>{t("Write some code")}</span>
-            <span className={styles.chip}>{t("Search Internet")}</span>
-          </div>
         </div>
       </div>
     );
