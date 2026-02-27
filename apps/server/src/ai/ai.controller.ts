@@ -28,8 +28,9 @@ import { AiGenerateDto } from './dto/ai-generate.dto';
 import { AiChatDto } from './dto/ai-chat.dto';
 import { AiPageSearchDto } from './dto/ai-page-search.dto';
 import { CreateAiSessionDto, UpdateAiSessionTitleDto, UpdateAiSessionThreadIdDto, AiSessionResponseDto, AiMessageResponseDto } from './dto/ai-session.dto';
+import { AiFaqStreamDto } from './dto/ai-faq.dto';
 
-import { buildEditorSystemPrompt } from './utils/prompt.utils';
+import { buildEditorSystemPrompt, buildFaqSystemPrompt } from './utils/prompt.utils';
 import { Mem0Service } from '@/mem0/mem0.service';
 
 @UseGuards(JwtAuthGuard)
@@ -663,6 +664,62 @@ export class AiController {
       );
     } catch (err: any) {
       res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
+      res.end();
+    }
+  }
+
+  // ── FAQ Chat (lightweight assistant) ─────────────────────────────────────
+
+  /**
+   * Lightweight endpoint specifically for FAQ widget.
+   * Uses a custom prompt without RAG context for fast, general answers.
+   * Skips persisting any DB session or history.
+   */
+  @Post('faq/stream')
+  async streamFaq(
+    @Body() dto: AiFaqStreamDto,
+    @Req() req: any,
+    @Res() reply: any,
+    @AuthUser() _user: any,
+    @AuthWorkspace() workspace: any,
+  ) {
+    this.ensureConfigured();
+
+    reply.hijack();
+
+    const res = reply.raw;
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
+    try {
+      const systemPrompt = buildFaqSystemPrompt();
+
+      // Simple exchange with custom FAQ prompt
+      await this.orchestrator.getProvider().streamChat(
+        [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: dto.query }
+        ],
+        [], // Empty chunks since we're not using RAG
+        (chunk) => {
+          res.write(`data: ${JSON.stringify({ type: 'chunk', data: chunk })}\n\n`);
+        },
+        () => {
+          res.write('data: [DONE]\n\n');
+          res.end();
+        },
+        undefined, // model
+        false, // thinking
+        undefined, // onThinking
+        (err: Error) => {
+          console.error('FAQ stream error:', err);
+        },
+        req.raw.signal,
+      );
+    } catch (err: any) {
+      res.write(`data: ${JSON.stringify({ type: 'error', data: err.message })}\n\n`);
       res.end();
     }
   }

@@ -1,0 +1,217 @@
+.dropdown {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-5));
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  padding: 12px 16px;
+  border-bottom: 1px solid light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-5));
+  background: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-7));
+}
+
+.headerIcon {
+  color: var(--mantine-color-violet-5);
+}
+
+.headerTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: light-dark(var(--mantine-color-gray-8), var(--mantine-color-dark-0));
+}
+
+.messagesArea {
+  height: 350px;
+  background: var(--mantine-color-body);
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 24px;
+  text-align: center;
+  color: light-dark(var(--mantine-color-gray-5), var(--mantine-color-dark-3));
+}
+
+.emptyIcon {
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.emptyText {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.messagesList {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.messageRow {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.userRow {
+  flex-direction: row-reverse;
+}
+
+.assistantRow {
+  flex-direction: row;
+}
+
+.avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.userAvatar {
+  background: linear-gradient(135deg, var(--mantine-color-violet-5), var(--mantine-color-violet-7));
+  color: white;
+}
+
+.assistantAvatar {
+  background: light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-5));
+  color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-1));
+}
+
+.bubble {
+  max-width: 85%;
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.userBubble {
+  background: linear-gradient(135deg, var(--mantine-color-violet-5), var(--mantine-color-violet-7));
+  color: white;
+  border-radius: 14px 14px 4px 14px;
+}
+
+.assistantBubble {
+  background: light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-6));
+  color: light-dark(var(--mantine-color-dark-8), var(--mantine-color-gray-1));
+  border-radius: 14px 14px 14px 4px;
+  border: 1px solid light-dark(var(--mantine-color-gray-2), transparent);
+}
+
+.assistantBubble h1,
+.assistantBubble h2,
+.assistantBubble h3 {
+  margin: 8px 0 4px 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.assistantBubble h1 { font-size: 15px; }
+.assistantBubble h2 { font-size: 14px; }
+.assistantBubble h3 { font-size: 13px; }
+
+.assistantBubble ul,
+.assistantBubble ol {
+  margin: 6px 0;
+  padding-left: 20px;
+}
+
+.assistantBubble li {
+  margin: 2px 0;
+}
+
+.assistantBubble code {
+  background: light-dark(rgba(0,0,0,0.05), rgba(255,255,255,0.1));
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-family: 'Monaco', 'Courier New', monospace;
+}
+
+.assistantBubble pre {
+  background: light-dark(rgba(0,0,0,0.05), rgba(255,255,255,0.1));
+  padding: 8px;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin: 6px 0;
+}
+
+.assistantBubble pre code {
+  background: none;
+  padding: 0;
+}
+
+.assistantBubble blockquote {
+  border-left: 3px solid var(--mantine-color-violet-5);
+  padding-left: 10px;
+  margin: 6px 0;
+  color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-2));
+}
+
+.assistantBubble a {
+  color: var(--mantine-color-violet-5);
+  text-decoration: none;
+}
+
+.assistantBubble a:hover {
+  text-decoration: underline;
+}
+
+.assistantBubble strong {
+  font-weight: 600;
+}
+
+.assistantBubble em {
+  font-style: italic;
+}
+
+.inputArea {
+  padding: 12px;
+  border-top: 1px solid light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-5));
+  background: var(--mantine-color-body);
+}
+
+.sources {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  border-top: 1px solid light-dark(rgba(0,0,0,0.1), rgba(255,255,255,0.1));
+  padding-top: 8px;
+}
+
+.sourceChip {
+  font-size: 11px;
+  padding: 2px 6px;
+  background: light-dark(rgba(0,0,0,0.05), rgba(255,255,255,0.05));
+  border-radius: 4px;
+  color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-1));
+}
+
+.typingDot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: currentColor;
+  border-radius: 50%;
+  animation: typing 1s infinite alternate;
+  opacity: 0.5;
+}
+
+@keyframes typing {
+  0% { transform: translateY(0); opacity: 0.5; }
+  100% { transform: translateY(-3px); opacity: 1; }
+}

@@ -40,7 +40,7 @@ import { PageStateSegmentedControl } from "@/features/user/components/page-state
 import MovePageModal from "@/features/page/components/move-page-modal.tsx";
 import { useTimeAgo } from "@/hooks/use-time-ago.tsx";
 import ShareModal from "@/features/share/components/share-modal.tsx";
-
+import { FaqWidget } from "@/features/ai/components/FaqWidget.tsx";
 interface PageHeaderMenuProps {
   readOnly?: boolean;
 }
@@ -96,6 +96,8 @@ export default function PageHeaderMenu({ readOnly }: PageHeaderMenuProps) {
           <IconList size={20} stroke={2} />
         </ActionIcon>
       </Tooltip>
+
+      <FaqWidget />
 
       <PageActionMenu readOnly={readOnly} />
     </>
