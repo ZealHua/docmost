@@ -13,14 +13,14 @@ export default function DisablePublicSharing() {
 
   return (
     <Group justify="space-between" wrap="nowrap" gap="xl">
-        <div>
-          <Text size="md">{t("Disable public sharing")}</Text>
-          <Text size="sm" c="dimmed">
-            {t("Prevent members from sharing pages publicly.")}
-          </Text>
-        </div>
+      <div>
+        <Text size="md">{t("Disable public sharing")}</Text>
+        <Text size="sm" c="dimmed">
+          {t("Prevent members from sharing pages publicly.")}
+        </Text>
+      </div>
 
-        <DisablePublicSharingToggle />
+      <DisablePublicSharingToggle />
     </Group>
   );
 }

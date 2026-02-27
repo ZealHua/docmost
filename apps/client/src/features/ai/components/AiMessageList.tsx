@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Box } from "@mantine/core";
-import { IconUser } from "@tabler/icons-react";
 import { useAtomValue } from "jotai";
 import {
   aiIsStreamingAtom,
@@ -9,6 +8,8 @@ import {
   aiStreamingContentAtom,
   aiStreamingThinkingAtom,
 } from "../store/ai.atoms";
+import { currentUserAtom } from "@/features/user/atoms/current-user-atom";
+import { CustomAvatar } from "@/components/ui/custom-avatar";
 import { AiCitationRenderer } from "./AiCitationRenderer";
 import { AiSourcePreviewBar } from "./AiSourcePreviewBar";
 import { ThinkingBlock } from "./ThinkingBlock";
@@ -32,15 +33,29 @@ function TypingIndicator() {
   );
 }
 
-function RenderHumanGroup({ group }: { group: Extract<MessageGroup, { type: 'human' }> }) {
+function RenderHumanGroup({
+  group,
+  user,
+}: {
+  group: Extract<MessageGroup, { type: "human" }>;
+  user?: { name?: string; avatarUrl?: string } | null;
+}) {
   return (
     <>
       {group.messages.map((msg) => (
-        <div key={msg.id} className={`${styles.messageRow} ${styles.user} ${styles.messageNew}`}>
+        <div
+          key={msg.id}
+          className={`${styles.messageRow} ${styles.user} ${styles.messageNew}`}
+        >
           <div className={`${styles.avatarWrapper} ${styles.user}`}>
             <div className={styles.avatarRing} />
             <div className={`${styles.avatar} ${styles.user}`}>
-              <IconUser size={13} />
+              <CustomAvatar
+                avatarUrl={user?.avatarUrl}
+                name={user?.name}
+                size={24}
+                showOrbitalRing={false}
+              />
             </div>
           </div>
           <div className={`${styles.bubble} ${styles.user}`}>
@@ -57,14 +72,24 @@ function RenderAssistantMessageGroup({
   group,
   formatTime,
 }: {
-  group: Extract<MessageGroup, { type: 'assistant:message' }>;
+  group: Extract<MessageGroup, { type: "assistant:message" }>;
   formatTime: (d: string) => string;
 }) {
   return (
     <>
       {group.messages.map((msg) => (
-        <div key={msg.id} className={`${styles.messageRow} ${styles.messageNew}`}>
-          <AiMessageCard header={<><AiInsightsIcon showLabel size={16} /><AiMemoryStatus /></>}>
+        <div
+          key={msg.id}
+          className={`${styles.messageRow} ${styles.messageNew}`}
+        >
+          <AiMessageCard
+            header={
+              <>
+                <AiInsightsIcon showLabel size={16} />
+                <AiMemoryStatus />
+              </>
+            }
+          >
             {msg.thinking && (
               <ThinkingBlock thinking={msg.thinking} isStreaming={false} />
             )}
@@ -86,14 +111,21 @@ function RenderProcessingGroup({
   group,
   formatTime,
 }: {
-  group: Extract<MessageGroup, { type: 'assistant:processing' }>;
+  group: Extract<MessageGroup, { type: "assistant:processing" }>;
   formatTime: (d: string) => string;
 }) {
   const { triggerMessage, toolResponses, resultMessage } = group;
 
   return (
     <div className={`${styles.messageRow} ${styles.messageNew}`}>
-      <AiMessageCard header={<><AiInsightsIcon showLabel size={16} /><AiMemoryStatus /></>}>
+      <AiMessageCard
+        header={
+          <>
+            <AiInsightsIcon showLabel size={16} />
+            <AiMemoryStatus />
+          </>
+        }
+      >
         {/* Tool calls */}
         {triggerMessage.tool_calls?.map((tc) => {
           const response = toolResponses.find((r) => r.tool_call_id === tc.id);
@@ -102,7 +134,13 @@ function RenderProcessingGroup({
               key={tc.id}
               toolCall={tc}
               result={response?.content}
-              status={response ? (response.tool_status === 'error' ? 'error' : 'success') : 'running'}
+              status={
+                response
+                  ? response.tool_status === "error"
+                    ? "error"
+                    : "success"
+                  : "running"
+              }
             />
           );
         })}
@@ -110,7 +148,10 @@ function RenderProcessingGroup({
         {/* Final response text */}
         {resultMessage && (
           <div className={cardStyles.body}>
-            <AiCitationRenderer content={resultMessage.content} sources={resultMessage.sources} />
+            <AiCitationRenderer
+              content={resultMessage.content}
+              sources={resultMessage.sources}
+            />
           </div>
         )}
 
@@ -126,22 +167,32 @@ function RenderPresentFilesGroup({
   group,
   formatTime,
 }: {
-  group: Extract<MessageGroup, { type: 'assistant:present-files' }>;
+  group: Extract<MessageGroup, { type: "assistant:present-files" }>;
   formatTime: (d: string) => string;
 }) {
   const lastMsg = group.messages[group.messages.length - 1];
   return (
     <div className={`${styles.messageRow} ${styles.messageNew}`}>
-      <AiMessageCard header={<><AiInsightsIcon showLabel size={16} /><AiMemoryStatus /></>}>
+      <AiMessageCard
+        header={
+          <>
+            <AiInsightsIcon showLabel size={16} />
+            <AiMemoryStatus />
+          </>
+        }
+      >
         <div className={cardStyles.body}>
           {lastMsg.content && (
-            <AiCitationRenderer content={lastMsg.content} sources={lastMsg.sources} />
+            <AiCitationRenderer
+              content={lastMsg.content}
+              sources={lastMsg.sources}
+            />
           )}
           {group.files.length > 0 && (
             <div className={styles.filesList}>
               {group.files.map((file, idx) => (
                 <div key={idx} className={styles.fileChip}>
-                  📄 {file.split('/').pop()}
+                  📄 {file.split("/").pop()}
                 </div>
               ))}
             </div>
@@ -159,13 +210,20 @@ function RenderClarificationGroup({
   group,
   formatTime,
 }: {
-  group: Extract<MessageGroup, { type: 'assistant:clarification' }>;
+  group: Extract<MessageGroup, { type: "assistant:clarification" }>;
   formatTime: (d: string) => string;
 }) {
   const msg = group.messages[0];
   return (
     <div className={`${styles.messageRow} ${styles.messageNew}`}>
-      <AiMessageCard header={<><AiInsightsIcon showLabel size={16} /><span className={styles.clarificationBadge}>Clarification</span></>}>
+      <AiMessageCard
+        header={
+          <>
+            <AiInsightsIcon showLabel size={16} />
+            <span className={styles.clarificationBadge}>Clarification</span>
+          </>
+        }
+      >
         <div className={cardStyles.body}>
           <AiCitationRenderer content={msg.content} sources={msg.sources} />
         </div>
@@ -180,26 +238,30 @@ function RenderClarificationGroup({
 function RenderGroup({
   group,
   formatTime,
+  user,
 }: {
   group: MessageGroup;
   formatTime: (d: string) => string;
+  user?: { name?: string; avatarUrl?: string } | null;
 }) {
   switch (group.type) {
-    case 'human':
-      return <RenderHumanGroup group={group} />;
-    case 'assistant:message':
-      return <RenderAssistantMessageGroup group={group} formatTime={formatTime} />;
-    case 'assistant:processing':
+    case "human":
+      return <RenderHumanGroup group={group} user={user} />;
+    case "assistant:message":
+      return (
+        <RenderAssistantMessageGroup group={group} formatTime={formatTime} />
+      );
+    case "assistant:processing":
       return <RenderProcessingGroup group={group} formatTime={formatTime} />;
-    case 'assistant:present-files':
+    case "assistant:present-files":
       return <RenderPresentFilesGroup group={group} formatTime={formatTime} />;
-    case 'assistant:clarification':
+    case "assistant:clarification":
       return <RenderClarificationGroup group={group} formatTime={formatTime} />;
-    case 'assistant:subagent':
+    case "assistant:subagent":
       // Subagent tasks are shown inline via SubtaskProgress during streaming
       return (
         <RenderAssistantMessageGroup
-          group={{ ...group, type: 'assistant:message' }}
+          group={{ ...group, type: "assistant:message" }}
           formatTime={formatTime}
         />
       );
@@ -215,6 +277,7 @@ export function AiMessageList() {
   const streamingContent = useAtomValue(aiStreamingContentAtom);
   const streamingThinking = useAtomValue(aiStreamingThinkingAtom);
   const sources = useAtomValue(aiSourcesAtom);
+  const currentUser = useAtomValue(currentUserAtom);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const [newMessageId, setNewMessageId] = useState<string | null>(null);
@@ -244,15 +307,15 @@ export function AiMessageList() {
         <div className={styles.emptyStateContent}>
           <AiInsightsIcon size={80} className={styles.emptyIconLarge} />
 
-          <div className={styles.emptyTitle}>{t('How can I help you?')}</div>
+          <div className={styles.emptyTitle}>{t("How can I help you?")}</div>
           <div className={styles.emptyDescription}>
             {t("Ask me anything — I'll think it through with you.")}
           </div>
 
           <div className={styles.emptyChips}>
-            <span className={styles.chip}>{t('Summarise a doc')}</span>
-            <span className={styles.chip}>{t('Write some code')}</span>
-            <span className={styles.chip}>{t('Search Internet')}</span>
+            <span className={styles.chip}>{t("Summarise a doc")}</span>
+            <span className={styles.chip}>{t("Write some code")}</span>
+            <span className={styles.chip}>{t("Search Internet")}</span>
           </div>
         </div>
       </div>
@@ -262,12 +325,24 @@ export function AiMessageList() {
   return (
     <Box className={styles.messageContainer}>
       {groups.map((group) => (
-        <RenderGroup key={group.id} group={group} formatTime={formatTime} />
+        <RenderGroup
+          key={group.id}
+          group={group}
+          formatTime={formatTime}
+          user={currentUser?.user}
+        />
       ))}
 
       {isStreaming && (
         <div className={`${styles.messageRow} ${styles.messageNew}`}>
-          <AiMessageCard header={<><AiInsightsIcon showLabel size={16} /><AiMemoryStatus /></>}>
+          <AiMessageCard
+            header={
+              <>
+                <AiInsightsIcon showLabel size={16} />
+                <AiMemoryStatus />
+              </>
+            }
+          >
             {streamingThinking && (
               <ThinkingBlock thinking={streamingThinking} isStreaming={true} />
             )}

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useMemo, ReactNode } from 'react';
+import { createContext, useContext, useState, useMemo, ReactNode } from "react";
 
 export interface ArtifactsContextType {
   artifacts: string[];
@@ -83,7 +83,7 @@ export function ArtifactsProvider({ children }: ArtifactsProviderProps) {
 export function useArtifacts() {
   const context = useContext(ArtifactsContext);
   if (context === undefined) {
-    throw new Error('useArtifacts must be used within an ArtifactsProvider');
+    throw new Error("useArtifacts must be used within an ArtifactsProvider");
   }
   return context;
 }

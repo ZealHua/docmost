@@ -28,7 +28,7 @@ export const TableCellMenu = React.memo(
 
         return isCellSelection(state.selection);
       },
-      [editor]
+      [editor],
     );
 
     const mergeCells = useCallback(() => {
@@ -130,7 +130,7 @@ export const TableCellMenu = React.memo(
         </ActionIcon.Group>
       </BubbleMenu>
     );
-  }
+  },
 );
 
 export default TableCellMenu;

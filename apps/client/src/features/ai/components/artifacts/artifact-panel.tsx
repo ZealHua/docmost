@@ -1,14 +1,19 @@
-import { Box, ActionIcon, Text, Tooltip } from '@mantine/core';
-import { Panel, Group as PanelGroup, Separator, type PanelImperativeHandle } from 'react-resizable-panels';
-import { IconX, IconFiles } from '@tabler/icons-react';
-import { ReactNode, useMemo, useRef, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Box, ActionIcon, Text, Tooltip } from "@mantine/core";
+import {
+  Panel,
+  Group as PanelGroup,
+  Separator,
+  type PanelImperativeHandle,
+} from "react-resizable-panels";
+import { IconX, IconFiles } from "@tabler/icons-react";
+import { ReactNode, useMemo, useRef, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
-import { useArtifacts } from '../../context/artifacts-context';
-import { ArtifactFileList } from './artifact-file-list';
-import { ArtifactFileDetail } from './artifact-file-detail';
+import { useArtifacts } from "../../context/artifacts-context";
+import { ArtifactFileList } from "./artifact-file-list";
+import { ArtifactFileDetail } from "./artifact-file-detail";
 
-import styles from './artifact-panel.module.css';
+import styles from "./artifact-panel.module.css";
 
 interface ArtifactPanelProps {
   sessionId: string;
@@ -52,10 +57,10 @@ export function ArtifactPanel({ sessionId, children }: ArtifactPanelProps) {
         {children}
       </Panel>
 
-      <Separator 
-        className={handleStyle} 
-        id="artifact-handle" 
-        disabled={!artifactPanelOpen} 
+      <Separator
+        className={handleStyle}
+        id="artifact-handle"
+        disabled={!artifactPanelOpen}
       />
 
       <Panel
@@ -70,7 +75,7 @@ export function ArtifactPanel({ sessionId, children }: ArtifactPanelProps) {
         <Box className={styles.artifactContent}>
           {/* Close button — always visible at top-right */}
           <div className={styles.closeButton}>
-            <Tooltip label={t('Close')}>
+            <Tooltip label={t("Close")}>
               <ActionIcon
                 variant="subtle"
                 size="sm"
@@ -88,7 +93,7 @@ export function ArtifactPanel({ sessionId, children }: ArtifactPanelProps) {
             <Box className={styles.emptyState}>
               <IconFiles size={48} stroke={1.2} opacity={0.4} />
               <Text size="sm" c="dimmed" mt="sm">
-                {t('No artifacts yet')}
+                {t("No artifacts yet")}
               </Text>
             </Box>
           ) : (
@@ -96,7 +101,7 @@ export function ArtifactPanel({ sessionId, children }: ArtifactPanelProps) {
             <Box className={styles.listContainer}>
               <Box className={styles.listHeader}>
                 <Text size="lg" fw={500}>
-                  {t('Artifacts')}
+                  {t("Artifacts")}
                 </Text>
               </Box>
               <Box className={styles.listBody}>

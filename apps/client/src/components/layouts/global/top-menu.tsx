@@ -42,7 +42,13 @@ export default function TopMenu() {
   }
 
   return (
-    <Menu width={250} position="bottom-end" withArrow shadow={"lg"} classNames={{ dropdown: classes.menu }}>
+    <Menu
+      width={250}
+      position="bottom-end"
+      withArrow
+      shadow={"lg"}
+      classNames={{ dropdown: classes.menu }}
+    >
       <Menu.Target>
         <UnstyledButton className={classes.workspaceButton}>
           <Group gap={7} wrap={"nowrap"}>
@@ -53,7 +59,14 @@ export default function TopMenu() {
               size="sm"
               type={AvatarIconType.WORKSPACE_ICON}
             />
-            <Text fw={500} size="sm" lh={1} mr={3} lineClamp={1} className={classes.workspaceName}>
+            <Text
+              fw={500}
+              size="sm"
+              lh={1}
+              mr={3}
+              lineClamp={1}
+              className={classes.workspaceName}
+            >
               {workspace?.name}
             </Text>
             <IconChevronDown size={16} className={classes.workspaceChevron} />
@@ -66,7 +79,9 @@ export default function TopMenu() {
         <Menu.Item
           component={Link}
           to={APP_ROUTE.SETTINGS.WORKSPACE.GENERAL}
-          leftSection={<IconSettings size={16} className={classes.menuItemIcon} />}
+          leftSection={
+            <IconSettings size={16} className={classes.menuItemIcon} />
+          }
           className={classes.menuItem}
         >
           {t("Workspace settings")}
@@ -84,7 +99,11 @@ export default function TopMenu() {
         <Menu.Divider className={classes.menuDivider} />
 
         <Menu.Label className={classes.menuLabel}>{t("Account")}</Menu.Label>
-        <Menu.Item component={Link} to={APP_ROUTE.SETTINGS.ACCOUNT.PROFILE} className={classes.menuItem}>
+        <Menu.Item
+          component={Link}
+          to={APP_ROUTE.SETTINGS.ACCOUNT.PROFILE}
+          className={classes.menuItem}
+        >
           <Group wrap={"nowrap"}>
             <CustomAvatar
               size={"sm"}
@@ -93,10 +112,20 @@ export default function TopMenu() {
             />
 
             <div className={classes.userInfo}>
-              <Text size="sm" fw={500} lineClamp={1} className={classes.userName}>
+              <Text
+                size="sm"
+                fw={500}
+                lineClamp={1}
+                className={classes.userName}
+              >
                 {user.name}
               </Text>
-              <Text size="xs" c="dimmed" truncate="end" className={classes.userEmail}>
+              <Text
+                size="xs"
+                c="dimmed"
+                truncate="end"
+                className={classes.userEmail}
+              >
                 {user.email}
               </Text>
             </div>
@@ -105,7 +134,9 @@ export default function TopMenu() {
         <Menu.Item
           component={Link}
           to={APP_ROUTE.SETTINGS.ACCOUNT.PROFILE}
-          leftSection={<IconUserCircle size={16} className={classes.menuItemIcon} />}
+          leftSection={
+            <IconUserCircle size={16} className={classes.menuItemIcon} />
+          }
           className={classes.menuItem}
         >
           {t("My profile")}
@@ -122,7 +153,12 @@ export default function TopMenu() {
 
         <Menu.Sub>
           <Menu.Sub.Target>
-            <Menu.Sub.Item leftSection={<IconBrightnessFilled size={16} className={classes.themeIcon} />} className={classes.themeItem}>
+            <Menu.Sub.Item
+              leftSection={
+                <IconBrightnessFilled size={16} className={classes.themeIcon} />
+              }
+              className={classes.themeItem}
+            >
               {t("Theme")}
             </Menu.Sub.Item>
           </Menu.Sub.Target>
@@ -150,7 +186,9 @@ export default function TopMenu() {
             </Menu.Item>
             <Menu.Item
               onClick={() => setColorScheme("auto")}
-              leftSection={<IconDeviceDesktop size={16} className={classes.themeIcon} />}
+              leftSection={
+                <IconDeviceDesktop size={16} className={classes.themeIcon} />
+              }
               rightSection={
                 colorScheme === "auto" ? <IconCheck size={16} /> : null
               }
@@ -163,7 +201,13 @@ export default function TopMenu() {
 
         <Menu.Divider className={classes.menuDivider} />
 
-        <Menu.Item onClick={logout} leftSection={<IconLogout size={16} className={classes.menuItemIcon} />} className={classes.menuItem}>
+        <Menu.Item
+          onClick={logout}
+          leftSection={
+            <IconLogout size={16} className={classes.menuItemIcon} />
+          }
+          className={classes.menuItem}
+        >
           {t("Logout")}
         </Menu.Item>
       </Menu.Dropdown>

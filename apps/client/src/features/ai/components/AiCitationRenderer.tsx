@@ -1,13 +1,13 @@
-import React from 'react';
-import ReactMarkdown from 'react-markdown';
-import rehypeRaw from 'rehype-raw';
-import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
-import remarkGfm from 'remark-gfm';
-import { Popover, Text, Anchor } from '@mantine/core';
-import { Link } from 'react-router-dom';
-import { RagSource } from '../types/ai-chat.types';
-import { buildPageUrl } from '@/features/page/page.utils';
-import cardStyles from './AiMessageCard.module.css';
+import React from "react";
+import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
+import remarkGfm from "remark-gfm";
+import { Popover, Text, Anchor } from "@mantine/core";
+import { Link } from "react-router-dom";
+import { RagSource } from "../types/ai-chat.types";
+import { buildPageUrl } from "@/features/page/page.utils";
+import cardStyles from "./AiMessageCard.module.css";
 
 interface AiCitationRendererProps {
   content: string;
@@ -28,17 +28,20 @@ interface AiCitationRendererProps {
 // Extend the default sanitize schema to allow only <cite data-ref>
 const sanitizeSchema = {
   ...defaultSchema,
-  tagNames: [...(defaultSchema.tagNames ?? []), 'cite'],
+  tagNames: [...(defaultSchema.tagNames ?? []), "cite"],
   attributes: {
     ...defaultSchema.attributes,
-    cite: ['dataRef'],
+    cite: ["dataRef"],
   },
 };
 
 const preprocessCitations = (text: string): string =>
   text.replace(/\[\^(\d+)\]/g, '<cite data-ref="$1">$1</cite>');
 
-export function AiCitationRenderer({ content, sources }: AiCitationRendererProps) {
+export function AiCitationRenderer({
+  content,
+  sources,
+}: AiCitationRendererProps) {
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
@@ -59,9 +62,7 @@ export function AiCitationRenderer({ content, sources }: AiCitationRendererProps
           return (
             <Popover withArrow width={280} position="top" shadow="md">
               <Popover.Target>
-                <span className={cardStyles.citationBadge}>
-                  {ref}
-                </span>
+                <span className={cardStyles.citationBadge}>{ref}</span>
               </Popover.Target>
               <Popover.Dropdown>
                 <Text fw={600} size="sm" mb={4}>
@@ -73,13 +74,22 @@ export function AiCitationRenderer({ content, sources }: AiCitationRendererProps
                   </Text>
                 )}
                 {source.url ? (
-                  <Anchor href={source.url} target="_blank" rel="noopener noreferrer" size="xs">
+                  <Anchor
+                    href={source.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    size="xs"
+                  >
                     Open link ↗
                   </Anchor>
                 ) : (
                   <Anchor
                     component={Link}
-                    to={buildPageUrl(source.spaceSlug, source.slugId, source.title)}
+                    to={buildPageUrl(
+                      source.spaceSlug,
+                      source.slugId,
+                      source.title,
+                    )}
                     size="xs"
                   >
                     Open page →

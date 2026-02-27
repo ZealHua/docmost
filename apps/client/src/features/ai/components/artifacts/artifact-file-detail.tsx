@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback } from "react";
 import {
   Box,
   Group,
@@ -9,16 +9,16 @@ import {
   Loader,
   Select,
   SegmentedControl,
-} from '@mantine/core';
+} from "@mantine/core";
 import {
   IconX,
   IconCopy,
   IconCheck,
   IconDownload,
   IconExternalLink,
-} from '@tabler/icons-react';
-import ReactMarkdown from 'react-markdown';
-import { useTranslation } from 'react-i18next';
+} from "@tabler/icons-react";
+import ReactMarkdown from "react-markdown";
+import { useTranslation } from "react-i18next";
 
 import {
   checkCodeFile,
@@ -27,11 +27,11 @@ import {
   isSkillFile,
   isPreviewable,
   urlOfArtifact,
-} from '../../lib/artifact-utils';
-import { useArtifacts } from '../../context/artifacts-context';
-import { useArtifactContent } from '../../hooks/use-artifact-content';
+} from "../../lib/artifact-utils";
+import { useArtifacts } from "../../context/artifacts-context";
+import { useArtifactContent } from "../../hooks/use-artifact-content";
 
-import styles from './artifact-file-detail.module.css';
+import styles from "./artifact-file-detail.module.css";
 
 interface ArtifactFileDetailProps {
   sessionId: string;
@@ -50,7 +50,7 @@ export function ArtifactFileDetail({ sessionId }: ArtifactFileDetailProps) {
 
   const actualPath = useMemo(() => {
     if (!filepath) return null;
-    return isWriteFile ? filepath.replace(/^write-file:/, '') : filepath;
+    return isWriteFile ? filepath.replace(/^write-file:/, "") : filepath;
   }, [filepath, isWriteFile]);
 
   const isSkill = useMemo(() => {
@@ -58,16 +58,16 @@ export function ArtifactFileDetail({ sessionId }: ArtifactFileDetailProps) {
   }, [filepath]);
 
   const { isCodeFile, language } = useMemo(() => {
-    if (!filepath) return { isCodeFile: false, language: 'text' };
+    if (!filepath) return { isCodeFile: false, language: "text" };
 
     if (isWriteFile) {
-      let lang = checkCodeFile(actualPath || '').language;
-      lang ||= 'text';
+      let lang = checkCodeFile(actualPath || "").language;
+      lang ||= "text";
       return { isCodeFile: true, language: lang };
     }
 
     if (isSkill) {
-      return { isCodeFile: true, language: 'markdown' };
+      return { isCodeFile: true, language: "markdown" };
     }
 
     return checkCodeFile(filepath);
@@ -79,15 +79,15 @@ export function ArtifactFileDetail({ sessionId }: ArtifactFileDetailProps) {
   }, [filepath, isWriteFile]);
 
   // View mode: user-toggleable for previewable files
-  const [viewMode, setViewMode] = useState<'code' | 'preview'>('preview');
+  const [viewMode, setViewMode] = useState<"code" | "preview">("preview");
 
   // Reset view mode when file changes
   useMemo(() => {
-    setViewMode(previewable ? 'preview' : 'code');
+    setViewMode(previewable ? "preview" : "code");
   }, [filepath, previewable]);
 
   const artifactUrl = useMemo(() => {
-    if (!actualPath || !sessionId) return '';
+    if (!actualPath || !sessionId) return "";
     return urlOfArtifact({ filepath: actualPath, sessionId });
   }, [actualPath, sessionId]);
 
@@ -97,9 +97,9 @@ export function ArtifactFileDetail({ sessionId }: ArtifactFileDetailProps) {
     isLoading: loading,
     error,
   } = useArtifactContent({
-    filepath: actualPath || '',
+    filepath: actualPath || "",
     sessionId,
-    enabled: !!actualPath && viewMode === 'code',
+    enabled: !!actualPath && viewMode === "code",
   });
 
   const handleCopy = useCallback(async () => {
@@ -111,14 +111,18 @@ export function ArtifactFileDetail({ sessionId }: ArtifactFileDetailProps) {
 
   const handleOpenInNewTab = useCallback(() => {
     if (artifactUrl) {
-      window.open(artifactUrl, '_blank');
+      window.open(artifactUrl, "_blank");
     }
   }, [artifactUrl]);
 
   const handleDownload = useCallback(() => {
     if (actualPath && sessionId) {
-      const url = urlOfArtifact({ filepath: actualPath, sessionId, download: true });
-      window.open(url, '_blank');
+      const url = urlOfArtifact({
+        filepath: actualPath,
+        sessionId,
+        download: true,
+      });
+      window.open(url, "_blank");
     }
   }, [actualPath, sessionId]);
 
@@ -135,7 +139,7 @@ export function ArtifactFileDetail({ sessionId }: ArtifactFileDetailProps) {
       <Box className={styles.container}>
         <Box className={styles.empty}>
           <Text size="sm" c="dimmed">
-            {t('Select a file to preview')}
+            {t("Select a file to preview")}
           </Text>
         </Box>
       </Box>
@@ -175,35 +179,35 @@ export function ArtifactFileDetail({ sessionId }: ArtifactFileDetailProps) {
             <SegmentedControl
               size="xs"
               data={[
-                { label: t('Preview'), value: 'preview' },
-                { label: t('Code'), value: 'code' },
+                { label: t("Preview"), value: "preview" },
+                { label: t("Code"), value: "code" },
               ]}
               value={viewMode}
-              onChange={(val) => setViewMode(val as 'code' | 'preview')}
+              onChange={(val) => setViewMode(val as "code" | "preview")}
             />
           )}
 
-          <Tooltip label={t('Open in new tab')}>
+          <Tooltip label={t("Open in new tab")}>
             <ActionIcon variant="subtle" size="sm" onClick={handleOpenInNewTab}>
               <IconExternalLink size={16} />
             </ActionIcon>
           </Tooltip>
 
-          {viewMode === 'code' && (
-            <Tooltip label={copied ? t('Copied!') : t('Copy')}>
+          {viewMode === "code" && (
+            <Tooltip label={copied ? t("Copied!") : t("Copy")}>
               <ActionIcon variant="subtle" size="sm" onClick={handleCopy}>
                 {copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
               </ActionIcon>
             </Tooltip>
           )}
 
-          <Tooltip label={t('Download')}>
+          <Tooltip label={t("Download")}>
             <ActionIcon variant="subtle" size="sm" onClick={handleDownload}>
               <IconDownload size={16} />
             </ActionIcon>
           </Tooltip>
 
-          <Tooltip label={t('Close')}>
+          <Tooltip label={t("Close")}>
             <ActionIcon variant="subtle" size="sm" onClick={deselect}>
               <IconX size={16} />
             </ActionIcon>
@@ -221,16 +225,16 @@ export function ArtifactFileDetail({ sessionId }: ArtifactFileDetailProps) {
         {error && (
           <Box className={styles.loading}>
             <Text size="sm" c="red">
-              {t('Failed to load artifact')}
+              {t("Failed to load artifact")}
             </Text>
           </Box>
         )}
 
-        {!loading && !error && viewMode === 'code' && (
+        {!loading && !error && viewMode === "code" && (
           <CodeViewer content={content} language={language} />
         )}
 
-        {!loading && !error && viewMode === 'preview' && (
+        {!loading && !error && viewMode === "preview" && (
           <PreviewViewer url={artifactUrl} language={language} />
         )}
       </ScrollArea>
@@ -244,7 +248,7 @@ interface CodeViewerProps {
 }
 
 function CodeViewer({ content, language }: CodeViewerProps) {
-  const isMarkdown = language === 'markdown';
+  const isMarkdown = language === "markdown";
 
   if (isMarkdown) {
     return (
@@ -269,7 +273,7 @@ interface PreviewViewerProps {
 }
 
 function PreviewViewer({ url, language }: PreviewViewerProps) {
-  const isMarkdown = language === 'markdown';
+  const isMarkdown = language === "markdown";
 
   if (isMarkdown) {
     return (

@@ -1,5 +1,5 @@
-import React, { useId } from 'react';
-import styles from './AiInsightsIcon.module.css';
+import React, { useId } from "react";
+import styles from "./AiInsightsIcon.module.css";
 
 interface AiInsightsIconProps {
   size?: number;
@@ -11,19 +11,19 @@ interface AiInsightsIconProps {
 export function AiInsightsIcon({
   size = 18,
   showLabel = false,
-  className = '',
-  label = 'AI Insights',
+  className = "",
+  label = "AI Insights",
 }: AiInsightsIconProps) {
   const id = useId();
 
   // Unique IDs for defs
-  const nucGradId    = `nucGrad-${id}`;
-  const partGradId   = `partGrad-${id}`;
-  const partGlowId   = `partGlow-${id}`;
-  const nucGlowId    = `nucGlow-${id}`;
-  const orbit1Id     = `o1-${id}`;
-  const orbit2Id     = `o2-${id}`;
-  const orbit3Id     = `o3-${id}`;
+  const nucGradId = `nucGrad-${id}`;
+  const partGradId = `partGrad-${id}`;
+  const partGlowId = `partGlow-${id}`;
+  const nucGlowId = `nucGlow-${id}`;
+  const orbit1Id = `o1-${id}`;
+  const orbit2Id = `o2-${id}`;
+  const orbit3Id = `o3-${id}`;
 
   /*
     Three orbital ellipses, each with the same semi-axes (rx=5.8, ry=1.8)
@@ -50,19 +50,25 @@ export function AiInsightsIcon({
         <defs>
           {/* ── Nucleus gradient ── */}
           <radialGradient id={nucGradId} cx="38%" cy="32%" r="65%">
-            <stop offset="0%"   stopColor="#ede9fe" />
-            <stop offset="40%"  stopColor="#8b5cf6" />
+            <stop offset="0%" stopColor="#ede9fe" />
+            <stop offset="40%" stopColor="#8b5cf6" />
             <stop offset="100%" stopColor="#3b0764" />
           </radialGradient>
 
           {/* ── Particle gradient ── */}
           <radialGradient id={partGradId} cx="35%" cy="30%" r="60%">
-            <stop offset="0%"   stopColor="#f5f0ff" />
+            <stop offset="0%" stopColor="#f5f0ff" />
             <stop offset="100%" stopColor="#a78bfa" />
           </radialGradient>
 
           {/* ── Particle soft glow ── */}
-          <filter id={partGlowId} x="-120%" y="-120%" width="340%" height="340%">
+          <filter
+            id={partGlowId}
+            x="-120%"
+            y="-120%"
+            width="340%"
+            height="340%"
+          >
             <feGaussianBlur stdDeviation="0.55" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
@@ -109,7 +115,10 @@ export function AiInsightsIcon({
         {/* ── Orbital rings (static visual tracks) ── */}
         <g transform="rotate(10, 9, 9)">
           <ellipse
-            cx="9" cy="9" rx="5.8" ry="1.8"
+            cx="9"
+            cy="9"
+            rx="5.8"
+            ry="1.8"
             stroke="rgba(167,139,250,0.22)"
             strokeWidth="0.42"
             fill="none"
@@ -118,7 +127,10 @@ export function AiInsightsIcon({
         </g>
         <g transform="rotate(70, 9, 9)">
           <ellipse
-            cx="9" cy="9" rx="5.8" ry="1.8"
+            cx="9"
+            cy="9"
+            rx="5.8"
+            ry="1.8"
             stroke="rgba(167,139,250,0.18)"
             strokeWidth="0.42"
             fill="none"
@@ -127,7 +139,10 @@ export function AiInsightsIcon({
         </g>
         <g transform="rotate(-50, 9, 9)">
           <ellipse
-            cx="9" cy="9" rx="5.8" ry="1.8"
+            cx="9"
+            cy="9"
+            rx="5.8"
+            ry="1.8"
             stroke="rgba(167,139,250,0.15)"
             strokeWidth="0.42"
             fill="none"
@@ -142,11 +157,7 @@ export function AiInsightsIcon({
           fill={`url(#${partGradId})`}
           filter={`url(#${partGlowId})`}
         >
-          <animateMotion
-            dur="3.2s"
-            repeatCount="indefinite"
-            begin="0s"
-          >
+          <animateMotion dur="3.2s" repeatCount="indefinite" begin="0s">
             <mpath href={`#${orbit1Id}`} />
           </animateMotion>
         </circle>
@@ -158,11 +169,7 @@ export function AiInsightsIcon({
           filter={`url(#${partGlowId})`}
           opacity="0.88"
         >
-          <animateMotion
-            dur="4.6s"
-            repeatCount="indefinite"
-            begin="-1.8s"
-          >
+          <animateMotion dur="4.6s" repeatCount="indefinite" begin="-1.8s">
             <mpath href={`#${orbit2Id}`} />
           </animateMotion>
         </circle>
@@ -174,23 +181,18 @@ export function AiInsightsIcon({
           filter={`url(#${partGlowId})`}
           opacity="0.75"
         >
-          <animateMotion
-            dur="3.9s"
-            repeatCount="indefinite"
-            begin="-2.6s"
-          >
+          <animateMotion dur="3.9s" repeatCount="indefinite" begin="-2.6s">
             <mpath href={`#${orbit3Id}`} />
           </animateMotion>
         </circle>
 
         {/* ── Nucleus ── */}
-        <g
-          filter={`url(#${nucGlowId})`}
-          className={styles.nucleusPulse}
-        >
+        <g filter={`url(#${nucGlowId})`} className={styles.nucleusPulse}>
           {/* Outer halo ring */}
           <circle
-            cx="9" cy="9" r="2.6"
+            cx="9"
+            cy="9"
+            r="2.6"
             stroke="rgba(167,139,250,0.25)"
             strokeWidth="0.35"
             fill="none"
@@ -216,7 +218,7 @@ export function AiInsightsIcon({
   }
 
   return (
-    <div className={className} style={{ display: 'inline-flex' }}>
+    <div className={className} style={{ display: "inline-flex" }}>
       {iconContent}
     </div>
   );

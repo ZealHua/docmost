@@ -63,7 +63,7 @@ export default function SpaceSettingsModal({
 
                 <Tabs.Panel value="general">
                   <ScrollArea h={580} scrollbarSize={5} pr={8}>
-                    <div style={{ paddingBottom: "100px"}}>
+                    <div style={{ paddingBottom: "100px" }}>
                       <SpaceDetails
                         spaceId={space?.id}
                         readOnly={spaceAbility.cannot(
@@ -72,7 +72,6 @@ export default function SpaceSettingsModal({
                         )}
                       />
                     </div>
-
                   </ScrollArea>
                 </Tabs.Panel>
 

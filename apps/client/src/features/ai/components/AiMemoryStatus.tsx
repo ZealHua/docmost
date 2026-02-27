@@ -1,8 +1,8 @@
-import React from 'react';
-import { useAtomValue } from 'jotai';
-import { Tooltip } from '@mantine/core';
-import { aiMemoriesAtom, aiMemoryErrorAtom } from '../store/ai.atoms';
-import styles from './AiMemoryStatus.module.css';
+import React from "react";
+import { useAtomValue } from "jotai";
+import { Tooltip } from "@mantine/core";
+import { aiMemoriesAtom, aiMemoryErrorAtom } from "../store/ai.atoms";
+import styles from "./AiMemoryStatus.module.css";
 
 interface AiMemoryStatusProps {
   className?: string;
@@ -25,7 +25,9 @@ export function AiMemoryStatus({ className }: AiMemoryStatusProps) {
   }
 
   return (
-    <Tooltip label={`${memories.length} memory${memories.length !== 1 ? 'ies' : ''} loaded`}>
+    <Tooltip
+      label={`${memories.length} memory${memories.length !== 1 ? "ies" : ""} loaded`}
+    >
       <span className={`${styles.dot} ${styles.loaded} ${className}`}>
         <span className={styles.count}>{memories.length}</span>
       </span>

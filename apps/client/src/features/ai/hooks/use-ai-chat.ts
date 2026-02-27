@@ -1,6 +1,6 @@
-import { useCallback, useRef } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useAtom, useAtomValue } from 'jotai';
+import { useCallback, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAtom, useAtomValue } from "jotai";
 import {
   aiMessagesAtom,
   aiSourcesAtom,
@@ -16,16 +16,18 @@ import {
   aiMemoryLoadedAtom,
   aiMemoryErrorAtom,
   Mem0Memory,
-} from '../store/ai.atoms';
-import { streamAiChat } from '../services/ai-chat.service';
-import { MODEL_CONFIG } from '../lib/models.config';
-import { AiMessage, RagSource, AiSession } from '../types/ai-chat.types';
-import api from '@/lib/api-client';
+} from "../store/ai.atoms";
+import { streamAiChat } from "../services/ai-chat.service";
+import { MODEL_CONFIG } from "../lib/models.config";
+import { AiMessage, RagSource, AiSession } from "../types/ai-chat.types";
+import api from "@/lib/api-client";
 
 export function useAiChat(workspaceId?: string) {
   const queryClient = useQueryClient();
   const [messages, setMessages] = useAtom(aiMessagesAtom);
-  const [activeSession, setActiveSession] = useAtom(aiActiveSessionAtom) as readonly [AiSession | null, (val: AiSession | null) => void];
+  const [activeSession, setActiveSession] = useAtom(
+    aiActiveSessionAtom,
+  ) as readonly [AiSession | null, (val: AiSession | null) => void];
   const [, setSources] = useAtom(aiSourcesAtom);
   const [, setIsStreaming] = useAtom(aiIsStreamingAtom);
   const [, setStreamingContent] = useAtom(aiStreamingContentAtom);
@@ -44,22 +46,32 @@ export function useAiChat(workspaceId?: string) {
 
   const ensureSession = useCallback(async (): Promise<string | undefined> => {
     // If session exists and is already persisted (not a local temp session), use it
-    if (activeSession?.id && !activeSession.id.startsWith('local-')) {
+    if (activeSession?.id && !activeSession.id.startsWith("local-")) {
       return activeSession.id;
     }
     if (!workspaceId) {
       return undefined;
     }
     // Create a new persisted session
-    const response = await api.post<{ session: AiSession; memories: Mem0Memory[] }>('/ai/sessions', {});
+    const response = await api.post<{
+      session: AiSession;
+      memories: Mem0Memory[];
+    }>("/ai/sessions", {});
     const { session: newSession, memories } = response.data;
     setActiveSession(newSession);
     setMemories(memories || []);
     setMemoryLoaded(memories && memories.length > 0);
     // Invalidate sessions cache so history panel shows the new session
-    queryClient.invalidateQueries({ queryKey: ['ai-sessions'] });
+    queryClient.invalidateQueries({ queryKey: ["ai-sessions"] });
     return newSession.id;
-  }, [activeSession, workspaceId, setActiveSession, setMemories, setMemoryLoaded, queryClient]);
+  }, [
+    activeSession,
+    workspaceId,
+    setActiveSession,
+    setMemories,
+    setMemoryLoaded,
+    queryClient,
+  ]);
 
   const sendMessage = useCallback(
     async (content: string) => {
@@ -70,7 +82,7 @@ export function useAiChat(workspaceId?: string) {
 
       const userMessage: AiMessage = {
         id: crypto.randomUUID(),
-        role: 'user',
+        role: "user",
         content,
         sources: [],
         createdAt: new Date().toISOString(),
@@ -78,8 +90,8 @@ export function useAiChat(workspaceId?: string) {
       };
       setMessages((prev) => [...prev, userMessage]);
       setSources([]);
-      setStreamingContent('');
-      setStreamingThinking('');
+      setStreamingContent("");
+      setStreamingThinking("");
       setIsStreaming(true);
 
       const history = [...messagesRef.current, userMessage]
@@ -87,8 +99,8 @@ export function useAiChat(workspaceId?: string) {
         .map((m) => ({ role: m.role, content: m.content }));
 
       let collectedSources: RagSource[] = [];
-      let collectedContent = '';
-      let collectedThinking = '';
+      let collectedContent = "";
+      let collectedThinking = "";
 
       abortRef.current = streamAiChat(
         history,
@@ -106,12 +118,12 @@ export function useAiChat(workspaceId?: string) {
             setStreamingThinking((prev) => prev + thinking);
           },
           onError: (error) => {
-            console.error('AI chat error:', error);
+            console.error("AI chat error:", error);
             setIsStreaming(false);
             // Add error message to chat
             const errorMessage: AiMessage = {
               id: crypto.randomUUID(),
-              role: 'assistant',
+              role: "assistant",
               content: `Error: ${error}`,
               sources: [],
               createdAt: new Date().toISOString(),
@@ -125,7 +137,7 @@ export function useAiChat(workspaceId?: string) {
 
             const assistantMessage: AiMessage = {
               id: crypto.randomUUID(),
-              role: 'assistant',
+              role: "assistant",
               content: collectedContent,
               thinking: collectedThinking || undefined,
               sources: collectedSources,
@@ -134,19 +146,25 @@ export function useAiChat(workspaceId?: string) {
             };
 
             setMessages((prev) => [...prev, assistantMessage]);
-            setStreamingContent('');
-            setStreamingThinking('');
+            setStreamingContent("");
+            setStreamingThinking("");
             setIsStreaming(false);
 
             // Auto-rename: only on the first real message, when title is still the default
-            if (activeSession?.title === 'New Chat') {
+            if (activeSession?.title === "New Chat") {
               try {
-                const response = await api.post<{ title: string }>(`/ai/sessions/${sessionId}/auto-title`);
+                const response = await api.post<{ title: string }>(
+                  `/ai/sessions/${sessionId}/auto-title`,
+                );
                 const newTitle = response.data.title;
 
                 // Update local query cache so the sidebar updates instantly
-                queryClient.setQueryData<AiSession[]>(['ai-sessions', workspaceId], (old = []) =>
-                  old.map((s) => (s.id === sessionId ? { ...s, title: newTitle } : s)),
+                queryClient.setQueryData<AiSession[]>(
+                  ["ai-sessions", workspaceId],
+                  (old = []) =>
+                    old.map((s) =>
+                      s.id === sessionId ? { ...s, title: newTitle } : s,
+                    ),
                 );
 
                 // Also update active session atom if it matches
@@ -154,7 +172,7 @@ export function useAiChat(workspaceId?: string) {
                   setActiveSession({ ...activeSession, title: newTitle });
                 }
               } catch (e) {
-                console.warn('Failed to auto-update title:', e);
+                console.warn("Failed to auto-update title:", e);
               }
             }
           },
@@ -164,39 +182,54 @@ export function useAiChat(workspaceId?: string) {
             }
           },
         },
-        { 
-          sessionId: sessionId, 
-          model: thinking && MODEL_CONFIG[selectedModel]?.thinkingModel
-            ? MODEL_CONFIG[selectedModel].thinkingModel!
-            : selectedModel,
-          thinking, 
+        {
+          sessionId: sessionId,
+          model:
+            thinking && MODEL_CONFIG[selectedModel]?.thinkingModel
+              ? MODEL_CONFIG[selectedModel].thinkingModel!
+              : selectedModel,
+          thinking,
           isWebSearchEnabled,
-          selectedPageIds: selectedPages.map(p => p.pageId)
+          selectedPageIds: selectedPages.map((p) => p.pageId),
         },
       );
     },
-    [setMessages, setSources, setIsStreaming, setStreamingContent, setMemoryLoaded, setMemories, ensureSession, selectedModel, thinking, selectedPages],
+    [
+      setMessages,
+      setSources,
+      setIsStreaming,
+      setStreamingContent,
+      setMemoryLoaded,
+      setMemories,
+      ensureSession,
+      selectedModel,
+      thinking,
+      selectedPages,
+    ],
   );
 
   const stopStream = useCallback(() => {
     abortRef.current?.abort();
     setIsStreaming(false);
-    setStreamingContent('');
-    setStreamingThinking('');
+    setStreamingContent("");
+    setStreamingThinking("");
   }, [setIsStreaming, setStreamingContent, setStreamingThinking]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);
     setSources([]);
-    setStreamingContent('');
+    setStreamingContent("");
   }, [setMessages, setSources, setStreamingContent]);
 
-  const setSession = useCallback((session: AiSession | null) => {
-    setActiveSession(session);
-    if (!session) {
-      setMessages([]);
-    }
-  }, [setActiveSession, setMessages]);
+  const setSession = useCallback(
+    (session: AiSession | null) => {
+      setActiveSession(session);
+      if (!session) {
+        setMessages([]);
+      }
+    },
+    [setActiveSession, setMessages],
+  );
 
   return { sendMessage, stopStream, clearMessages, setSession, activeSession };
 }

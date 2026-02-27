@@ -97,7 +97,13 @@ export default function AllSpacesList({
                           variant="filled"
                           size="md"
                         />
-                        <div style={{ minWidth: 0, overflow: "hidden", maxWidth: 350 }}>
+                        <div
+                          style={{
+                            minWidth: 0,
+                            overflow: "hidden",
+                            maxWidth: 350,
+                          }}
+                        >
                           <AutoTooltipText fz="sm" fw={500} lineClamp={1}>
                             {space.name}
                           </AutoTooltipText>

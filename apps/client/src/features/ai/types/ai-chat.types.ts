@@ -17,7 +17,7 @@ export interface ToolCall {
   name: string;
   args: Record<string, unknown>;
   id: string;
-  type?: 'tool_call';
+  type?: "tool_call";
 }
 
 export interface Todo {
@@ -26,7 +26,7 @@ export interface Todo {
 }
 
 export interface SubtaskEvent {
-  type: 'task_running' | 'task_complete' | 'task_error';
+  type: "task_running" | "task_complete" | "task_error";
   task_id: string;
   message?: {
     type: string;
@@ -45,18 +45,18 @@ export interface SubtaskEvent {
 export interface AiMessage {
   id: string;
   sessionId?: string;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
   thinking?: string;
   sources: RagSource[];
   createdAt: string;
 
   // LangGraph agentic fields
-  messageType?: 'chat' | 'tool_use' | 'tool_result';
+  messageType?: "chat" | "tool_use" | "tool_result";
   tool_calls?: ToolCall[];
   tool_call_id?: string;
   tool_name?: string;
-  tool_status?: 'success' | 'error';
+  tool_status?: "success" | "error";
 }
 
 export interface AiSession {
@@ -72,6 +72,6 @@ export interface AiSession {
 }
 
 export interface AiStreamEvent {
-  type: 'sources' | 'chunk' | 'thinking' | 'error';
+  type: "sources" | "chunk" | "thinking" | "error";
   data: RagSource[] | string;
 }

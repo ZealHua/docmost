@@ -29,11 +29,21 @@ export default function AttachmentView(props: NodeViewProps) {
               <Loader size={20} style={{ flexShrink: 0 }} />
             )}
 
-            <Text component="span" size="md" truncate="end" style={{ minWidth: 0 }}>
+            <Text
+              component="span"
+              size="md"
+              truncate="end"
+              style={{ minWidth: 0 }}
+            >
               {url ? name : t("Uploading {{name}}", { name })}
             </Text>
 
-            <Text component="span" size="sm" c="dimmed" style={{ flexShrink: 0 }}>
+            <Text
+              component="span"
+              size="sm"
+              c="dimmed"
+              style={{ flexShrink: 0 }}
+            >
               {formatBytes(size)}
             </Text>
           </Group>

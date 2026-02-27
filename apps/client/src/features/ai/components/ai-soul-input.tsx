@@ -40,12 +40,18 @@ export default function AiSoulInput() {
 
   return (
     <>
-      <Title order={5} mb="xs">{t("AI Soul")}</Title>
+      <Title order={5} mb="xs">
+        {t("AI Soul")}
+      </Title>
       <Text size="sm" c="dimmed" mb="md">
-        {t("Define the AI's personality, tone, and communication style. This will be injected into the system prompt for the Intelligence feature.")}
+        {t(
+          "Define the AI's personality, tone, and communication style. This will be injected into the system prompt for the Intelligence feature.",
+        )}
       </Text>
       <Textarea
-        placeholder={t("e.g., You are a helpful, friendly assistant who explains things in simple terms...")}
+        placeholder={t(
+          "e.g., You are a helpful, friendly assistant who explains things in simple terms...",
+        )}
         minRows={3}
         maxRows={6}
         value={value}

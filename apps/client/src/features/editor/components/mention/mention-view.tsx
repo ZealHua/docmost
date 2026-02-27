@@ -59,7 +59,9 @@ export default function MentionView(props: NodeViewProps) {
           component={Link}
           fw={500}
           to={
-            isShareRoute ? shareSlugUrl : buildPageUrl(spaceSlug, slugId, label, anchorId)
+            isShareRoute
+              ? shareSlugUrl
+              : buildPageUrl(spaceSlug, slugId, label, anchorId)
           }
           onClick={handleClick}
           underline="never"

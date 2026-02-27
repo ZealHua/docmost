@@ -32,7 +32,7 @@ export const TableMenu = React.memo(
 
         return editor.isActive("table") && !isCellSelection(state.selection);
       },
-      [editor]
+      [editor],
     );
 
     const getReferencedVirtualElement = useCallback(() => {
@@ -221,7 +221,7 @@ export const TableMenu = React.memo(
         </ActionIcon.Group>
       </BubbleMenu>
     );
-  }
+  },
 );
 
 export default TableMenu;

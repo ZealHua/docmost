@@ -26,7 +26,7 @@ import {
   prefetchApiKeys,
   prefetchBilling,
   prefetchGroups,
-  prefetchLicense,
+  // prefetchLicense,
   prefetchShares,
   prefetchSpaces,
   prefetchSsoProviders,
@@ -89,15 +89,15 @@ const groupedData: DataGroup[] = [
         isCloud: true,
         isAdmin: true,
       },
-      {
-        label: "Security & SSO",
-        icon: IconLock,
-        path: "/settings/security",
-        isCloud: true,
-        isEnterprise: true,
-        isAdmin: true,
-        showDisabledInNonEE: true,
-      },
+      // {
+      //   label: "Security & SSO",
+      //   icon: IconLock,
+      //   path: "/settings/security",
+      //   isCloud: true,
+      //   isEnterprise: true,
+      //   isAdmin: true,
+      //   showDisabledInNonEE: true,
+      // },
       { label: "Groups", icon: IconUsersGroup, path: "/settings/groups" },
       { label: "Spaces", icon: IconSpaces, path: "/settings/spaces" },
       { label: "Public sharing", icon: IconWorld, path: "/settings/sharing" },
@@ -118,16 +118,16 @@ const groupedData: DataGroup[] = [
       },
     ],
   },
-  {
-    heading: "System",
-    items: [
-      {
-        label: "License & Edition",
-        icon: IconKey,
-        path: "/settings/license",
-      },
-    ],
-  },
+  // {
+  //   heading: "System",
+  //   items: [
+  //     {
+  //       label: "License & Edition",
+  //       icon: IconKey,
+  //       path: "/settings/license",
+  //     },
+  //   ],
+  // },
 ];
 
 export default function SettingsSidebar() {

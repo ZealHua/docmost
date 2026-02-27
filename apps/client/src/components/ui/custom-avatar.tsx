@@ -21,20 +21,33 @@ interface CustomAvatarProps {
 export const CustomAvatar = React.forwardRef<
   HTMLInputElement,
   CustomAvatarProps
->(({ avatarUrl, name, type, showOrbitalRing = true, ...props }: CustomAvatarProps, ref) => {
-  const avatarLink = getAvatarUrl(avatarUrl, type);
+>(
+  (
+    {
+      avatarUrl,
+      name,
+      type,
+      showOrbitalRing = true,
+      ...props
+    }: CustomAvatarProps,
+    ref,
+  ) => {
+    const avatarLink = getAvatarUrl(avatarUrl, type);
 
-  return (
-    <div className={`${classes.avatarWrapper} ${showOrbitalRing ? classes.hasRing : ""}`}>
-      {showOrbitalRing && <div className={classes.avatarRing} />}
-      <Avatar
-        ref={ref}
-        src={avatarLink}
-        name={name}
-        alt={name}
-        color="initials"
-        {...props}
-      />
-    </div>
-  );
-});
+    return (
+      <div
+        className={`${classes.avatarWrapper} ${showOrbitalRing ? classes.hasRing : ""}`}
+      >
+        {showOrbitalRing && <div className={classes.avatarRing} />}
+        <Avatar
+          ref={ref}
+          src={avatarLink}
+          name={name}
+          alt={name}
+          color="initials"
+          {...props}
+        />
+      </div>
+    );
+  },
+);

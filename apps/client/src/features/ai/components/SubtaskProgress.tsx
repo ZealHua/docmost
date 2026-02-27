@@ -1,8 +1,8 @@
-import React from 'react';
-import { useAtomValue } from 'jotai';
-import { IconLoader2 } from '@tabler/icons-react';
-import { aiSubtaskProgressAtom } from '../store/ai.atoms';
-import styles from './SubtaskProgress.module.css';
+import React from "react";
+import { useAtomValue } from "jotai";
+import { IconLoader2 } from "@tabler/icons-react";
+import { aiSubtaskProgressAtom } from "../store/ai.atoms";
+import styles from "./SubtaskProgress.module.css";
 
 export function SubtaskProgress() {
   const subtasks = useAtomValue(aiSubtaskProgressAtom);
@@ -14,9 +14,9 @@ export function SubtaskProgress() {
       {subtasks.map((task) => (
         <div key={task.task_id} className={styles.taskRow}>
           <div className={styles.statusDot}>
-            {task.type === 'task_running' ? (
+            {task.type === "task_running" ? (
               <IconLoader2 size={14} className={styles.spinnerIcon} />
-            ) : task.type === 'task_complete' ? (
+            ) : task.type === "task_complete" ? (
               <span className={styles.completeDot} />
             ) : (
               <span className={styles.errorDot} />

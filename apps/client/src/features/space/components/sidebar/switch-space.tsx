@@ -44,7 +44,9 @@ export function SwitchSpace({
           variant="subtle"
           fullWidth
           justify="space-between"
-          rightSection={opened ? <IconChevronUp size={18} /> : <IconChevronDown size={18} />}
+          rightSection={
+            opened ? <IconChevronUp size={18} /> : <IconChevronDown size={18} />
+          }
           color="gray"
           onClick={toggle}
         >

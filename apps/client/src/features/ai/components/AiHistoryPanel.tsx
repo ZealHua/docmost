@@ -1,9 +1,9 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { IconX, IconTrash, IconPencil } from '@tabler/icons-react';
-import { useClickOutside } from '@mantine/hooks';
-import { AiSession } from '../types/ai-chat.types';
-import { useTranslation } from 'react-i18next';
-import styles from './AiHistoryPanel.module.css';
+import React, { useState, useMemo, useRef, useEffect } from "react";
+import { IconX, IconTrash, IconPencil } from "@tabler/icons-react";
+import { useClickOutside } from "@mantine/hooks";
+import { AiSession } from "../types/ai-chat.types";
+import { useTranslation } from "react-i18next";
+import styles from "./AiHistoryPanel.module.css";
 
 interface AiHistoryPanelProps {
   open: boolean;
@@ -16,7 +16,14 @@ interface AiHistoryPanelProps {
   onRenameSession?: (sessionId: string, title: string) => void;
 }
 
-type TimeCategory = 'today' | 'yesterday' | 'thisWeek' | 'lastWeek' | 'thisMonth' | 'thisQuarter' | 'older';
+type TimeCategory =
+  | "today"
+  | "yesterday"
+  | "thisWeek"
+  | "lastWeek"
+  | "thisMonth"
+  | "thisQuarter"
+  | "older";
 
 interface GroupedSessions {
   [key: string]: AiSession[];
@@ -25,54 +32,61 @@ interface GroupedSessions {
 function getTimeCategory(date: Date): TimeCategory {
   const now = new Date();
   const sessionDate = new Date(date);
-  
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const startOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+  );
   const startOfYesterday = new Date(startOfToday);
   startOfYesterday.setDate(startOfYesterday.getDate() - 1);
   const endOfYesterday = new Date(startOfToday);
   endOfYesterday.setMilliseconds(-1);
-  
+
   const startOfThisWeek = new Date(startOfToday);
   startOfThisWeek.setDate(startOfThisWeek.getDate() - startOfThisWeek.getDay());
-  
+
   const startOfLastWeek = new Date(startOfThisWeek);
   startOfLastWeek.setDate(startOfLastWeek.getDate() - 7);
-  
+
   const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  
-  const startOfThisQuarter = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
-  
-  if (sessionDate >= startOfToday) return 'today';
-  if (sessionDate >= startOfYesterday && sessionDate <= endOfYesterday) return 'yesterday';
-  if (sessionDate >= startOfThisWeek) return 'thisWeek';
-  if (sessionDate >= startOfLastWeek) return 'lastWeek';
-  if (sessionDate >= startOfThisMonth) return 'thisMonth';
-  if (sessionDate >= startOfThisQuarter) return 'thisQuarter';
-  
-  return 'older';
+
+  const startOfThisQuarter = new Date(
+    now.getFullYear(),
+    Math.floor(now.getMonth() / 3) * 3,
+    1,
+  );
+
+  if (sessionDate >= startOfToday) return "today";
+  if (sessionDate >= startOfYesterday && sessionDate <= endOfYesterday)
+    return "yesterday";
+  if (sessionDate >= startOfThisWeek) return "thisWeek";
+  if (sessionDate >= startOfLastWeek) return "lastWeek";
+  if (sessionDate >= startOfThisMonth) return "thisMonth";
+  if (sessionDate >= startOfThisQuarter) return "thisQuarter";
+
+  return "older";
 }
 
-function getCategoryLabel(category: TimeCategory, t: (key: string) => string): string {
+function getCategoryLabel(
+  category: TimeCategory,
+  t: (key: string) => string,
+): string {
   const labels: Record<TimeCategory, string> = {
-    today: t('Today'),
-    yesterday: t('Yesterday'),
-    thisWeek: t('This Week'),
-    lastWeek: t('Last Week'),
-    thisMonth: t('This Month'),
-    thisQuarter: t('This Quarter'),
-    older: t('Older'),
+    today: t("Today"),
+    yesterday: t("Yesterday"),
+    thisWeek: t("This Week"),
+    lastWeek: t("Last Week"),
+    thisMonth: t("This Month"),
+    thisQuarter: t("This Quarter"),
+    older: t("Older"),
   };
   return labels[category];
 }
 
-function formatSessionDate(dateString: string): string {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined });
-}
-
 function groupSessionsByTime(sessions: AiSession[]): GroupedSessions {
   const groups: GroupedSessions = {};
-  
+
   for (const session of sessions) {
     const category = getTimeCategory(new Date(session.updatedAt));
     if (!groups[category]) {
@@ -80,28 +94,19 @@ function groupSessionsByTime(sessions: AiSession[]): GroupedSessions {
     }
     groups[category].push(session);
   }
-  
+
   return groups;
 }
 
-function formatRelativeTime(dateString: string, t: (key: string, options?: any) => string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / (1000 * 60));
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffMins < 1) return t('Just now');
-  if (diffMins < 60) return t('{{count}} min ago', { count: diffMins });
-  if (diffHours < 24) return t('{{count}} hr ago', { count: diffHours });
-  if (diffDays === 1) return t('Yesterday');
-  if (diffDays < 7) return t('{{count}} days ago', { count: diffDays });
-  
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
-
-const categoryOrder: TimeCategory[] = ['today', 'yesterday', 'thisWeek', 'lastWeek', 'thisMonth', 'thisQuarter', 'older'];
+const categoryOrder: TimeCategory[] = [
+  "today",
+  "yesterday",
+  "thisWeek",
+  "lastWeek",
+  "thisMonth",
+  "thisQuarter",
+  "older",
+];
 
 export function AiHistoryPanel({
   open,
@@ -113,9 +118,9 @@ export function AiHistoryPanel({
   onDeleteSession,
 }: AiHistoryPanelProps) {
   const { t } = useTranslation();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editTitle, setEditTitle] = useState('');
+  const [editTitle, setEditTitle] = useState("");
   const panelRef = useClickOutside(() => onClose());
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -129,8 +134,8 @@ export function AiHistoryPanel({
   const filteredSessions = useMemo(() => {
     if (!searchQuery.trim()) return sessions;
     const query = searchQuery.toLowerCase();
-    return sessions.filter(
-      (s) => (s.title || '').toLowerCase().includes(query),
+    return sessions.filter((s) =>
+      (s.title || "").toLowerCase().includes(query),
     );
   }, [sessions, searchQuery]);
 
@@ -154,7 +159,7 @@ export function AiHistoryPanel({
   const handleEditClick = (e: React.MouseEvent, session: AiSession) => {
     e.stopPropagation();
     setEditingId(session.id);
-    setEditTitle(session.title || '');
+    setEditTitle(session.title || "");
   };
 
   const handleRenameSubmit = () => {
@@ -162,15 +167,15 @@ export function AiHistoryPanel({
       onRenameSession(editingId, editTitle.trim());
     }
     setEditingId(null);
-    setEditTitle('');
+    setEditTitle("");
   };
 
   const handleRenameKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleRenameSubmit();
-    } else if (e.key === 'Escape') {
+    } else if (e.key === "Escape") {
       setEditingId(null);
-      setEditTitle('');
+      setEditTitle("");
     }
   };
 
@@ -184,7 +189,7 @@ export function AiHistoryPanel({
         <div className={styles.headerSearchWrapper}>
           <input
             type="text"
-            placeholder={t('Search conversations...')}
+            placeholder={t("Search conversations...")}
             className={styles.searchInput}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -204,16 +209,19 @@ export function AiHistoryPanel({
           <>
             {categoryOrder.map((category) => {
               const categorySessions = groupedSessions[category];
-              if (!categorySessions || categorySessions.length === 0) return null;
-              
+              if (!categorySessions || categorySessions.length === 0)
+                return null;
+
               return (
                 <div key={category}>
-                  <div className={styles.sectionLabel}>{getCategoryLabel(category, t)}</div>
+                  <div className={styles.sectionLabel}>
+                    {getCategoryLabel(category, t)}
+                  </div>
                   {categorySessions.map((session) => (
                     <div
                       key={session.id}
                       className={`${styles.sessionItem} ${
-                        activeSessionId === session.id ? styles.active : ''
+                        activeSessionId === session.id ? styles.active : ""
                       }`}
                       onClick={() => handleSessionClick(session)}
                     >
@@ -230,16 +238,9 @@ export function AiHistoryPanel({
                             onClick={(e) => e.stopPropagation()}
                           />
                         ) : (
-                          <div className={styles.sessionTitleRow}>
-                            <span className={styles.sessionTitle}>
-                              {session.title || t('New chat')}
-                            </span>
-                            <span className={styles.sessionTime}>
-                              {category === 'older' 
-                                ? formatSessionDate(session.updatedAt) 
-                                : formatRelativeTime(session.updatedAt, t)}
-                            </span>
-                          </div>
+                          <span className={styles.sessionTitle}>
+                            {session.title || t("New chat")}
+                          </span>
                         )}
                       </div>
                       <div className={styles.sessionActions}>
@@ -247,7 +248,7 @@ export function AiHistoryPanel({
                           <button
                             className={styles.editButton}
                             onClick={(e) => handleEditClick(e, session)}
-                            aria-label={t('Rename session')}
+                            aria-label={t("Rename session")}
                           >
                             <IconPencil size={14} />
                           </button>
@@ -255,7 +256,7 @@ export function AiHistoryPanel({
                         <button
                           className={styles.deleteButton}
                           onClick={(e) => handleDeleteClick(e, session.id)}
-                          aria-label={t('Delete session')}
+                          aria-label={t("Delete session")}
                         >
                           <IconTrash size={14} />
                         </button>
@@ -269,7 +270,7 @@ export function AiHistoryPanel({
         ) : (
           <div className={styles.emptySessions}>
             <div className={styles.emptySessionsText}>
-              {searchQuery ? t('No conversations found') : t('No chats yet')}
+              {searchQuery ? t("No conversations found") : t("No chats yet")}
             </div>
           </div>
         )}

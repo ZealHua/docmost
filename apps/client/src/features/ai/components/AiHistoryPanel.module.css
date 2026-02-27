@@ -85,6 +85,31 @@
   box-shadow: 0 0 0 2px light-dark(rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.15));
 }
 
+.panelActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.closeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: light-dark(var(--mantine-color-gray-4), var(--mantine-color-dark-3));
+  transition: all 0.15s ease;
+}
+
+.closeButton:hover {
+  background: light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-5));
+  color: light-dark(var(--mantine-color-gray-6), var(--mantine-color-dark-1));
+}
+
 .sessionList {
   padding: 2px 4px 6px;
   flex: 1;
@@ -128,7 +153,6 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0px;
 }
 
 .sessionTitle {
@@ -144,13 +168,6 @@
 
 .sessionItem.active .sessionTitle {
   color: light-dark(var(--mantine-color-gray-8), var(--mantine-color-dark-0));
-}
-
-.sessionTime {
-  font-size: 10.5px;
-  color: light-dark(var(--mantine-color-gray-5), var(--mantine-color-dark-4));
-  font-family: var(--mantine-font-family);
-  line-height: 1.2;
 }
 
 .sessionActions {

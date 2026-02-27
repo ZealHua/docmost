@@ -13,7 +13,7 @@ import Paginate from "@/components/common/paginate";
 import { useCursorPaginate } from "@/hooks/use-cursor-paginate";
 import { useGetApiKeysQuery } from "@/ee/api-key/queries/api-key-query.ts";
 import { IApiKey } from "@/ee/api-key";
-import useUserRole from '@/hooks/use-user-role.tsx';
+import useUserRole from "@/hooks/use-user-role.tsx";
 
 export default function WorkspaceApiKeys() {
   const { t } = useTranslation();

@@ -1,8 +1,8 @@
-import { ActionIcon, Tooltip, Badge } from '@mantine/core';
-import { IconFiles } from '@tabler/icons-react';
-import { useTranslation } from 'react-i18next';
+import { ActionIcon, Tooltip, Badge } from "@mantine/core";
+import { IconFiles } from "@tabler/icons-react";
+import { useTranslation } from "react-i18next";
 
-import { useArtifacts } from '../../context/artifacts-context';
+import { useArtifacts } from "../../context/artifacts-context";
 
 export function ArtifactHeaderButton() {
   const { t } = useTranslation();
@@ -15,7 +15,7 @@ export function ArtifactHeaderButton() {
   }
 
   return (
-    <Tooltip label={t('Artifacts')}>
+    <Tooltip label={t("Artifacts")}>
       <ActionIcon
         variant="subtle"
         size="lg"
@@ -24,11 +24,7 @@ export function ArtifactHeaderButton() {
       >
         <IconFiles size={20} />
         {artifacts.length > 0 && (
-          <Badge
-            size="xs"
-            circle
-            className="artifact-badge"
-          >
+          <Badge size="xs" circle className="artifact-badge">
             {artifacts.length}
           </Badge>
         )}

@@ -1,18 +1,18 @@
-import { Client } from '@langchain/langgraph-sdk';
+import { Client } from "@langchain/langgraph-sdk";
 
 let _singleton: Client | null = null;
 
 const getBaseUrl = (): string => {
   const envUrl = process.env.NEXT_PUBLIC_LANGGRAPH_BASE_URL;
-  
+
   if (envUrl) {
     return envUrl;
   }
   // Fallback for client-side
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     return `${window.location.origin}/api/langgraph`;
   }
-  return '';
+  return "";
 };
 
 const LANGGRAPH_BASE_URL = getBaseUrl();

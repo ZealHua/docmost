@@ -1,4 +1,11 @@
-import { Group, ActionIcon, Tooltip, Menu, Button, Popover } from "@mantine/core";
+import {
+  Group,
+  ActionIcon,
+  Tooltip,
+  Menu,
+  Button,
+  Popover,
+} from "@mantine/core";
 import {
   IconChevronDown,
   IconChevronUp,
@@ -34,13 +41,20 @@ interface SidebarBottomNavProps {
   spaceLogo?: string;
 }
 
-export function SidebarBottomNav({ spaceName, spaceSlug, spaceLogo }: SidebarBottomNavProps) {
+export function SidebarBottomNav({
+  spaceName,
+  spaceSlug,
+  spaceLogo,
+}: SidebarBottomNavProps) {
   const { t } = useTranslation();
   const [currentUser] = useAtom(currentUserAtom);
   const { logout } = useAuth();
   const { colorScheme, setColorScheme } = useMantineColorScheme();
   const navigate = useNavigate();
-  const [spaceSelectOpened, { close: closeSpaceSelect, toggle: toggleSpaceSelect }] = useDisclosure(false);
+  const [
+    spaceSelectOpened,
+    { close: closeSpaceSelect, toggle: toggleSpaceSelect },
+  ] = useDisclosure(false);
 
   const user = currentUser?.user;
 
@@ -54,7 +68,13 @@ export function SidebarBottomNav({ spaceName, spaceSlug, spaceLogo }: SidebarBot
   return (
     <div className={classes.bottomNav}>
       {/* User Avatar — Left Aligned */}
-      <Menu position="top-start" withArrow shadow="lg" offset={22} classNames={{ dropdown: classes.menu }}>
+      <Menu
+        position="top-start"
+        withArrow
+        shadow="lg"
+        offset={22}
+        classNames={{ dropdown: classes.menu }}
+      >
         <Menu.Target>
           <Tooltip label={user?.name} withArrow position="top">
             <div className={classes.userAvatarWrapper}>
@@ -69,12 +89,16 @@ export function SidebarBottomNav({ spaceName, spaceSlug, spaceLogo }: SidebarBot
         </Menu.Target>
 
         <Menu.Dropdown>
-          <Menu.Label className={classes.menuLabel}>{t("Workspace")}</Menu.Label>
+          <Menu.Label className={classes.menuLabel}>
+            {t("Workspace")}
+          </Menu.Label>
 
           <Menu.Item
             component={Link}
             to={APP_ROUTE.SETTINGS.WORKSPACE.GENERAL}
-            leftSection={<IconSettings size={16} className={classes.menuItemIcon} />}
+            leftSection={
+              <IconSettings size={16} className={classes.menuItemIcon} />
+            }
             className={classes.menuItem}
           >
             {t("Workspace settings")}
@@ -83,7 +107,9 @@ export function SidebarBottomNav({ spaceName, spaceSlug, spaceLogo }: SidebarBot
           <Menu.Item
             component={Link}
             to={APP_ROUTE.SETTINGS.WORKSPACE.MEMBERS}
-            leftSection={<IconUsers size={16} className={classes.menuItemIcon} />}
+            leftSection={
+              <IconUsers size={16} className={classes.menuItemIcon} />
+            }
             className={classes.menuItem}
           >
             {t("Manage members")}
@@ -93,7 +119,11 @@ export function SidebarBottomNav({ spaceName, spaceSlug, spaceLogo }: SidebarBot
 
           <Menu.Label className={classes.menuLabel}>{t("Account")}</Menu.Label>
 
-          <Menu.Item component={Link} to={APP_ROUTE.SETTINGS.ACCOUNT.PROFILE} className={classes.menuItem}>
+          <Menu.Item
+            component={Link}
+            to={APP_ROUTE.SETTINGS.ACCOUNT.PROFILE}
+            className={classes.menuItem}
+          >
             <Group wrap={"nowrap"}>
               <CustomAvatar
                 size={"sm"}
@@ -110,7 +140,9 @@ export function SidebarBottomNav({ spaceName, spaceSlug, spaceLogo }: SidebarBot
           <Menu.Item
             component={Link}
             to={APP_ROUTE.SETTINGS.ACCOUNT.PROFILE}
-            leftSection={<IconUserCircle size={16} className={classes.menuItemIcon} />}
+            leftSection={
+              <IconUserCircle size={16} className={classes.menuItemIcon} />
+            }
             className={classes.menuItem}
           >
             {t("My profile")}
@@ -119,7 +151,9 @@ export function SidebarBottomNav({ spaceName, spaceSlug, spaceLogo }: SidebarBot
           <Menu.Item
             component={Link}
             to={APP_ROUTE.SETTINGS.ACCOUNT.PREFERENCES}
-            leftSection={<IconBrush size={16} className={classes.menuItemIcon} />}
+            leftSection={
+              <IconBrush size={16} className={classes.menuItemIcon} />
+            }
             className={classes.menuItem}
           >
             {t("My preferences")}
@@ -127,7 +161,15 @@ export function SidebarBottomNav({ spaceName, spaceSlug, spaceLogo }: SidebarBot
 
           <Menu.Sub>
             <Menu.Sub.Target>
-              <Menu.Sub.Item leftSection={<IconBrightnessFilled size={16} className={classes.themeIcon} />} className={classes.themeItem}>
+              <Menu.Sub.Item
+                leftSection={
+                  <IconBrightnessFilled
+                    size={16}
+                    className={classes.themeIcon}
+                  />
+                }
+                className={classes.themeItem}
+              >
                 {t("Theme")}
               </Menu.Sub.Item>
             </Menu.Sub.Target>
@@ -135,9 +177,13 @@ export function SidebarBottomNav({ spaceName, spaceSlug, spaceLogo }: SidebarBot
             <Menu.Sub.Dropdown>
               <Menu.Item
                 onClick={() => setColorScheme("light")}
-                leftSection={<IconSun size={16} className={classes.themeIcon} />}
+                leftSection={
+                  <IconSun size={16} className={classes.themeIcon} />
+                }
                 rightSection={
-                  colorScheme === "light" ? <IconCheck size={16} className={classes.checkIcon} /> : null
+                  colorScheme === "light" ? (
+                    <IconCheck size={16} className={classes.checkIcon} />
+                  ) : null
                 }
                 className={classes.themeItem}
               >
@@ -145,9 +191,13 @@ export function SidebarBottomNav({ spaceName, spaceSlug, spaceLogo }: SidebarBot
               </Menu.Item>
               <Menu.Item
                 onClick={() => setColorScheme("dark")}
-                leftSection={<IconMoon size={16} className={classes.themeIcon} />}
+                leftSection={
+                  <IconMoon size={16} className={classes.themeIcon} />
+                }
                 rightSection={
-                  colorScheme === "dark" ? <IconCheck size={16} className={classes.checkIcon} /> : null
+                  colorScheme === "dark" ? (
+                    <IconCheck size={16} className={classes.checkIcon} />
+                  ) : null
                 }
                 className={classes.themeItem}
               >
@@ -155,9 +205,13 @@ export function SidebarBottomNav({ spaceName, spaceSlug, spaceLogo }: SidebarBot
               </Menu.Item>
               <Menu.Item
                 onClick={() => setColorScheme("auto")}
-                leftSection={<IconDeviceDesktop size={16} className={classes.themeIcon} />}
+                leftSection={
+                  <IconDeviceDesktop size={16} className={classes.themeIcon} />
+                }
                 rightSection={
-                  colorScheme === "auto" ? <IconCheck size={16} className={classes.checkIcon} /> : null
+                  colorScheme === "auto" ? (
+                    <IconCheck size={16} className={classes.checkIcon} />
+                  ) : null
                 }
                 className={classes.themeItem}
               >
@@ -168,7 +222,13 @@ export function SidebarBottomNav({ spaceName, spaceSlug, spaceLogo }: SidebarBot
 
           <Menu.Divider className={classes.menuDivider} />
 
-          <Menu.Item onClick={logout} leftSection={<IconLogout size={16} className={classes.menuItemIcon} />} className={classes.menuItem}>
+          <Menu.Item
+            onClick={logout}
+            leftSection={
+              <IconLogout size={16} className={classes.menuItemIcon} />
+            }
+            className={classes.menuItem}
+          >
             {t("Logout")}
           </Menu.Item>
         </Menu.Dropdown>

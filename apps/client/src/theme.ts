@@ -53,7 +53,9 @@ const red: MantineColorsTuple = [
 export const theme = createTheme({
   // ── Brand colours ────────────────────────────────────────────────────────
   colors: {
-    violet, blue, red,
+    violet,
+    blue,
+    red,
 
     // Override the built-in "dark" scale so dark-mode surfaces
     // all carry our violet undertone.
@@ -70,7 +72,7 @@ export const theme = createTheme({
       "#08041a", // dark.9 — absolute darkest
     ] as MantineColorsTuple,
   },
-  primaryColor: "violet",        // every default Mantine accent is now violet
+  primaryColor: "violet", // every default Mantine accent is now violet
   primaryShade: { light: 6, dark: 5 }, // [6] in light, [5] in dark
 
   // ── Typography — matches the Sora / DM Sans / IBM Plex Mono system ───────
@@ -81,39 +83,39 @@ export const theme = createTheme({
     fontWeight: "700",
   },
   fontSizes: {
-    xs:  rem(11),
-    sm:  rem(12.5),
-    md:  rem(14),
-    lg:  rem(16),
-    xl:  rem(18),
+    xs: rem(11),
+    sm: rem(12.5),
+    md: rem(14),
+    lg: rem(16),
+    xl: rem(18),
   },
 
   // ── Shape ────────────────────────────────────────────────────────────────
   defaultRadius: "md",
   radius: {
-    xs:  rem(4),
-    sm:  rem(6),
-    md:  rem(10),
-    lg:  rem(14),
-    xl:  rem(20),
+    xs: rem(4),
+    sm: rem(6),
+    md: rem(10),
+    lg: rem(14),
+    xl: rem(20),
   },
 
   // ── Spacing ──────────────────────────────────────────────────────────────
   spacing: {
-    xs:  rem(6),
-    sm:  rem(10),
-    md:  rem(14),
-    lg:  rem(20),
-    xl:  rem(32),
+    xs: rem(6),
+    sm: rem(10),
+    md: rem(14),
+    lg: rem(20),
+    xl: rem(32),
   },
 
   // ── Shadows — violet-tinted, not cold grey ───────────────────────────────
   shadows: {
-    xs:  "0 1px 4px rgba(109, 40, 217, 0.10)",
-    sm:  "0 2px 8px rgba(109, 40, 217, 0.15)",
-    md:  "0 4px 16px rgba(109, 40, 217, 0.20)",
-    lg:  "0 6px 28px rgba(109, 40, 217, 0.28)",
-    xl:  "0 10px 40px rgba(109, 40, 217, 0.35)",
+    xs: "0 1px 4px rgba(109, 40, 217, 0.10)",
+    sm: "0 2px 8px rgba(109, 40, 217, 0.15)",
+    md: "0 4px 16px rgba(109, 40, 217, 0.20)",
+    lg: "0 6px 28px rgba(109, 40, 217, 0.28)",
+    xl: "0 10px 40px rgba(109, 40, 217, 0.35)",
   },
 
   // ── Focus ring — violet glow instead of default blue ────────────────────
@@ -131,38 +133,38 @@ export const mantineCssResolver: CSSVariablesResolver = (theme) => ({
     "--input-error-size": theme.fontSizes.sm,
 
     // ── Brand violet shortcuts ───────────────────────────────────────────────
-    "--quantum-violet-core":    "#7c3aed", // primary
-    "--quantum-violet-bright":  "#9370ff", // active / hover
-    "--quantum-violet-light":   "#a78bfa", // text / icon accents
-    "--quantum-violet-pale":    "#c4b5fd", // light fills / gradients
-    "--quantum-violet-ghost":   "rgba(147, 112, 255, 0.12)", // surface tints
-    "--quantum-violet-border":  "rgba(147, 112, 255, 0.22)", // borders
+    "--quantum-violet-core": "#7c3aed", // primary
+    "--quantum-violet-bright": "#9370ff", // active / hover
+    "--quantum-violet-light": "#a78bfa", // text / icon accents
+    "--quantum-violet-pale": "#c4b5fd", // light fills / gradients
+    "--quantum-violet-ghost": "rgba(147, 112, 255, 0.12)", // surface tints
+    "--quantum-violet-border": "rgba(147, 112, 255, 0.22)", // borders
     "--quantum-violet-glow-sm": "0 0 12px rgba(109, 40, 217, 0.4)",
     "--quantum-violet-glow-md": "0 0 24px rgba(109, 40, 217, 0.55)",
     "--quantum-violet-glow-lg": "0 0 40px rgba(109, 40, 217, 0.7)",
 
     // ── Orbit ring colour (re-usable in any component) ───────────────────────
-    "--quantum-orbit-primary":  "rgba(167, 139, 250, 0.65)",
-    "--quantum-orbit-secondary":"rgba(167, 139, 250, 0.18)",
+    "--quantum-orbit-primary": "rgba(167, 139, 250, 0.65)",
+    "--quantum-orbit-secondary": "rgba(167, 139, 250, 0.18)",
 
     // ── Animation durations ─────────────────────────────────────────────────
-    "--quantum-dur-breathe":    "2.8s",
-    "--quantum-dur-shimmer":    "3.5s",
+    "--quantum-dur-breathe": "2.8s",
+    "--quantum-dur-shimmer": "3.5s",
     "--quantum-dur-orbit-slow": "3.5s",
     "--quantum-dur-orbit-fast": "2.4s",
 
     // ── Scrollbar ─────────────────────────────────────────────────────────────
-    "--quantum-scrollbar-thumb":       "rgba(147, 112, 255, 0.22)",
+    "--quantum-scrollbar-thumb": "rgba(147, 112, 255, 0.22)",
     "--quantum-scrollbar-thumb-hover": "rgba(147, 112, 255, 0.48)",
 
     // ── Sidebar positioning ───────────────────────────────────────────────────
     "--quantum-sidebar-toggle-offset": "-13px",
-    "--quantum-sidebar-border-inset":  "12%",
+    "--quantum-sidebar-border-inset": "12%",
 
     // ── Glass / Frosted effect ────────────────────────────────────────────────
-    "--quantum-glass-blur":     "16px",
+    "--quantum-glass-blur": "16px",
     "--quantum-glass-bg-light": "rgba(253, 251, 255, 0.85)",
-    "--quantum-glass-bg-dark":  "rgba(11, 7, 26, 0.85)",
+    "--quantum-glass-bg-dark": "rgba(11, 7, 26, 0.85)",
   },
 
   light: {
@@ -171,13 +173,13 @@ export const mantineCssResolver: CSSVariablesResolver = (theme) => ({
     "--mantine-color-dark-light-hover": "var(--mantine-color-gray-light-hover)",
 
     // ── Light-mode background surfaces ──────────────────────────────────────
-    "--quantum-surface-1":  "#faf8ff",   // input pill, card bg
-    "--quantum-surface-2":  "#f3eeff",   // subtle chip / badge bg
-    "--quantum-text-body":  "rgba(30, 10, 60, 0.82)",
+    "--quantum-surface-1": "#faf8ff", // input pill, card bg
+    "--quantum-surface-2": "#f3eeff", // subtle chip / badge bg
+    "--quantum-text-body": "rgba(30, 10, 60, 0.82)",
     "--quantum-text-muted": "rgba(109, 40, 217, 0.45)",
 
     // ── Focus ring ───────────────────────────────────────────────────────────
-    "--mantine-color-violet-outline":  "rgba(124, 58, 237, 0.45)",
+    "--mantine-color-violet-outline": "rgba(124, 58, 237, 0.45)",
   },
 
   dark: {
@@ -187,18 +189,18 @@ export const mantineCssResolver: CSSVariablesResolver = (theme) => ({
 
     // ── Dark-mode background surfaces — the key upgrade ─────────────────────
     // Replaces the neutral black with violet-tinted darks (#0f0b1f family)
-    "--quantum-surface-1":  "#0f0b1f",   // primary card / input backgrounds
-    "--quantum-surface-2":  "rgba(15, 11, 31, 0.85)", // frosted glass variant
-    "--quantum-surface-3":  "#110a2e",   // deeper panels / sidebars
-    "--quantum-text-body":  "rgba(220, 210, 255, 0.82)",
+    "--quantum-surface-1": "#0f0b1f", // primary card / input backgrounds
+    "--quantum-surface-2": "rgba(15, 11, 31, 0.85)", // frosted glass variant
+    "--quantum-surface-3": "#110a2e", // deeper panels / sidebars
+    "--quantum-text-body": "rgba(220, 210, 255, 0.82)",
     "--quantum-text-muted": "rgba(196, 176, 255, 0.35)",
 
     // ── Dark-mode body background ────────────────────────────────────────────
     // Set this on <html> or <body> via a global style:
     //   body { background: var(--quantum-bg); }
-    "--quantum-bg":         "#0d0720",
+    "--quantum-bg": "#0d0720",
 
     // ── Focus ring ───────────────────────────────────────────────────────────
-    "--mantine-color-violet-outline":  "rgba(167, 139, 250, 0.5)",
+    "--mantine-color-violet-outline": "rgba(167, 139, 250, 0.5)",
   },
 });

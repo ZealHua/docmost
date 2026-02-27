@@ -1,4 +1,4 @@
-import { AiStreamEvent, RagSource } from '../types/ai-chat.types';
+import { AiStreamEvent, RagSource } from "../types/ai-chat.types";
 
 interface StreamCallbacks {
   onSources: (sources: RagSource[]) => void;
@@ -27,7 +27,7 @@ interface StreamOptions {
  * Returns an AbortController immediately — call .abort() to cancel the stream.
  */
 export function streamAiChat(
-  messages: Array<{ role: 'user' | 'assistant'; content: string }>,
+  messages: Array<{ role: "user" | "assistant"; content: string }>,
   callbacks: StreamCallbacks,
   options?: StreamOptions,
 ): AbortController {
@@ -36,9 +36,9 @@ export function streamAiChat(
   // Fire-and-forget the stream processing — we return the controller synchronously
   (async () => {
     try {
-      const response = await fetch('/api/ai/chat/stream', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/ai/chat/stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages,
           sessionId: options?.sessionId,
@@ -48,58 +48,66 @@ export function streamAiChat(
           isWebSearchEnabled: options?.isWebSearchEnabled,
         }),
         signal: abortController.signal,
-        credentials: 'include',
+        credentials: "include",
       });
 
       if (!response.ok) {
-        const errorText = await response.text().catch(() => response.statusText);
+        const errorText = await response
+          .text()
+          .catch(() => response.statusText);
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
 
-      let buffer = '';
+      let buffer = "";
       try {
         while (true) {
           const { done, value } = await reader!.read();
           if (done) break;
 
           buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
 
           for (const line of lines) {
-            if (!line.startsWith('data: ')) continue;
+            if (!line.startsWith("data: ")) continue;
             const raw = line.slice(6);
-            if (raw === '[DONE]') {
+            if (raw === "[DONE]") {
               callbacks.onComplete();
               return;
             }
 
             try {
               const event: AiStreamEvent = JSON.parse(raw);
-              if (event.type === 'sources') {
+              if (event.type === "sources") {
                 callbacks.onSources(event.data as RagSource[]);
-              } else if (event.type === 'chunk') {
+              } else if (event.type === "chunk") {
                 callbacks.onChunk(event.data as string);
-              } else if (event.type === 'thinking') {
+              } else if (event.type === "thinking") {
                 callbacks.onThinking(event.data as string);
-              } else if (event.type === 'error') {
+              } else if (event.type === "error") {
                 callbacks.onError(event.data as string);
                 return;
-              } else if (event.type === 'memory') {
-                const memoryData = event.data as { enabled?: boolean; loaded?: boolean };
-                callbacks.onMemory?.({ enabled: !!memoryData.enabled, loaded: !!memoryData.loaded });
+              } else if (event.type === "memory") {
+                const memoryData = event.data as {
+                  enabled?: boolean;
+                  loaded?: boolean;
+                };
+                callbacks.onMemory?.({
+                  enabled: !!memoryData.enabled,
+                  loaded: !!memoryData.loaded,
+                });
               }
             } catch (parseError) {
-              console.warn('Failed to parse SSE event:', raw, parseError);
+              console.warn("Failed to parse SSE event:", raw, parseError);
             }
           }
         }
       } catch (err: any) {
-        if (err.name !== 'AbortError') {
-          console.error('Stream error:', err);
+        if (err.name !== "AbortError") {
+          console.error("Stream error:", err);
           callbacks.onError(err.message);
         }
         // AbortError → user cancelled, no callback needed
@@ -107,8 +115,8 @@ export function streamAiChat(
         reader?.releaseLock();
       }
     } catch (err: any) {
-      if (err.name !== 'AbortError') {
-        console.error('Fetch error:', err);
+      if (err.name !== "AbortError") {
+        console.error("Fetch error:", err);
         callbacks.onError(err.message);
       }
     }

@@ -9,7 +9,9 @@ import { notifications } from "@mantine/notifications";
 export default function UserProfileInput() {
   const { t } = useTranslation();
   const [workspace] = useAtom(workspaceAtom);
-  const [value, setValue] = useState(workspace?.settings?.ai?.userProfile || "");
+  const [value, setValue] = useState(
+    workspace?.settings?.ai?.userProfile || "",
+  );
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -30,7 +32,8 @@ export default function UserProfileInput() {
       });
     } catch (err) {
       notifications.show({
-        message: err?.response?.data?.message || t("Failed to save user profile"),
+        message:
+          err?.response?.data?.message || t("Failed to save user profile"),
         color: "red",
       });
     } finally {
@@ -40,12 +43,18 @@ export default function UserProfileInput() {
 
   return (
     <>
-      <Title order={5} mb="xs">{t("User Profile")}</Title>
+      <Title order={5} mb="xs">
+        {t("User Profile")}
+      </Title>
       <Text size="sm" c="dimmed" mb="md">
-        {t("Provide context about the user (name, role, preferences) to personalize AI responses. This will be injected into the system prompt for the Intelligence feature.")}
+        {t(
+          "Provide context about the user (name, role, preferences) to personalize AI responses. This will be injected into the system prompt for the Intelligence feature.",
+        )}
       </Text>
       <Textarea
-        placeholder={t("e.g., John is a software engineer who prefers technical explanations...")}
+        placeholder={t(
+          "e.g., John is a software engineer who prefers technical explanations...",
+        )}
         minRows={3}
         maxRows={6}
         value={value}

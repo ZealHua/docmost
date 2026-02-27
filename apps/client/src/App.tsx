@@ -23,7 +23,7 @@ import CreateWorkspace from "@/ee/pages/create-workspace.tsx";
 import { isCloud } from "@/lib/config.ts";
 import { useTranslation } from "react-i18next";
 import Security from "@/ee/security/pages/security.tsx";
-import License from "@/ee/licence/pages/license.tsx";
+// import License from "@/ee/licence/pages/license.tsx";
 import { useRedirectToCloudSelect } from "@/ee/hooks/use-redirect-to-cloud-select.tsx";
 import SharedPage from "@/pages/share/shared-page.tsx";
 import Shares from "@/pages/settings/shares/shares.tsx";
@@ -84,10 +84,7 @@ export default function App() {
           <Route path={"/s/:spaceSlug/trash"} element={<SpaceTrash />} />
           <Route path={"/s/:spaceSlug/ai"} element={<AiPage />} />
           <Route path={"/s/:spaceSlug/ai/:sessionId"} element={<AiPage />} />
-          <Route
-            path={"/s/:spaceSlug/p/:pageSlug"}
-            element={<Page />}
-          />
+          <Route path={"/s/:spaceSlug/p/:pageSlug"} element={<Page />} />
 
           <Route path={"/settings"}>
             <Route path={"account/profile"} element={<AccountSettings />} />
@@ -105,7 +102,7 @@ export default function App() {
             <Route path={"sharing"} element={<Shares />} />
             <Route path={"security"} element={<Security />} />
             <Route path={"ai"} element={<AiSettings />} />
-            {!isCloud() && <Route path={"license"} element={<License />} />}
+            {/* {!isCloud() && <Route path={"license"} element={<License />} />} */}
             {isCloud() && <Route path={"billing"} element={<Billing />} />}
           </Route>
         </Route>

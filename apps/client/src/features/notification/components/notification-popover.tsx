@@ -29,7 +29,9 @@ interface NotificationPopoverProps {
   variant?: "icon" | "menu";
 }
 
-export function NotificationPopover({ variant = "icon" }: NotificationPopoverProps) {
+export function NotificationPopover({
+  variant = "icon",
+}: NotificationPopoverProps) {
   const { t } = useTranslation();
   const [opened, setOpened] = useState(false);
   const [filter, setFilter] = useState<NotificationFilter>("all");
@@ -159,7 +161,9 @@ export function NotificationPopover({ variant = "icon" }: NotificationPopoverPro
             className={classes.actionIcon}
             aria-label={t("Notifications")}
           >
-            <div className={`${classes.notifWrapper} ${hasUnread ? classes.hasUnread : ""}`}>
+            <div
+              className={`${classes.notifWrapper} ${hasUnread ? classes.hasUnread : ""}`}
+            >
               <div className={classes.notifRing} />
               <IconBell size={15} />
               {hasUnread && <div className={classes.notifDot} />}

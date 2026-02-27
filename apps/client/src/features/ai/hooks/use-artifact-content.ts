@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { urlOfArtifact } from '../lib/artifact-utils';
+import { useQuery } from "@tanstack/react-query";
+import { urlOfArtifact } from "../lib/artifact-utils";
 
 async function loadArtifactContent({
   filepath,
@@ -28,12 +28,12 @@ export function useArtifactContent({
   enabled?: boolean;
 }) {
   const { data, isLoading, error } = useQuery({
-    queryKey: ['artifact-content', sessionId, filepath],
+    queryKey: ["artifact-content", sessionId, filepath],
     queryFn: () => loadArtifactContent({ filepath, sessionId }),
     enabled: enabled && !!filepath && !!sessionId,
     // Cache artifact content for 5 minutes to avoid repeated fetches
     staleTime: 5 * 60 * 1000,
   });
 
-  return { content: data ?? '', isLoading, error };
+  return { content: data ?? "", isLoading, error };
 }

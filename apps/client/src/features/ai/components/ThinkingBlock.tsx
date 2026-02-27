@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
-import { Collapse } from '@mantine/core';
-import { IconBrain, IconChevronDown, IconSparkles } from '@tabler/icons-react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import { useTranslation } from 'react-i18next';
-import styles from './ThinkingBlock.module.css';
+import { useEffect, useRef, useState } from "react";
+import { Collapse } from "@mantine/core";
+import { IconBrain, IconChevronDown, IconSparkles } from "@tabler/icons-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { useTranslation } from "react-i18next";
+import styles from "./ThinkingBlock.module.css";
 
 interface ThinkingBlockProps {
   thinking: string;
@@ -18,7 +18,7 @@ function formatDuration(ms: number): string {
 }
 
 export function ThinkingBlock({
-  thinking = '',
+  thinking = "",
   isStreaming = false,
   defaultOpen = false,
 }: ThinkingBlockProps) {
@@ -60,12 +60,12 @@ export function ThinkingBlock({
   if (!thinking) return null;
 
   const sublabel = isStreaming
-    ? t('Reasoning...', { time: formatDuration(elapsed) })
+    ? t("Reasoning...", { time: formatDuration(elapsed) })
     : duration
-    ? t('Reasoned for {{time}}', { time: formatDuration(duration) })
-    : t('Reasoning complete');
+      ? t("Reasoned for {{time}}", { time: formatDuration(duration) })
+      : t("Reasoning complete");
 
-  const wrapperClass = `${styles.wrapper} ${isStreaming ? styles.wrapperActive : ''}`;
+  const wrapperClass = `${styles.wrapper} ${isStreaming ? styles.wrapperActive : ""}`;
 
   return (
     <div className={wrapperClass}>
@@ -82,8 +82,10 @@ export function ThinkingBlock({
         </div>
 
         <div className={styles.labelGroup}>
-          <span className={`${styles.label} ${!isStreaming ? styles.labelStatic : ''}`}>
-            {t('Thinking')}
+          <span
+            className={`${styles.label} ${!isStreaming ? styles.labelStatic : ""}`}
+          >
+            {t("Thinking")}
           </span>
           <span className={styles.sublabel}>{sublabel}</span>
         </div>
@@ -97,14 +99,14 @@ export function ThinkingBlock({
         ) : (
           <div className={styles.doneBadge}>
             <IconSparkles size={10} strokeWidth={2} />
-            {t('Done')}
+            {t("Done")}
           </div>
         )}
 
         <IconChevronDown
           size={14}
           strokeWidth={2}
-          className={`${styles.chevron} ${open ? styles.chevronOpen : ''}`}
+          className={`${styles.chevron} ${open ? styles.chevronOpen : ""}`}
         />
       </div>
 

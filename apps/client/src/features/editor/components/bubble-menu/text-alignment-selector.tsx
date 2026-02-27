@@ -84,7 +84,12 @@ export const TextAlignmentSelector: FC<TextAlignmentProps> = ({
   return (
     <Popover opened={isOpen} withArrow>
       <Popover.Target>
-        <Tooltip label={t("Text align")} withArrow withinPortal={false} disabled={isOpen}>
+        <Tooltip
+          label={t("Text align")}
+          withArrow
+          withinPortal={false}
+          disabled={isOpen}
+        >
           <Button
             variant="default"
             style={{ border: "none", height: "34px" }}

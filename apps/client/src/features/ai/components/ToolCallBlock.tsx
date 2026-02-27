@@ -1,22 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   IconTool,
   IconCheck,
   IconX,
   IconChevronDown,
   IconChevronRight,
-} from '@tabler/icons-react';
-import { ToolCall } from '../types/ai-chat.types';
-import styles from './ToolCallBlock.module.css';
+} from "@tabler/icons-react";
+import { ToolCall } from "../types/ai-chat.types";
+import styles from "./ToolCallBlock.module.css";
 
 interface ToolCallBlockProps {
   toolCall: ToolCall;
   /** Result from the tool execution, if available */
   result?: string;
-  status?: 'running' | 'success' | 'error';
+  status?: "running" | "success" | "error";
 }
 
-export function ToolCallBlock({ toolCall, result, status = 'running' }: ToolCallBlockProps) {
+export function ToolCallBlock({
+  toolCall,
+  result,
+  status = "running",
+}: ToolCallBlockProps) {
   const [expanded, setExpanded] = useState(false);
 
   const statusIcon = {
@@ -37,11 +41,12 @@ export function ToolCallBlock({ toolCall, result, status = 'running' }: ToolCall
         <IconTool size={14} className={styles.toolIcon} />
         <span className={styles.toolName}>{toolCall.name}</span>
         {statusIcon}
-        {(hasArgs || result) && (
-          expanded
-            ? <IconChevronDown size={12} className={styles.chevron} />
-            : <IconChevronRight size={12} className={styles.chevron} />
-        )}
+        {(hasArgs || result) &&
+          (expanded ? (
+            <IconChevronDown size={12} className={styles.chevron} />
+          ) : (
+            <IconChevronRight size={12} className={styles.chevron} />
+          ))}
       </button>
 
       {expanded && (

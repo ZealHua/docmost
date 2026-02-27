@@ -18,13 +18,8 @@ export function NotificationList({
   onNavigate,
 }: NotificationListProps) {
   const { t } = useTranslation();
-  const {
-    data,
-    isLoading,
-    hasNextPage,
-    fetchNextPage,
-    isFetchingNextPage,
-  } = useNotificationsQuery();
+  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } =
+    useNotificationsQuery();
 
   const sentinelRef = useRef<HTMLDivElement>(null);
 
@@ -53,8 +48,7 @@ export function NotificationList({
     );
   }
 
-  const allNotifications =
-    data?.pages.flatMap((page) => page.items) ?? [];
+  const allNotifications = data?.pages.flatMap((page) => page.items) ?? [];
 
   const filtered =
     filter === "unread"
@@ -65,7 +59,11 @@ export function NotificationList({
     return (
       <Center py="xl">
         <Stack align="center" gap="xs">
-          <IconBellOff size={32} stroke={1.5} color="var(--mantine-color-dimmed)" />
+          <IconBellOff
+            size={32}
+            stroke={1.5}
+            color="var(--mantine-color-dimmed)"
+          />
           <Text size="sm" c="dimmed">
             {filter === "unread"
               ? t("No unread notifications")

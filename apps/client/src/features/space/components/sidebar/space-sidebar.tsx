@@ -82,10 +82,19 @@ export function SpaceSidebar() {
             {/* Brand / Home link */}
             <Link to="/home" className={classes.brand}>
               <div className={classes.brandMark}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                  <path d="M2 17l10 5 10-5"/>
-                  <path d="M2 12l10 5 10-5"/>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                  <path d="M2 17l10 5 10-5" />
+                  <path d="M2 12l10 5 10-5" />
                 </svg>
               </div>
               <span className={classes.brandName}>OpenMemo</span>
@@ -201,7 +210,9 @@ export function SpaceSidebar() {
             desktopSidebarOpened ? "" : classes.sidebarToggleCollapsed
           }`}
           onClick={toggleDesktopSidebar}
-          aria-label={desktopSidebarOpened ? "Collapse sidebar" : "Expand sidebar"}
+          aria-label={
+            desktopSidebarOpened ? "Collapse sidebar" : "Expand sidebar"
+          }
         >
           <div className={classes.sidebarToggleRing} />
           <div className={classes.sidebarToggleIcon}>

@@ -41,7 +41,8 @@ export default function SpaceMembersList({
   readOnly,
 }: SpaceMembersProps) {
   const { t } = useTranslation();
-  const { search, cursor, goNext, goPrev, handleSearch } = usePaginateAndSearch();
+  const { search, cursor, goNext, goPrev, handleSearch } =
+    usePaginateAndSearch();
   const { data, isLoading } = useSpaceMembersQuery(spaceId, {
     cursor,
     limit: 100,
@@ -139,7 +140,13 @@ export default function SpaceMembersList({
 
                       {member.type === "group" && <IconGroupCircle />}
 
-                      <div style={{ minWidth: 0, overflow: "hidden", maxWidth: 260 }}>
+                      <div
+                        style={{
+                          minWidth: 0,
+                          overflow: "hidden",
+                          maxWidth: 260,
+                        }}
+                      >
                         <AutoTooltipText fz="sm" fw={500}>
                           {member?.name}
                         </AutoTooltipText>

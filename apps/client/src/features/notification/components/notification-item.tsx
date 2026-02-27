@@ -107,7 +107,10 @@ export function NotificationItem({
                 <IconFileDescription
                   size={14}
                   stroke={1.5}
-                  style={{ flexShrink: 0, color: "var(--mantine-color-dimmed)" }}
+                  style={{
+                    flexShrink: 0,
+                    color: "var(--mantine-color-dimmed)",
+                  }}
                 />
               )}
               <Text size="xs" c="dimmed" lineClamp={1}>
@@ -120,11 +123,7 @@ export function NotificationItem({
         <Group gap={4} wrap="nowrap" align="center" style={{ flexShrink: 0 }}>
           {hovered && isUnread ? (
             <Tooltip label={t("Mark as read")} withArrow>
-              <ActionIcon
-                variant="subtle"
-                size="sm"
-                onClick={handleMarkRead}
-              >
+              <ActionIcon variant="subtle" size="sm" onClick={handleMarkRead}>
                 <IconCheck size={14} />
               </ActionIcon>
             </Tooltip>

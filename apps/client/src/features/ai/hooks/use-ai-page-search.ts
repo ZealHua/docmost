@@ -17,8 +17,13 @@ interface PageSearchParams {
 
 export function useAiPageSearch() {
   return useMutation({
-    mutationFn: async (params: PageSearchParams): Promise<AiPageSearchResult[]> => {
-      const response = await api.post<AiPageSearchResult[]>("/ai/pages/search", params);
+    mutationFn: async (
+      params: PageSearchParams,
+    ): Promise<AiPageSearchResult[]> => {
+      const response = await api.post<AiPageSearchResult[]>(
+        "/ai/pages/search",
+        params,
+      );
       return response.data;
     },
   });

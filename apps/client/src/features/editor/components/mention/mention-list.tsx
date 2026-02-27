@@ -31,7 +31,10 @@ import {
   MentionSuggestionItem,
 } from "@/features/editor/components/mention/mention.type.ts";
 import { IPage } from "@/features/page/types/page.types";
-import { useCreatePageMutation, usePageQuery } from "@/features/page/queries/page-query";
+import {
+  useCreatePageMutation,
+  usePageQuery,
+} from "@/features/page/queries/page-query";
 import { treeDataAtom } from "@/features/page/tree/atoms/tree-data-atom";
 import { SimpleTree } from "react-arborist";
 import { SpaceTreeNode } from "@/features/page/tree/types";
@@ -63,7 +66,7 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
     preload: true,
   });
 
-  const createPageItem = (label: string) : MentionSuggestionItem => {
+  const createPageItem = (label: string): MentionSuggestionItem => {
     return {
       id: null,
       label: label,
@@ -71,8 +74,8 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
       entityId: null,
       slugId: null,
       icon: null,
-    }
-  }
+    };
+  };
 
   useEffect(() => {
     if (suggestion && !isLoading) {
@@ -129,7 +132,7 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
             creatorId: currentUser?.user.id,
           });
         }
-        if (item.entityType === "page" && item.id!==null) {
+        if (item.entityType === "page" && item.id !== null) {
           props.command({
             id: item.id,
             label: item.label || "Untitled",
@@ -139,7 +142,7 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
             creatorId: currentUser?.user.id,
           });
         }
-        if (item.entityType === "page" && item.id===null) {
+        if (item.entityType === "page" && item.id === null) {
           createPage(item.label);
         }
       }
@@ -207,7 +210,7 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
     const payload: { spaceId: string; parentPageId?: string; title: string } = {
       spaceId: space.id,
       parentPageId: page.id || null,
-      title: title
+      title: title,
     };
 
     let createdPage: IPage;
@@ -231,7 +234,7 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
 
       props.command({
         id: uuid7(),
-        label:  createdPage.title || "Untitled",
+        label: createdPage.title || "Untitled",
         entityType: "page",
         entityId: createdPage.id,
         slugId: createdPage.slugId,
@@ -239,21 +242,20 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
       });
 
       setTimeout(() => {
-      emit({
-        operation: "addTreeNode",
-        spaceId: space.id,
-        payload: {
-          parentId,
-          index: lastIndex,
-          data,
-        },
-      });
-    }, 50);
-
+        emit({
+          operation: "addTreeNode",
+          spaceId: space.id,
+          payload: {
+            parentId,
+            index: lastIndex,
+            data,
+          },
+        });
+      }, 50);
     } catch (err) {
       throw new Error("Failed to create page");
     }
-  }
+  };
 
   useEffect(() => {
     viewportRef.current
@@ -267,15 +269,19 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
     return (
       <Paper id="mention" shadow="md" py="xs" withBorder radius="md">
         <Text c="dimmed" size="sm" px="sm">
-          { t("No results") }
+          {t("No results")}
         </Text>
       </Paper>
     );
   }
 
   const hasUsers = renderItems.some((item) => item.entityType === "user");
-  const hasPages = renderItems.some((item) => item.entityType === "page" && item.id !== null);
-  const createPageItemData = renderItems.find((item) => item.entityType === "page" && item.id === null);
+  const hasPages = renderItems.some(
+    (item) => item.entityType === "page" && item.id !== null,
+  );
+  const createPageItemData = renderItems.find(
+    (item) => item.entityType === "page" && item.id === null,
+  );
 
   return (
     <Paper id="mention" shadow="md" withBorder radius="md" py={6}>
@@ -372,9 +378,12 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
             {(hasUsers || hasPages) && <Divider my={6} />}
             <UnstyledButton
               data-item-index={renderItems.indexOf(createPageItemData)}
-              onClick={() => selectItem(renderItems.indexOf(createPageItemData))}
+              onClick={() =>
+                selectItem(renderItems.indexOf(createPageItemData))
+              }
               className={clsx(classes.menuBtn, {
-                [classes.selectedItem]: renderItems.indexOf(createPageItemData) === selectedIndex,
+                [classes.selectedItem]:
+                  renderItems.indexOf(createPageItemData) === selectedIndex,
               })}
               px="sm"
             >
