@@ -43,4 +43,8 @@ export class AiChatDto {
   @IsOptional()
   @IsBoolean()
   isWebSearchEnabled?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  skipUserPersist?: boolean;  // Set true for AI regeneration (user msg already exists)
 }

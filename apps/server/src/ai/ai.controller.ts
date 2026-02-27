@@ -538,14 +538,16 @@ export class AiController {
               if (!session || session.workspaceId !== workspace.id || session.userId !== user.id) {
                 console.warn('Session not found or unauthorized for message persistence');
               } else {
-                // Persist user message
-                await this.messageRepo.create({
-                  sessionId: dto.sessionId,
-                  workspaceId: workspace.id,
-                  role: 'user',
-                  content: lastMessage.content,
-                  sources: [],
-                });
+                // Persist user message only if not skipped (e.g., during AI regeneration)
+                if (!dto.skipUserPersist) {
+                  await this.messageRepo.create({
+                    sessionId: dto.sessionId,
+                    workspaceId: workspace.id,
+                    role: 'user',
+                    content: lastMessage.content,
+                    sources: [],
+                  });
+                }
                 // Persist assistant message
                 await this.messageRepo.create({
                   sessionId: dto.sessionId,

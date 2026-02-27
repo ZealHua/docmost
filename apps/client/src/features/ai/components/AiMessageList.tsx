@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Box, ActionIcon, Tooltip, Textarea, Button, Group } from "@mantine/core";
-import { IconChevronDown, IconChevronUp, IconCopy, IconPencil } from "@tabler/icons-react";
+import { IconChevronDown, IconChevronUp, IconCopy, IconPencil, IconRefresh } from "@tabler/icons-react";
 import { useAtomValue } from "jotai";
 import {
   aiIsStreamingAtom,
@@ -30,6 +30,58 @@ function TypingIndicator() {
       <div className={styles.typingDot} />
       <div className={styles.typingDot} />
       <div className={styles.typingDot} />
+    </div>
+  );
+}
+
+function AiMessageFooter({
+  content,
+  timestamp,
+  isLatest,
+  onRegenerate,
+}: {
+  content: string;
+  timestamp: string;
+  isLatest: boolean;
+  onRegenerate?: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [content]);
+
+  return (
+    <div className={cardStyles.footerRow}>
+      <div className={cardStyles.footerActions}>
+        <Tooltip label={copied ? "Copied!" : "Copy"} withArrow position="top">
+          <ActionIcon
+            size="xs"
+            variant="subtle"
+            onClick={handleCopy}
+            className={cardStyles.footerActionBtn}
+            aria-label="Copy message"
+          >
+            <IconCopy size={14} />
+          </ActionIcon>
+        </Tooltip>
+        {isLatest && onRegenerate && (
+          <Tooltip label="Regenerate" withArrow position="top">
+            <ActionIcon
+              size="xs"
+              variant="subtle"
+              onClick={onRegenerate}
+              className={cardStyles.footerActionBtn}
+              aria-label="Regenerate response"
+            >
+              <IconRefresh size={14} />
+            </ActionIcon>
+          </Tooltip>
+        )}
+      </div>
+      <div className={cardStyles.footerTimestamp}>{timestamp}</div>
     </div>
   );
 }
@@ -251,9 +303,13 @@ function RenderHumanGroup({
 function RenderAssistantMessageGroup({
   group,
   formatTime,
+  latestAssistantMessageId,
+  onRegenerate,
 }: {
   group: Extract<MessageGroup, { type: "assistant:message" }>;
   formatTime: (d: string) => string;
+  latestAssistantMessageId?: string;
+  onRegenerate?: (messageId: string) => void;
 }) {
   return (
     <>
@@ -269,6 +325,18 @@ function RenderAssistantMessageGroup({
                 <AiMemoryStatus />
               </>
             }
+            footer={
+              <AiMessageFooter
+                content={msg.content}
+                timestamp={formatTime(msg.createdAt)}
+                isLatest={msg.id === latestAssistantMessageId}
+                onRegenerate={
+                  msg.id === latestAssistantMessageId
+                    ? () => onRegenerate?.(msg.id)
+                    : undefined
+                }
+              />
+            }
           >
             {msg.thinking && (
               <ThinkingBlock thinking={msg.thinking} isStreaming={false} />
@@ -276,9 +344,6 @@ function RenderAssistantMessageGroup({
             <div className={cardStyles.body}>
               <AiSourcePreviewBar messageId={msg.id} sources={msg.sources} />
               <AiCitationRenderer content={msg.content} sources={msg.sources} />
-            </div>
-            <div className={`${styles.timestamp} ${styles.assistant}`}>
-              {formatTime(msg.createdAt)}
             </div>
           </AiMessageCard>
         </div>
@@ -290,11 +355,16 @@ function RenderAssistantMessageGroup({
 function RenderProcessingGroup({
   group,
   formatTime,
+  latestAssistantMessageId,
+  onRegenerate,
 }: {
   group: Extract<MessageGroup, { type: "assistant:processing" }>;
   formatTime: (d: string) => string;
+  latestAssistantMessageId?: string;
+  onRegenerate?: (messageId: string) => void;
 }) {
   const { triggerMessage, toolResponses, resultMessage } = group;
+  const content = resultMessage?.content || "";
 
   return (
     <div className={`${styles.messageRow} ${styles.messageNew}`}>
@@ -304,6 +374,20 @@ function RenderProcessingGroup({
             <AiInsightsIcon showLabel size={16} />
             <AiMemoryStatus />
           </>
+        }
+        footer={
+          resultMessage && (
+            <AiMessageFooter
+              content={content}
+              timestamp={formatTime(triggerMessage.createdAt)}
+              isLatest={resultMessage.id === latestAssistantMessageId}
+              onRegenerate={
+                resultMessage.id === latestAssistantMessageId
+                  ? () => onRegenerate?.(resultMessage.id)
+                  : undefined
+              }
+            />
+          )
         }
       >
         {/* Tool calls */}
@@ -334,10 +418,6 @@ function RenderProcessingGroup({
             />
           </div>
         )}
-
-        <div className={`${styles.timestamp} ${styles.assistant}`}>
-          {formatTime(triggerMessage.createdAt)}
-        </div>
       </AiMessageCard>
     </div>
   );
@@ -346,11 +426,17 @@ function RenderProcessingGroup({
 function RenderPresentFilesGroup({
   group,
   formatTime,
+  latestAssistantMessageId,
+  onRegenerate,
 }: {
   group: Extract<MessageGroup, { type: "assistant:present-files" }>;
   formatTime: (d: string) => string;
+  latestAssistantMessageId?: string;
+  onRegenerate?: (messageId: string) => void;
 }) {
   const lastMsg = group.messages[group.messages.length - 1];
+  const isLatest = lastMsg.id === latestAssistantMessageId;
+
   return (
     <div className={`${styles.messageRow} ${styles.messageNew}`}>
       <AiMessageCard
@@ -359,6 +445,14 @@ function RenderPresentFilesGroup({
             <AiInsightsIcon showLabel size={16} />
             <AiMemoryStatus />
           </>
+        }
+        footer={
+          <AiMessageFooter
+            content={lastMsg.content || ""}
+            timestamp={formatTime(lastMsg.createdAt)}
+            isLatest={isLatest}
+            onRegenerate={isLatest ? () => onRegenerate?.(lastMsg.id) : undefined}
+          />
         }
       >
         <div className={cardStyles.body}>
@@ -378,9 +472,6 @@ function RenderPresentFilesGroup({
             </div>
           )}
         </div>
-        <div className={`${styles.timestamp} ${styles.assistant}`}>
-          {formatTime(lastMsg.createdAt)}
-        </div>
       </AiMessageCard>
     </div>
   );
@@ -389,11 +480,17 @@ function RenderPresentFilesGroup({
 function RenderClarificationGroup({
   group,
   formatTime,
+  latestAssistantMessageId,
+  onRegenerate,
 }: {
   group: Extract<MessageGroup, { type: "assistant:clarification" }>;
   formatTime: (d: string) => string;
+  latestAssistantMessageId?: string;
+  onRegenerate?: (messageId: string) => void;
 }) {
   const msg = group.messages[0];
+  const isLatest = msg.id === latestAssistantMessageId;
+
   return (
     <div className={`${styles.messageRow} ${styles.messageNew}`}>
       <AiMessageCard
@@ -403,12 +500,17 @@ function RenderClarificationGroup({
             <span className={styles.clarificationBadge}>Clarification</span>
           </>
         }
+        footer={
+          <AiMessageFooter
+            content={msg.content}
+            timestamp={formatTime(msg.createdAt)}
+            isLatest={isLatest}
+            onRegenerate={isLatest ? () => onRegenerate?.(msg.id) : undefined}
+          />
+        }
       >
         <div className={cardStyles.body}>
           <AiCitationRenderer content={msg.content} sources={msg.sources} />
-        </div>
-        <div className={`${styles.timestamp} ${styles.assistant}`}>
-          {formatTime(msg.createdAt)}
         </div>
       </AiMessageCard>
     </div>
@@ -420,13 +522,17 @@ function RenderGroup({
   formatTime,
   user,
   latestUserMessageId,
+  latestAssistantMessageId,
   onEditAndResend,
+  onRegenerate,
 }: {
   group: MessageGroup;
   formatTime: (d: string) => string;
   user?: { name?: string; avatarUrl?: string } | null;
   latestUserMessageId?: string;
+  latestAssistantMessageId?: string;
   onEditAndResend?: (messageId: string, newContent: string) => void;
+  onRegenerate?: (messageId: string) => void;
 }) {
   switch (group.type) {
     case "human":
@@ -440,20 +546,48 @@ function RenderGroup({
       );
     case "assistant:message":
       return (
-        <RenderAssistantMessageGroup group={group} formatTime={formatTime} />
+        <RenderAssistantMessageGroup
+          group={group}
+          formatTime={formatTime}
+          latestAssistantMessageId={latestAssistantMessageId}
+          onRegenerate={onRegenerate}
+        />
       );
     case "assistant:processing":
-      return <RenderProcessingGroup group={group} formatTime={formatTime} />;
+      return (
+        <RenderProcessingGroup
+          group={group}
+          formatTime={formatTime}
+          latestAssistantMessageId={latestAssistantMessageId}
+          onRegenerate={onRegenerate}
+        />
+      );
     case "assistant:present-files":
-      return <RenderPresentFilesGroup group={group} formatTime={formatTime} />;
+      return (
+        <RenderPresentFilesGroup
+          group={group}
+          formatTime={formatTime}
+          latestAssistantMessageId={latestAssistantMessageId}
+          onRegenerate={onRegenerate}
+        />
+      );
     case "assistant:clarification":
-      return <RenderClarificationGroup group={group} formatTime={formatTime} />;
+      return (
+        <RenderClarificationGroup
+          group={group}
+          formatTime={formatTime}
+          latestAssistantMessageId={latestAssistantMessageId}
+          onRegenerate={onRegenerate}
+        />
+      );
     case "assistant:subagent":
       // Subagent tasks are shown inline via SubtaskProgress during streaming
       return (
         <RenderAssistantMessageGroup
           group={{ ...group, type: "assistant:message" }}
           formatTime={formatTime}
+          latestAssistantMessageId={latestAssistantMessageId}
+          onRegenerate={onRegenerate}
         />
       );
     default:
@@ -463,8 +597,10 @@ function RenderGroup({
 
 export function AiMessageList({
   onEditAndResend,
+  onRegenerate,
 }: {
   onEditAndResend?: (messageId: string, newContent: string) => void;
+  onRegenerate?: (messageId: string) => void;
 } = {}) {
   const { t } = useTranslation();
   const messages = useAtomValue(aiMessagesAtom);
@@ -497,6 +633,11 @@ export function AiMessageList({
   const latestUserMessageId = [...messages]
     .reverse()
     .find((m) => m.role === "user")?.id;
+
+  // Find the latest assistant message ID
+  const latestAssistantMessageId = [...messages]
+    .reverse()
+    .find((m) => m.role === "assistant")?.id;
 
   // Group messages for richer rendering
   const groups = groupMessages(messages);
@@ -531,7 +672,9 @@ export function AiMessageList({
           formatTime={formatTime}
           user={currentUser?.user}
           latestUserMessageId={latestUserMessageId}
+          latestAssistantMessageId={latestAssistantMessageId}
           onEditAndResend={onEditAndResend}
+          onRegenerate={onRegenerate}
         />
       ))}
 

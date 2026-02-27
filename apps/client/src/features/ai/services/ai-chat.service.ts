@@ -16,6 +16,7 @@ interface StreamOptions {
   thinking?: boolean;
   selectedPageIds?: string[];
   isWebSearchEnabled?: boolean;
+  skipUserPersist?: boolean;  // Set true for AI regeneration (user msg already exists)
 }
 
 /**
@@ -58,6 +59,7 @@ export function streamAiChat(
           thinking: options?.thinking,
           selectedPageIds: options?.selectedPageIds,
           isWebSearchEnabled: options?.isWebSearchEnabled,
+          skipUserPersist: options?.skipUserPersist,
         }),
         signal: abortController.signal,
         credentials: "include",

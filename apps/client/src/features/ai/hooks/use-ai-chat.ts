@@ -346,6 +346,120 @@ export function useAiChat(workspaceId?: string) {
     ],
   );
 
+  const regenerateMessage = useCallback(
+    async (assistantMessageId: string) => {
+      if (!activeSession?.id || activeSession.id.startsWith("local-")) return;
+
+      // Find the assistant message index
+      const assistantIndex = messages.findIndex((m) => m.id === assistantMessageId);
+      if (assistantIndex === -1 || messages[assistantIndex].role !== "assistant") return;
+
+      // Keep messages up to (but not including) the assistant message
+      // The user message is already in this list
+      const keptMessages = messages.slice(0, assistantIndex);
+
+      // Update UI - remove the assistant message and start streaming
+      setStreamingContent("");
+      setStreamingThinking("");
+      setMessages(keptMessages);
+      setIsStreaming(true);
+
+      try {
+        // Truncate from the assistant message in the backend
+        await truncateMessages(activeSession.id, assistantMessageId);
+
+        // Build history for AI - user message is already included in keptMessages
+        const history = keptMessages
+          .slice(-10)
+          .map((m) => ({ role: m.role, content: m.content }));
+
+        let collectedSources: RagSource[] = [];
+        let collectedContent = "";
+        let collectedThinking = "";
+
+        abortRef.current = streamAiChat(
+          history,
+          {
+            onSources: (sources) => {
+              collectedSources = sources;
+              setSources(sources);
+            },
+            onChunk: (chunk) => {
+              collectedContent += chunk;
+              setStreamingContent((prev) => prev + chunk);
+            },
+            onThinking: (thinking) => {
+              collectedThinking += thinking;
+              setStreamingThinking((prev) => prev + thinking);
+            },
+            onError: (error) => {
+              console.error("AI chat error:", error);
+              setIsStreaming(false);
+              const errorMessage: AiMessage = {
+                id: crypto.randomUUID(),
+                role: "assistant",
+                content: `Error: ${error}`,
+                sources: [],
+                createdAt: new Date().toISOString(),
+                sessionId: activeSession.id,
+              };
+              setMessages((prev) => [...prev, errorMessage]);
+            },
+            onComplete: () => {
+              if (abortRef.current?.signal.aborted) return;
+              const newAssistantMessage: AiMessage = {
+                id: crypto.randomUUID(),
+                role: "assistant",
+                content: collectedContent,
+                thinking: collectedThinking || undefined,
+                sources: collectedSources,
+                createdAt: new Date().toISOString(),
+                sessionId: activeSession.id,
+              };
+              setMessages((prev) => [...prev, newAssistantMessage]);
+              setStreamingContent("");
+              setStreamingThinking("");
+              setIsStreaming(false);
+            },
+            onMemory: (memory) => {
+              if (memory.enabled) {
+                setMemoryLoaded(memory.loaded);
+              }
+            },
+          },
+          {
+            sessionId: activeSession.id,
+            model:
+              thinking && MODEL_CONFIG[selectedModel]?.thinkingModel
+                ? MODEL_CONFIG[selectedModel].thinkingModel!
+                : selectedModel,
+            thinking,
+            isWebSearchEnabled,
+            selectedPageIds: selectedPages.map((p) => p.pageId),
+            skipUserPersist: true,  // User message already exists, only persist AI response
+          },
+        );
+      } catch (error) {
+        console.error("Failed to regenerate message:", error);
+        setIsStreaming(false);
+      }
+    },
+    [
+      activeSession,
+      messages,
+      setMessages,
+      setSources,
+      setIsStreaming,
+      setStreamingContent,
+      setStreamingThinking,
+      setMemoryLoaded,
+      selectedModel,
+      thinking,
+      isWebSearchEnabled,
+      selectedPages,
+    ],
+  );
+
   return {
     sendMessage,
     stopStream,
@@ -353,5 +467,6 @@ export function useAiChat(workspaceId?: string) {
     setSession,
     activeSession,
     editAndResendMessage,
+    regenerateMessage,
   };
 }

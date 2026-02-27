@@ -276,6 +276,50 @@
   margin-bottom: 12px;
 }
 
+/* ─── Footer with actions and timestamp ─────────────────────────────────── */
+
+.footer {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--ai-card-border);
+}
+
+.footerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.footerActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.footerActionBtn {
+  background: transparent !important;
+  color: var(--ai-text-muted) !important;
+  border-radius: 6px;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.footerActionBtn:hover {
+  background: rgba(139, 92, 246, 0.1) !important;
+  color: var(--ai-accent) !important;
+  transform: scale(1.1);
+}
+
+.footerTimestamp {
+  font-family: var(--mantine-font-family);
+  font-size: 11px;
+  color: var(--ai-text-muted);
+  opacity: 0.6;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  margin-left: auto;
+}
+
 .citationRow {
   display: flex;
   align-items: flex-start;
