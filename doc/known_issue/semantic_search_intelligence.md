@@ -11,3 +11,7 @@ Semantic search (ragService.retrieve()) is commented out with a note explaining 
 Why It Was Disabled
 
 The current Intelligence feature design only wants explicitly selected pages to be used as RAG context. Semantic search was automatically returning top 5 similar pages when no pages were selected, which was unexpected behavior.
+
+Final Decision:
+
+the selected page(+) and workspace tree are now used for the AI search, the generic semantic search(from source code) is disabled.

@@ -38,24 +38,43 @@ export class WebSearchService {
   }
 
   async rewriteQuery(messages: any[]): Promise<string> {
-    this.log('Starting query rewrite for web search');
+    this.log('Starting query rewrite for web search with full conversation context');
 
     try {
-      const prompt = `You are a web search assistant. Determine if the user's latest message requires external web search (e.g., facts, news, current events). 
-If it is a conversational greeting or can be answered without searching, reply ONLY with "NO_SEARCH". 
-Otherwise, reply ONLY with a highly optimized, short Google search query designed to find the exact information.
-Do not use quotes or prefixes in the output.`;
+      // Build conversation context from all messages
+      const conversationContext = messages
+        .map((msg, index) => {
+          const role = msg.role === 'user' ? 'Human' : 'Assistant';
+          return `[Message ${index + 1} - ${role}]: ${msg.content}`;
+        })
+        .join('\n\n');
 
-      const userMessage = messages[messages.length - 1].content;
-      
+      const prompt = `You are a web search assistant. Analyze the entire conversation below to determine if the latest user message requires external web search (e.g., facts, news, current events, or information not present in the conversation history).
+
+Consider:
+- Does the user ask about recent events or current information?
+- Does the user ask for facts not mentioned in the conversation?
+- Does the user ask for details that would require external knowledge?
+- Is it just a conversational continuation or greeting?
+
+If web search is NOT needed, reply ONLY with "NO_SEARCH".
+Otherwise, reply ONLY with a highly optimized, short Google search query designed to find the exact information the user is seeking based on the full conversation context.
+
+Conversation to analyze:
+${conversationContext}
+
+Remember: Reply with ONLY "NO_SEARCH" or a search query.`;
+
       const provider = this.orchestrator.getProvider('glm-4.5');
-      const rewritten = await provider.generateText(prompt, userMessage, 'glm-4.5');
-      
+      const rewritten = await provider.generateText('', prompt, 'glm-4.5');
+
       const trimmed = rewritten.trim();
       this.log(`Query rewritten to: "${trimmed}"`);
       return trimmed;
-    } catch (e) {
-      this.logger.error('Failed to rewrite query', e);
+    } catch (e: any) {
+      const errorMessage = e?.message || 'Unknown error';
+      const errorStack = e?.stack || 'No stack trace';
+      this.logger.error(`Failed to rewrite query: ${errorMessage}`, errorStack);
       return 'NO_SEARCH';
     }
   }
@@ -102,7 +121,7 @@ Do not use quotes or prefixes in the output.`;
         title: c.title,
         url: c.link,
         content: c.snippet || '',
-      })).slice(0, 5);
+      })).slice(0, 10);
 
       this.log(`Web search returned ${results.length} results`);
       return { results };
