@@ -8,6 +8,7 @@ import {
   Param,
   Req,
   Res,
+  Query,
   UseGuards,
   HttpCode,
   ParseUUIDPipe,
@@ -27,6 +28,7 @@ import { PageRepo } from '@docmost/db/repos/page/page.repo';
 import { AiGenerateDto } from './dto/ai-generate.dto';
 import { AiChatDto } from './dto/ai-chat.dto';
 import { AiPageSearchDto } from './dto/ai-page-search.dto';
+import { GetPageTreeDto } from './dto/ai-page-tree.dto';
 import { CreateAiSessionDto, UpdateAiSessionTitleDto, UpdateAiSessionThreadIdDto, AiSessionResponseDto, AiMessageResponseDto } from './dto/ai-session.dto';
 import { AiFaqStreamDto } from './dto/ai-faq.dto';
 
@@ -756,5 +758,24 @@ export class AiController {
       spaceId: p.spaceId,
       spaceSlug: p.spaceSlug,
     }));
+  }
+
+  // ── Page tree for AI chat ───────────────────────────────────────────────────
+
+  /**
+   * Get hierarchical page tree for a space.
+   * Used for the AI page tree selection feature.
+   */
+  @Get('pages/tree')
+  async getPageTree(
+    @Query() query: GetPageTreeDto,
+    @AuthUser() user: any,
+    @AuthWorkspace() workspace: any,
+  ) {
+    const tree = await this.pageRepo.getPagesBySpace(
+      query.spaceId,
+      workspace.id,
+    );
+    return tree;
   }
 }

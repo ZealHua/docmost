@@ -522,4 +522,102 @@ export class PageRepo {
       .limit(limit)
       .execute();
   }
+
+  /**
+   * Retrieves all pages in a space and builds a hierarchical tree structure.
+   * Used for the AI page tree selection feature.
+   */
+  async getPagesBySpace(spaceId: string, workspaceId: string): Promise<
+    Array<{
+      id: string;
+      title: string | null;
+      icon: string | null;
+      slugId: string;
+      spaceId: string;
+      parentPageId: string | null;
+      children: any[];
+    }>
+  > {
+    const pages = await this.db
+      .selectFrom('pages')
+      .select([
+        'pages.id',
+        'pages.title',
+        'pages.icon',
+        'pages.slugId',
+        'pages.spaceId',
+        'pages.parentPageId',
+        'pages.position',
+      ])
+      .where('pages.spaceId', '=', spaceId)
+      .where('pages.workspaceId', '=', workspaceId)
+      .where('pages.deletedAt', 'is', null)
+      .orderBy('position')
+      .orderBy('createdAt')
+      .execute();
+
+    return this.buildPageTree(pages);
+  }
+
+  /**
+   * Builds a hierarchical tree structure from a flat list of pages.
+   * @private
+   */
+  private buildPageTree(
+    pages: Array<{
+      id: string;
+      title: string | null;
+      icon: string | null;
+      slugId: string;
+      spaceId: string;
+      parentPageId: string | null;
+    }>,
+  ): Array<{
+    id: string;
+    title: string | null;
+    icon: string | null;
+    slugId: string;
+    spaceId: string;
+    parentPageId: string | null;
+    children: any[];
+  }> {
+    const map = new Map<
+      string,
+      {
+        id: string;
+        title: string | null;
+        icon: string | null;
+        slugId: string;
+        spaceId: string;
+        parentPageId: string | null;
+        children: any[];
+      }
+    >();
+    const roots: any[] = [];
+
+    // Create nodes for all pages
+    pages.forEach((page) => {
+      map.set(page.id, {
+        id: page.id,
+        title: page.title,
+        icon: page.icon,
+        slugId: page.slugId,
+        spaceId: page.spaceId,
+        parentPageId: page.parentPageId,
+        children: [],
+      });
+    });
+
+    // Build hierarchy by connecting children to parents
+    pages.forEach((page) => {
+      const node = map.get(page.id)!;
+      if (page.parentPageId && map.has(page.parentPageId)) {
+        map.get(page.parentPageId)!.children.push(node);
+      } else {
+        roots.push(node);
+      }
+    });
+
+    return roots;
+  }
 }

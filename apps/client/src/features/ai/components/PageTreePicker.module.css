@@ -1,0 +1,23 @@
+/* Target the scroll container react-arborist renders internally */
+.treeContainer :global(::-webkit-scrollbar) {
+  width: 5px;
+}
+
+.treeContainer :global(::-webkit-scrollbar-thumb) {
+  background-color: var(--mantine-color-gray-4);
+  border-radius: 4px;
+}
+
+.treeContainer :global(::-webkit-scrollbar-thumb:hover) {
+  background-color: var(--mantine-color-gray-5);
+}
+
+.treeContainer :global(::-webkit-scrollbar-track) {
+  background: transparent;
+}
+
+/* Firefox scrollbar support */
+.treeContainer {
+  scrollbar-width: thin;
+  scrollbar-color: var(--mantine-color-gray-4) transparent;
+}

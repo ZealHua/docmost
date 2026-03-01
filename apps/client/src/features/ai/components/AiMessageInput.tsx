@@ -19,6 +19,7 @@ import {
   IconAdjustments,
   IconX,
   IconSparkles,
+  IconFolderOpen,
 } from "@tabler/icons-react";
 import { useAtom, useAtomValue } from "jotai";
 import {
@@ -40,6 +41,7 @@ import { useParams } from "react-router-dom";
 import { MODEL_CONFIG } from "../lib/models.config";
 import { useTranslation } from "react-i18next";
 import styles from "./AiMessageInput.module.css";
+import { PageTreePicker } from "./PageTreePicker";
 
 interface AiMessageInputProps {
   workspaceId?: string;
@@ -71,6 +73,7 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [treePickerOpen, setTreePickerOpen] = useState(false);
 
   const pageSearch = useAiPageSearch();
 
@@ -204,6 +207,17 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
         {/* Line 2: Toolbar inside pill */}
         <div className={styles.toolbar}>
           <div className={styles.toolbarLeft}>
+            {/* Tree Picker Button */}
+            {spaceId && (
+              <button
+                className={styles.iconButton}
+                onClick={() => setTreePickerOpen(true)}
+                title={t("Select pages from tree")}
+              >
+                <IconFolderOpen size={16} />
+              </button>
+            )}
+
             <Popover
               position="top"
               withArrow
@@ -378,6 +392,16 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
           </div>
         </div>
       </Box>
+
+      {/* Page Tree Picker Modal */}
+      {spaceId && spaceSlug && (
+        <PageTreePicker
+          spaceId={spaceId}
+          spaceSlug={spaceSlug}
+          opened={treePickerOpen}
+          onClose={() => setTreePickerOpen(false)}
+        />
+      )}
     </Box>
   );
 }
