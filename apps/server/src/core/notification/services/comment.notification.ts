@@ -78,12 +78,13 @@ export class CommentNotificationService {
         commentId,
       });
 
-      await this.notificationService.queueEmail(
-        userId,
-        notification.id,
-        `${actor.name} mentioned you in a comment`,
-        CommentMentionEmail({ actorName: actor.name, pageTitle, pageUrl }),
-      );
+      // Commented out email sending - in-app notifications are still active
+      // await this.notificationService.queueEmail(
+      //   userId,
+      //   notification.id,
+      //   `${actor.name} mentioned you in a comment`,
+      //   CommentMentionEmail({ actorName: actor.name, pageTitle, pageUrl }),
+      // );
 
       notifiedUserIds.add(userId);
     }
@@ -102,12 +103,13 @@ export class CommentNotificationService {
         commentId,
       });
 
-      await this.notificationService.queueEmail(
-        recipientId,
-        notification.id,
-        `${actor.name} commented on ${pageTitle}`,
-        CommentCreateEmail({ actorName: actor.name, pageTitle, pageUrl }),
-      );
+      // Commented out email sending - in-app notifications are still active
+      // await this.notificationService.queueEmail(
+      //   recipientId,
+      //   notification.id,
+      //   `${actor.name} commented on ${pageTitle}`,
+      //   CommentCreateEmail({ actorName: actor.name, pageTitle, pageUrl }),
+      // );
     }
   }
 
@@ -156,14 +158,15 @@ export class CommentNotificationService {
       commentId,
     });
 
-    const subject = `${actor.name} resolved a comment on ${pageTitle}`;
-
-    await this.notificationService.queueEmail(
-      commentCreatorId,
-      notification.id,
-      subject,
-      CommentResolvedEmail({ actorName: actor.name, pageTitle, pageUrl }),
-    );
+    // Commented out email sending - in-app notifications are still active
+    // const subject = `${actor.name} resolved a comment on ${pageTitle}`;
+    //
+    // await this.notificationService.queueEmail(
+    //   commentCreatorId,
+    //   notification.id,
+    //   subject,
+    //   CommentResolvedEmail({ actorName: actor.name, pageTitle, pageUrl }),
+    // );
   }
 
   private async getThreadParticipantIds(

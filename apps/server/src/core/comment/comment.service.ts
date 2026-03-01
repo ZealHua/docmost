@@ -157,6 +157,35 @@ export class CommentService {
     return comment;
   }
 
+  async resolve(
+    comment: Comment,
+    resolved: boolean,
+    authUser: User,
+  ): Promise<Comment> {
+    // Short-circuit if already in desired state
+    if (!!comment.resolvedAt === resolved) {
+      return comment;
+    }
+
+    const resolvedAt = resolved ? new Date() : null;
+    const resolvedById = resolved ? authUser.id : null;
+
+    await this.commentRepo.updateComment(
+      {
+        resolvedAt,
+        resolvedById,
+        updatedAt: new Date(),
+      },
+      comment.id,
+    );
+
+    comment.resolvedAt = resolvedAt;
+    comment.resolvedById = resolvedById;
+    comment.updatedAt = new Date();
+
+    return comment;
+  }
+
   private async queueCommentNotification(
     content: any,
     oldMentionIds: string[],
