@@ -7,12 +7,11 @@ import {
 import { IPageSearchParams } from "@/features/search/types/search.types.ts";
 
 // @ts-ignore
-interface UseAiSearchResult
-  extends UseMutationResult<IAiSearchResponse, Error, IPageSearchParams> {
+type UseAiSearchResult = UseMutationResult<IAiSearchResponse, Error, IPageSearchParams> & {
   streamingAnswer: string;
   streamingSources: any[];
   clearStreaming: () => void;
-}
+};
 
 export function useAiSearch(): UseAiSearchResult {
   const [streamingAnswer, setStreamingAnswer] = useState("");

@@ -210,11 +210,11 @@ export default function SettingsSidebar() {
             case "Billing":
               prefetchHandler = prefetchBilling;
               break;
-            case "License & Edition":
-              if (workspace?.hasLicenseKey) {
-                prefetchHandler = prefetchLicense;
-              }
-              break;
+            // case "License & Edition":
+            //   if (workspace?.hasLicenseKey) {
+            //     prefetchHandler = prefetchLicense;
+            //   }
+            //   break;
             case "Security & SSO":
               prefetchHandler = prefetchSsoProviders;
               break;
