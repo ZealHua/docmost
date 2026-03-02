@@ -123,12 +123,14 @@ export class OpenAiProvider implements AiProvider {
     systemPrompt: string,
     content: string,
     model?: string,
+    signal?: AbortSignal,
   ): Promise<string> {
     const { model: targetModel } = this.getApiClientForModel(model);
     const { text } = await aiGenerateText({
       model: targetModel,
       system: systemPrompt,
       prompt: content,
+      abortSignal: signal,
     });
     return text;
   }

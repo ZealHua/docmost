@@ -416,7 +416,7 @@ export class AiController {
     let streamError: Error | null = null;
 
     try {
-      // Step 1: retrieve relevant chunks - either from selected pages or RAG
+      // Step 1: retrieve relevant chunks - parallel hybrid search
       const lastMessage = dto.messages[dto.messages.length - 1];
       let chunks = [];
 
@@ -430,61 +430,49 @@ export class AiController {
         this.logger.debug(`Messages: ${JSON.stringify(dto.messages)}`);
       }
 
-      // Web Search Layer
-      if (dto.isWebSearchEnabled) {
-        if (this.debug) this.logger.log('Web search is enabled');
-        const rewrittenQuery = await this.webSearchService.rewriteQuery(dto.messages);
-        
-        if (rewrittenQuery && rewrittenQuery !== 'NO_SEARCH') {
-          if (this.debug) this.logger.log(`Web search query: "${rewrittenQuery}"`);
-          const searchResponse = await this.webSearchService.search(rewrittenQuery);
-          
-          if (searchResponse.error) {
-            if (this.debug) this.logger.warn(`Web search failed: ${searchResponse.error}`);
-            chunks = [{
-              pageId: 'web-error',
-              title: 'Web Search Failed',
-              url: '',
-              excerpt: `Web search failed: ${searchResponse.error}. Falling back to internal knowledge base.`,
-              similarity: 1.0,
-              spaceSlug: '',
-              slugId: '',
-              chunkIndex: 0,
-            }];
-          } else if (searchResponse.results.length > 0) {
-            if (this.debug) this.logger.log(`Web search returned ${searchResponse.results.length} results`);
-            chunks = searchResponse.results.map((res: any, index: number) => ({
-              pageId: 'web',
-              title: res.title,
-              url: res.url,
-              excerpt: res.content,
-              similarity: 1.0,
-              spaceSlug: '',
-              slugId: '',
-              chunkIndex: index,
-            }));
-          } else {
-            if (this.debug) this.logger.log('Web search returned no results');
-          }
+      // Parallel execution: query rewrite and internal RAG
+      const [rewrittenQuery, internalChunks] = await Promise.all([
+        dto.isWebSearchEnabled
+          ? this.webSearchService.rewriteQuery(dto.messages)
+          : Promise.resolve('NO_SEARCH'),
+        (dto.selectedPageIds && dto.selectedPageIds.length > 0)
+          ? this.ragService.retrieveSelectedPages(dto.selectedPageIds, workspace.id)
+          : Promise.resolve([]),
+      ]);
+
+      // Execute web search if query requires it
+      let webChunks = [];
+      if (rewrittenQuery && rewrittenQuery !== 'NO_SEARCH') {
+        if (this.debug) this.logger.log(`Web search query: "${rewrittenQuery}"`);
+        const searchResponse = await this.webSearchService.search(rewrittenQuery);
+
+        if (searchResponse.error) {
+          if (this.debug) this.logger.warn(`Web search failed: ${searchResponse.error}`);
+          // Don't add error chunk, just log and continue with internal chunks
+        } else if (searchResponse.results.length > 0) {
+          if (this.debug) this.logger.log(`Web search returned ${searchResponse.results.length} results`);
+          webChunks = searchResponse.results.map((res: any, index: number) => ({
+            pageId: 'web',
+            title: res.title,
+            url: res.url,
+            excerpt: res.content,
+            similarity: 1.0,
+            spaceSlug: '',
+            slugId: '',
+            chunkIndex: index,
+          }));
         } else {
-          if (this.debug) this.logger.log('Query rewrite returned NO_SEARCH, skipping web search');
+          if (this.debug) this.logger.log('Web search returned no results');
         }
+      } else {
+        if (this.debug) this.logger.log('Query rewrite returned NO_SEARCH or web search disabled, skipping web search');
       }
 
-      // Fallback to internal RAG if no web search chunks found
-      if (chunks.length === 0) {
-        if (this.debug) this.logger.log('Falling back to internal RAG');
-        if (dto.selectedPageIds && dto.selectedPageIds.length > 0) {
-          chunks = await this.ragService.retrieveSelectedPages(
-            dto.selectedPageIds,
-            workspace.id,
-          );
-        } else {
-          // Semantic search disabled - only use explicitly selected pages
-          // Previously: chunks = await this.ragService.retrieve(lastMessage.content, workspace.id);
-          // This returned top 5 similar pages based on query, which is not the expected behavior
-          chunks = [];
-        }
+      // Merge internal and web chunks, then limit to Top-8
+      chunks = [...internalChunks, ...webChunks].slice(0, 8);
+
+      if (this.debug) {
+        this.logger.log(`Total chunks after merge and truncation: ${chunks.length} (internal: ${internalChunks.length}, web: ${webChunks.length})`);
       }
 
       // AI Debug: Log retrieved chunks
