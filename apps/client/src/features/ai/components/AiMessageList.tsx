@@ -168,7 +168,9 @@ function UserMessageBubble({
 
   return (
     <div className={`${styles.bubble} ${styles.user}`}>
-      <span className={styles.bubbleShimmer} />
+      <div className={styles.shimmerContainer}>
+        <span className={styles.bubbleShimmer} />
+      </div>
 
       {/* Hover actions - positioned outside the bubble on the left */}
       {isHovered && !isEditing && (
@@ -268,6 +270,7 @@ export function AiMessageList({
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const [newMessageId, setNewMessageId] = useState<string | null>(null);
+  const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -313,7 +316,12 @@ export function AiMessageList({
   return (
     <Box className={styles.messageContainer}>
       {messages.map((message) => (
-        <div key={message.id} className={`${styles.messageRow} ${message.role === "user" ? styles.user : ""} ${styles.messageNew}`}>
+        <div
+          key={message.id}
+          className={`${styles.messageRow} ${message.role === "user" ? styles.user : ""} ${styles.messageNew}`}
+          onMouseEnter={message.role === "user" ? () => setHoveredMessageId(message.id) : undefined}
+          onMouseLeave={message.role === "user" ? () => setHoveredMessageId(null) : undefined}
+        >
           {message.role === "user" ? (
             <>
               <div className={`${styles.avatarWrapper} ${styles.user}`}>
@@ -332,7 +340,7 @@ export function AiMessageList({
                 messageId={message.id}
                 isLatest={message.id === latestUserMessageId}
                 onEditAndResend={onEditAndResend}
-                isHovered={false}
+                isHovered={hoveredMessageId === message.id}
               />
             </>
           ) : (

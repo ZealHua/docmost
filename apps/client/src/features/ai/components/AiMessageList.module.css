@@ -242,7 +242,6 @@
 
 .bubble.user {
   position: relative;
-  overflow: hidden;
   max-width: 72%;
 
   /* Deep violet — same #0f0b1f family but inverted for a filled surface */
@@ -289,6 +288,15 @@
   50%       { background-position: 100% 50%; }
 }
 
+.shimmerContainer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 14px;
+  border-bottom-right-radius: 4px;
+  pointer-events: none;
+}
+
 /* Gloss sheen layer — same shimmer-pass concept as .label shimmer */
 .bubbleShimmer {
   position: absolute;
@@ -333,6 +341,7 @@
 .bubbleContent.collapsed {
   display: -webkit-box;
   -webkit-line-clamp: 5;
+  line-clamp: 5;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -354,11 +363,6 @@
   transform: scale(1.05);
 }
 
-/* Bubble wrapper - contains bubble and hover actions */
-.bubbleWrapper {
-  position: relative;
-}
-
 /* Hover actions - positioned to the left of the bubble, top-aligned */
 .hoverActions {
   position: absolute;
@@ -368,14 +372,18 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  opacity: 0;
-  transform: translateX(4px);
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  animation: hoverActionsSlideIn 0.15s ease forwards;
 }
 
-.bubbleWrapper:hover .hoverActions {
-  opacity: 1;
-  transform: translateX(0);
+@keyframes hoverActionsSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .actionButton {
