@@ -4,8 +4,6 @@ import {
   AiMessage,
   AiSession,
   RagSource,
-  Todo,
-  SubtaskEvent,
 } from "../types/ai-chat.types";
 import { AiPageSearchResult } from "../hooks/use-ai-page-search";
 
@@ -70,15 +68,3 @@ export interface Mem0Memory {
 export const aiMemoriesAtom = atom<Mem0Memory[]>([]);
 export const aiMemoryLoadedAtom = atom<boolean>(false);
 export const aiMemoryErrorAtom = atom<string | null>(null);
-
-// Design mode for agentic flow
-export const aiDesignModeAtom = atom<boolean>(false);
-
-// LangGraph thread ID for design flow
-export const aiThreadIdAtom = atom<string | null>(null);
-
-// LangGraph agent todos (from thread state)
-export const aiTodosAtom = atom<Todo[]>([]);
-
-// Real-time subtask progress from custom SSE events
-export const aiSubtaskProgressAtom = atom<SubtaskEvent[]>([]);

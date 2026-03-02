@@ -17,9 +17,6 @@ import { ThinkingBlock } from "./ThinkingBlock";
 import { AiInsightsIcon } from "./AiInsightsIcon";
 import { AiMessageCard } from "./AiMessageCard";
 import { AiMemoryStatus } from "./AiMemoryStatus";
-import { ToolCallBlock } from "./ToolCallBlock";
-import { SubtaskProgress } from "./SubtaskProgress";
-import { groupMessages, MessageGroup } from "../lib/message-grouping";
 import { useTranslation } from "react-i18next";
 import styles from "./AiMessageList.module.css";
 import cardStyles from "./AiMessageCard.module.css";
@@ -254,347 +251,6 @@ function UserMessageBubble({
   );
 }
 
-function RenderHumanGroup({
-  group,
-  user,
-  latestUserMessageId,
-  onEditAndResend,
-}: {
-  group: Extract<MessageGroup, { type: "human" }>;
-  user?: { name?: string; avatarUrl?: string } | null;
-  latestUserMessageId?: string;
-  onEditAndResend?: (messageId: string, newContent: string) => void;
-}) {
-  const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
-
-  return (
-    <>
-      {group.messages.map((msg) => (
-        <div
-          key={msg.id}
-          className={`${styles.messageRow} ${styles.user} ${styles.messageNew}`}
-          onMouseEnter={() => setHoveredMessageId(msg.id)}
-          onMouseLeave={() => setHoveredMessageId(null)}
-        >
-          <div className={`${styles.avatarWrapper} ${styles.user}`}>
-            <div className={styles.avatarRing} />
-            <div className={`${styles.avatar} ${styles.user}`}>
-              <CustomAvatar
-                avatarUrl={user?.avatarUrl}
-                name={user?.name}
-                size={24}
-                showOrbitalRing={false}
-              />
-            </div>
-          </div>
-          <UserMessageBubble
-            content={msg.content}
-            messageId={msg.id}
-            isLatest={msg.id === latestUserMessageId}
-            onEditAndResend={onEditAndResend}
-            isHovered={hoveredMessageId === msg.id}
-          />
-        </div>
-      ))}
-    </>
-  );
-}
-
-function RenderAssistantMessageGroup({
-  group,
-  formatTime,
-  latestAssistantMessageId,
-  onRegenerate,
-}: {
-  group: Extract<MessageGroup, { type: "assistant:message" }>;
-  formatTime: (d: string) => string;
-  latestAssistantMessageId?: string;
-  onRegenerate?: (messageId: string) => void;
-}) {
-  return (
-    <>
-      {group.messages.map((msg) => (
-        <div
-          key={msg.id}
-          className={`${styles.messageRow} ${styles.messageNew}`}
-        >
-          <AiMessageCard
-            header={
-              <>
-                <AiInsightsIcon showLabel size={16} />
-                <AiMemoryStatus />
-              </>
-            }
-            footer={
-              <AiMessageFooter
-                content={msg.content}
-                timestamp={formatTime(msg.createdAt)}
-                isLatest={msg.id === latestAssistantMessageId}
-                onRegenerate={
-                  msg.id === latestAssistantMessageId
-                    ? () => onRegenerate?.(msg.id)
-                    : undefined
-                }
-              />
-            }
-          >
-            {msg.thinking && (
-              <ThinkingBlock thinking={msg.thinking} isStreaming={false} />
-            )}
-            <div className={cardStyles.body}>
-              <AiSourcePreviewBar messageId={msg.id} sources={msg.sources} />
-              <AiCitationRenderer content={msg.content} sources={msg.sources} />
-            </div>
-          </AiMessageCard>
-        </div>
-      ))}
-    </>
-  );
-}
-
-function RenderProcessingGroup({
-  group,
-  formatTime,
-  latestAssistantMessageId,
-  onRegenerate,
-}: {
-  group: Extract<MessageGroup, { type: "assistant:processing" }>;
-  formatTime: (d: string) => string;
-  latestAssistantMessageId?: string;
-  onRegenerate?: (messageId: string) => void;
-}) {
-  const { triggerMessage, toolResponses, resultMessage } = group;
-  const content = resultMessage?.content || "";
-
-  return (
-    <div className={`${styles.messageRow} ${styles.messageNew}`}>
-      <AiMessageCard
-        header={
-          <>
-            <AiInsightsIcon showLabel size={16} />
-            <AiMemoryStatus />
-          </>
-        }
-        footer={
-          resultMessage && (
-            <AiMessageFooter
-              content={content}
-              timestamp={formatTime(triggerMessage.createdAt)}
-              isLatest={resultMessage.id === latestAssistantMessageId}
-              onRegenerate={
-                resultMessage.id === latestAssistantMessageId
-                  ? () => onRegenerate?.(resultMessage.id)
-                  : undefined
-              }
-            />
-          )
-        }
-      >
-        {/* Tool calls */}
-        {triggerMessage.tool_calls?.map((tc) => {
-          const response = toolResponses.find((r) => r.tool_call_id === tc.id);
-          return (
-            <ToolCallBlock
-              key={tc.id}
-              toolCall={tc}
-              result={response?.content}
-              status={
-                response
-                  ? response.tool_status === "error"
-                    ? "error"
-                    : "success"
-                  : "running"
-              }
-            />
-          );
-        })}
-
-        {/* Final response text */}
-        {resultMessage && (
-          <div className={cardStyles.body}>
-            <AiCitationRenderer
-              content={resultMessage.content}
-              sources={resultMessage.sources}
-            />
-          </div>
-        )}
-      </AiMessageCard>
-    </div>
-  );
-}
-
-function RenderPresentFilesGroup({
-  group,
-  formatTime,
-  latestAssistantMessageId,
-  onRegenerate,
-}: {
-  group: Extract<MessageGroup, { type: "assistant:present-files" }>;
-  formatTime: (d: string) => string;
-  latestAssistantMessageId?: string;
-  onRegenerate?: (messageId: string) => void;
-}) {
-  const lastMsg = group.messages[group.messages.length - 1];
-  const isLatest = lastMsg.id === latestAssistantMessageId;
-
-  return (
-    <div className={`${styles.messageRow} ${styles.messageNew}`}>
-      <AiMessageCard
-        header={
-          <>
-            <AiInsightsIcon showLabel size={16} />
-            <AiMemoryStatus />
-          </>
-        }
-        footer={
-          <AiMessageFooter
-            content={lastMsg.content || ""}
-            timestamp={formatTime(lastMsg.createdAt)}
-            isLatest={isLatest}
-            onRegenerate={isLatest ? () => onRegenerate?.(lastMsg.id) : undefined}
-          />
-        }
-      >
-        <div className={cardStyles.body}>
-          {lastMsg.content && (
-            <AiCitationRenderer
-              content={lastMsg.content}
-              sources={lastMsg.sources}
-            />
-          )}
-          {group.files.length > 0 && (
-            <div className={styles.filesList}>
-              {group.files.map((file, idx) => (
-                <div key={idx} className={styles.fileChip}>
-                  📄 {file.split("/").pop()}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </AiMessageCard>
-    </div>
-  );
-}
-
-function RenderClarificationGroup({
-  group,
-  formatTime,
-  latestAssistantMessageId,
-  onRegenerate,
-}: {
-  group: Extract<MessageGroup, { type: "assistant:clarification" }>;
-  formatTime: (d: string) => string;
-  latestAssistantMessageId?: string;
-  onRegenerate?: (messageId: string) => void;
-}) {
-  const msg = group.messages[0];
-  const isLatest = msg.id === latestAssistantMessageId;
-
-  return (
-    <div className={`${styles.messageRow} ${styles.messageNew}`}>
-      <AiMessageCard
-        header={
-          <>
-            <AiInsightsIcon showLabel size={16} />
-            <span className={styles.clarificationBadge}>Clarification</span>
-          </>
-        }
-        footer={
-          <AiMessageFooter
-            content={msg.content}
-            timestamp={formatTime(msg.createdAt)}
-            isLatest={isLatest}
-            onRegenerate={isLatest ? () => onRegenerate?.(msg.id) : undefined}
-          />
-        }
-      >
-        <div className={cardStyles.body}>
-          <AiCitationRenderer content={msg.content} sources={msg.sources} />
-        </div>
-      </AiMessageCard>
-    </div>
-  );
-}
-
-function RenderGroup({
-  group,
-  formatTime,
-  user,
-  latestUserMessageId,
-  latestAssistantMessageId,
-  onEditAndResend,
-  onRegenerate,
-}: {
-  group: MessageGroup;
-  formatTime: (d: string) => string;
-  user?: { name?: string; avatarUrl?: string } | null;
-  latestUserMessageId?: string;
-  latestAssistantMessageId?: string;
-  onEditAndResend?: (messageId: string, newContent: string) => void;
-  onRegenerate?: (messageId: string) => void;
-}) {
-  switch (group.type) {
-    case "human":
-      return (
-        <RenderHumanGroup
-          group={group}
-          user={user}
-          latestUserMessageId={latestUserMessageId}
-          onEditAndResend={onEditAndResend}
-        />
-      );
-    case "assistant:message":
-      return (
-        <RenderAssistantMessageGroup
-          group={group}
-          formatTime={formatTime}
-          latestAssistantMessageId={latestAssistantMessageId}
-          onRegenerate={onRegenerate}
-        />
-      );
-    case "assistant:processing":
-      return (
-        <RenderProcessingGroup
-          group={group}
-          formatTime={formatTime}
-          latestAssistantMessageId={latestAssistantMessageId}
-          onRegenerate={onRegenerate}
-        />
-      );
-    case "assistant:present-files":
-      return (
-        <RenderPresentFilesGroup
-          group={group}
-          formatTime={formatTime}
-          latestAssistantMessageId={latestAssistantMessageId}
-          onRegenerate={onRegenerate}
-        />
-      );
-    case "assistant:clarification":
-      return (
-        <RenderClarificationGroup
-          group={group}
-          formatTime={formatTime}
-          latestAssistantMessageId={latestAssistantMessageId}
-          onRegenerate={onRegenerate}
-        />
-      );
-    case "assistant:subagent":
-      // Subagent tasks are shown inline via SubtaskProgress during streaming
-      return (
-        <RenderAssistantMessageGroup
-          group={{ ...group, type: "assistant:message" }}
-          formatTime={formatTime}
-          latestAssistantMessageId={latestAssistantMessageId}
-          onRegenerate={onRegenerate}
-        />
-      );
-    default:
-      return null;
-  }
-}
-
 export function AiMessageList({
   onEditAndResend,
   onRegenerate,
@@ -639,9 +295,6 @@ export function AiMessageList({
     .reverse()
     .find((m) => m.role === "assistant")?.id;
 
-  // Group messages for richer rendering
-  const groups = groupMessages(messages);
-
   if (messages.length === 0 && !isStreaming) {
     return (
       <div className={styles.emptyState}>
@@ -659,17 +312,60 @@ export function AiMessageList({
 
   return (
     <Box className={styles.messageContainer}>
-      {groups.map((group) => (
-        <RenderGroup
-          key={group.id}
-          group={group}
-          formatTime={formatTime}
-          user={currentUser?.user}
-          latestUserMessageId={latestUserMessageId}
-          latestAssistantMessageId={latestAssistantMessageId}
-          onEditAndResend={onEditAndResend}
-          onRegenerate={onRegenerate}
-        />
+      {messages.map((message) => (
+        <div key={message.id} className={`${styles.messageRow} ${message.role === "user" ? styles.user : ""} ${styles.messageNew}`}>
+          {message.role === "user" ? (
+            <>
+              <div className={`${styles.avatarWrapper} ${styles.user}`}>
+                <div className={styles.avatarRing} />
+                <div className={`${styles.avatar} ${styles.user}`}>
+                  <CustomAvatar
+                    avatarUrl={currentUser?.user?.avatarUrl}
+                    name={currentUser?.user?.name}
+                    size={24}
+                    showOrbitalRing={false}
+                  />
+                </div>
+              </div>
+              <UserMessageBubble
+                content={message.content}
+                messageId={message.id}
+                isLatest={message.id === latestUserMessageId}
+                onEditAndResend={onEditAndResend}
+                isHovered={false}
+              />
+            </>
+          ) : (
+            <AiMessageCard
+              header={
+                <>
+                  <AiInsightsIcon showLabel size={16} />
+                  <AiMemoryStatus />
+                </>
+              }
+              footer={
+                <AiMessageFooter
+                  content={message.content}
+                  timestamp={formatTime(message.createdAt)}
+                  isLatest={message.id === latestAssistantMessageId}
+                  onRegenerate={
+                    message.id === latestAssistantMessageId
+                      ? () => onRegenerate?.(message.id)
+                      : undefined
+                  }
+                />
+              }
+            >
+              {message.thinking && (
+                <ThinkingBlock thinking={message.thinking} isStreaming={false} />
+              )}
+              <div className={cardStyles.body}>
+                <AiSourcePreviewBar messageId={message.id} sources={message.sources} />
+                <AiCitationRenderer content={message.content} sources={message.sources} />
+              </div>
+            </AiMessageCard>
+          )}
+        </div>
       ))}
 
       {isStreaming && (
@@ -685,8 +381,6 @@ export function AiMessageList({
             {streamingThinking && (
               <ThinkingBlock thinking={streamingThinking} isStreaming={true} />
             )}
-            {/* Subtask progress during streaming */}
-            <SubtaskProgress />
             {streamingContent ? (
               <div className={cardStyles.body}>
                 <AiSourcePreviewBar messageId="streaming" sources={sources} />

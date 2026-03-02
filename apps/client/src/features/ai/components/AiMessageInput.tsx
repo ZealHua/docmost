@@ -28,10 +28,8 @@ import {
   aiThinkingAtom,
   aiSelectedPagesAtom,
   aiWebSearchEnabledAtom,
-  aiDesignModeAtom,
 } from "../store/ai.atoms";
 import { useAiChat } from "../hooks/use-ai-chat";
-import { useDesignChat } from "../hooks/use-design-chat";
 import {
   useAiPageSearch,
   AiPageSearchResult,
@@ -60,14 +58,8 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
     aiWebSearchEnabledAtom,
   );
   const [selectedPages, setSelectedPages] = useAtom(aiSelectedPagesAtom);
-  const [designMode, setDesignMode] = useAtom(aiDesignModeAtom);
 
   const { sendMessage, stopStream } = useAiChat(workspaceId);
-  const {
-    sendDesignMessage,
-    stop: stopDesign,
-    isStreaming: designStreaming,
-  } = useDesignChat();
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -109,21 +101,14 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
 
   const handleSend = useCallback(() => {
     const trimmed = value.trim();
-    if (!trimmed || isStreaming || designStreaming) return;
+    if (!trimmed || isStreaming) return;
 
-    if (designMode) {
-      sendDesignMessage(trimmed);
-    } else {
-      sendMessage(trimmed);
-    }
+    sendMessage(trimmed);
     setValue("");
   }, [
     value,
     isStreaming,
-    designStreaming,
-    designMode,
     sendMessage,
-    sendDesignMessage,
   ]);
 
   const handleKeyDown = useCallback(
@@ -289,26 +274,6 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
                 </Box>
               </Popover.Dropdown>
             </Popover>
-
-            {designMode ? (
-              <Badge
-                variant="light"
-                color="violet"
-                size="sm"
-                className={styles.designPill}
-                onClick={() => setDesignMode(false)}
-                style={{ cursor: "pointer" }}
-              >
-                Web Design ✕
-              </Badge>
-            ) : (
-              <button
-                className={styles.designButton}
-                onClick={() => setDesignMode(true)}
-              >
-                Web Design
-              </button>
-            )}
           </div>
 
           <div className={styles.toolbarRight}>
@@ -364,13 +329,10 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
               </Popover.Dropdown>
             </Popover>
 
-            {isStreaming || designStreaming ? (
+            {isStreaming ? (
               <ActionIcon
                 className={`${styles.sendButton} ${styles.stop}`}
-                onClick={() => {
-                  if (designStreaming) stopDesign();
-                  else stopStream();
-                }}
+                onClick={stopStream}
                 aria-label={t("Stop generating")}
                 size="lg"
                 radius="xl"
