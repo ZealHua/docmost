@@ -23,6 +23,8 @@ export type JsonPrimitive = boolean | number | string | null;
 
 export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
+export type Numeric = ColumnType<string, number | string, number | string>;
+
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 export interface AiMessages {
@@ -290,6 +292,38 @@ export interface Pages {
   ydoc: Buffer | null;
 }
 
+export interface ResearchOperations {
+  costAmount: Numeric;
+  costCurrency: Generated<string>;
+  createdAt: Generated<Timestamp>;
+  id: Generated<string>;
+  operationDetails: Json | null;
+  operationType: string;
+  researchSessionId: string;
+  workspaceId: string;
+}
+
+export interface ResearchSessions {
+  completedAt: Timestamp | null;
+  crawlUrlsCount: Generated<number>;
+  createdAt: Generated<Timestamp>;
+  errorMessage: string | null;
+  estimatedCost: Generated<Numeric>;
+  finalReport: string | null;
+  id: Generated<string>;
+  llmInputTokens: Generated<number>;
+  llmOutputTokens: Generated<number>;
+  plan: Json | null;
+  query: string;
+  sessionId: string | null;
+  startedAt: Generated<Timestamp>;
+  status: Generated<string>;
+  updatedAt: Generated<Timestamp>;
+  userId: string;
+  webSearchesCount: Generated<number>;
+  workspaceId: string;
+}
+
 export interface Shares {
   createdAt: Generated<Timestamp>;
   creatorId: string | null;
@@ -401,6 +435,25 @@ export interface WorkspaceInvitations {
   workspaceId: string;
 }
 
+export interface WorkspaceQuotas {
+  crawlUrlsLimit: Generated<number>;
+  crawlUrlsUsed: Generated<number>;
+  createdAt: Generated<Timestamp>;
+  currency: Generated<string>;
+  id: Generated<string>;
+  isEnabled: Generated<boolean>;
+  lastResetAt: Generated<Timestamp>;
+  llmTokensLimit: Generated<number>;
+  llmTokensUsed: Generated<number>;
+  researchRequestsLimit: Generated<number>;
+  researchRequestsUsed: Generated<number>;
+  totalCostThisMonth: Generated<Numeric>;
+  updatedAt: Generated<Timestamp>;
+  webSearchesLimit: Generated<number>;
+  webSearchesUsed: Generated<number>;
+  workspaceId: string;
+}
+
 export interface Workspaces {
   billingEmail: string | null;
   createdAt: Generated<Timestamp>;
@@ -442,6 +495,8 @@ export interface DB {
   pageEmbeddings: PageEmbeddings;
   pageHistory: PageHistory;
   pages: Pages;
+  researchOperations: ResearchOperations;
+  researchSessions: ResearchSessions;
   shares: Shares;
   spaceMembers: SpaceMembers;
   spaces: Spaces;
@@ -450,5 +505,6 @@ export interface DB {
   userTokens: UserTokens;
   watchers: Watchers;
   workspaceInvitations: WorkspaceInvitations;
+  workspaceQuotas: WorkspaceQuotas;
   workspaces: Workspaces;
 }

@@ -10,6 +10,7 @@ import {
   Badge,
   Button,
   Group,
+  Alert,
 } from "@mantine/core";
 import {
   IconPlayerStop,
@@ -40,6 +41,10 @@ import { MODEL_CONFIG } from "../lib/models.config";
 import { useTranslation } from "react-i18next";
 import styles from "./AiMessageInput.module.css";
 import { PageTreePicker } from "./PageTreePicker";
+import { useDeepResearch } from "../hooks/use-deep-research";
+import { ClarificationModal } from "./ClarificationModal";
+import { PlanApprovalDialog } from "./PlanApprovalDialog";
+import { userAtom } from "@/features/user/atoms/current-user-atom";
 
 interface AiMessageInputProps {
   workspaceId?: string;
@@ -60,6 +65,10 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
   const [selectedPages, setSelectedPages] = useAtom(aiSelectedPagesAtom);
 
   const { sendMessage, stopStream } = useAiChat(workspaceId);
+  const user = useAtomValue(userAtom);
+  const deepResearch = useDeepResearch(workspaceId, user?.id || '');
+  const [deepResearchEnabled, setDeepResearchEnabled] = useState(false);
+  
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -103,11 +112,24 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
     const trimmed = value.trim();
     if (!trimmed || isStreaming) return;
 
-    sendMessage(trimmed);
+    if (deepResearchEnabled) {
+      deepResearch.startResearch(trimmed, {
+        model: selectedModel,
+        isWebSearchEnabled: webSearchEnabled,
+        selectedPageIds: selectedPages.map(p => p.pageId),
+      });
+    } else {
+      sendMessage(trimmed);
+    }
     setValue("");
   }, [
     value,
     isStreaming,
+    deepResearchEnabled,
+    deepResearch.startResearch,
+    selectedModel,
+    webSearchEnabled,
+    selectedPages,
     sendMessage,
   ]);
 
@@ -137,6 +159,16 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
     value,
     label: config.label,
   }));
+
+  const isDeepResearchActive = !deepResearch.state.matches('idle') && !deepResearch.state.matches('completed') && !deepResearch.state.matches('error');
+
+  const handleStop = useCallback(() => {
+    if (isDeepResearchActive) {
+      deepResearch.cancelResearch();
+      return;
+    }
+    stopStream();
+  }, [deepResearch.cancelResearch, isDeepResearchActive, stopStream]);
 
   return (
     <Box className={styles.inputWrapper}>
@@ -264,13 +296,6 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
                         {t("No pages found")}
                       </Box>
                     )}
-                  {pageSearch.data &&
-                    pageSearch.data.length === 0 &&
-                    searchQuery && (
-                      <Box ta="center" c="dimmed" py="xs">
-                        {t("No pages found")}
-                      </Box>
-                    )}
                 </Box>
               </Popover.Dropdown>
             </Popover>
@@ -325,6 +350,20 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
                       aria-label={t("Enable Web Search")}
                     />
                   </div>
+                  <div className={styles.settingsRow}>
+                    <span className={styles.settingsLabel}>
+                      {t("Deep Research")}
+                    </span>
+                    <Switch
+                      size="xs"
+                      checked={deepResearchEnabled}
+                      onChange={(e) =>
+                        setDeepResearchEnabled(e.currentTarget.checked)
+                      }
+                      aria-label={t("Enable Deep Research")}
+                      disabled={!webSearchEnabled}
+                    />
+                  </div>
                 </div>
               </Popover.Dropdown>
             </Popover>
@@ -332,7 +371,7 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
             {isStreaming ? (
               <ActionIcon
                 className={`${styles.sendButton} ${styles.stop}`}
-                onClick={stopStream}
+                onClick={handleStop}
                 aria-label={t("Stop generating")}
                 size="lg"
                 radius="xl"
@@ -364,6 +403,31 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
           onClose={() => setTreePickerOpen(false)}
         />
       )}
+
+      {/* Deep Research UI Components */}
+      <ClarificationModal
+        opened={deepResearch.state.matches('awaitingClarification')}
+        onClose={() => deepResearch.cancelResearch()}
+        onSubmit={(answer) => deepResearch.provideClarification(answer)}
+        question={deepResearch.state.context.clarificationQuestion}
+        round={deepResearch.state.context.clarificationRound}
+      />
+
+      <PlanApprovalDialog
+        opened={deepResearch.state.matches('awaitingPlanApproval')}
+        onClose={() => undefined}
+        plan={deepResearch.state.context.researchPlan}
+        onApprove={() => deepResearch.approvePlan()}
+        onReject={() => deepResearch.rejectPlan()}
+      />
+
+      {deepResearch.state.matches('error') && deepResearch.state.context.error ? (
+        <Box mt="md">
+          <Alert color="red" title={t("Deep Research Error")}>
+            {deepResearch.state.context.error}
+          </Alert>
+        </Box>
+      ) : null}
     </Box>
   );
 }

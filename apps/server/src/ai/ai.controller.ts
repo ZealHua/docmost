@@ -31,9 +31,11 @@ import { AiPageSearchDto } from './dto/ai-page-search.dto';
 import { GetPageTreeDto } from './dto/ai-page-tree.dto';
 import { CreateAiSessionDto, UpdateAiSessionTitleDto, UpdateAiSessionThreadIdDto, AiSessionResponseDto, AiMessageResponseDto } from './dto/ai-session.dto';
 import { AiFaqStreamDto } from './dto/ai-faq.dto';
+import { DeepResearchDto } from './dto/deep-research.dto';
 
 import { buildEditorSystemPrompt, buildFaqSystemPrompt } from './utils/prompt.utils';
 import { Mem0Service } from '@/mem0/mem0.service';
+import { DeepResearchService } from './services/deep-research.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('ai')
@@ -51,6 +53,7 @@ export class AiController {
     private readonly pageRepo: PageRepo,
     private readonly configService: ConfigService,
     private readonly mem0Service: Mem0Service,
+    private readonly deepResearchService: DeepResearchService,
   ) {
     this.debug = this.configService.get<string>('SERPER_DEBUG') === 'true';
     this.aiDebug = this.configService.get<string>('AI_DEBUG') === 'true';
@@ -656,6 +659,107 @@ export class AiController {
       res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
       res.end();
     }
+  }
+
+  // ── Deep Research (multi-phase research) ──────────────────────────────────
+
+  /**
+   * Streaming deep research endpoint with multi-phase flow:
+   * 1. Quota check
+   * 2. Clarification (if needed, up to 3 rounds)
+   * 3. Plan generation and validation
+   * 4. Plan approval (human-in-the-loop)
+   * 5. Research execution (search → crawl → extract)
+   * 6. Synthesis and report generation
+   */
+  @Post('deep-research/stream')
+  async streamDeepResearch(
+    @Body() dto: DeepResearchDto,
+    @Req() req: any,
+    @Res() reply: any,
+    @AuthUser() user: any,
+    @AuthWorkspace() workspace: any,
+  ) {
+    this.ensureConfigured();
+
+    reply.hijack();
+
+    const res = reply.raw;
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
+    let collectedContent = '';
+    let collectedSources: any[] = [];
+    let researchSessionId = '';
+
+    // Defensive: ensure messages is an array
+    const messages = Array.isArray(dto.messages) ? dto.messages : [];
+    if (messages.length === 0) {
+      res.write(`data: ${JSON.stringify({ type: 'error', data: { error: 'No messages provided' } })}\n\n`);
+      res.end();
+      return;
+    }
+
+    try {
+      // Start deep research execution
+      const result = await this.deepResearchService.execute(
+        {
+          messages,
+          sessionId: dto.sessionId,
+          model: dto.model,
+          workspaceId: workspace.id,
+          userId: user.id,
+          isWebSearchEnabled: dto.isWebSearchEnabled,
+          selectedPageIds: dto.selectedPageIds,
+          clarificationRound: dto.clarificationRound ?? 0,
+        },
+        (event) => {
+          // Stream all events to client
+          res.write(`data: ${JSON.stringify(event)}\n\n`);
+
+          // Collect data for persistence
+          if (event.type === 'chunk') {
+            collectedContent += event.data;
+          } else if (event.type === 'sources') {
+            collectedSources = event.data;
+          } else if (event.type === 'complete') {
+            researchSessionId = event.data.researchSessionId;
+          }
+        },
+        req.raw.signal
+      );
+
+      res.write('data: [DONE]\n\n');
+      res.end();
+    } catch (error: any) {
+      if (error.message === 'CLARIFICATION_NEEDED') {
+        // Don't send error - clarification is expected
+        res.write('data: [DONE]\n\n');
+        res.end();
+      } else {
+        res.write(`data: ${JSON.stringify({ type: 'error', data: { error: error.message } })}\n\n`);
+        res.end();
+      }
+    }
+  }
+
+  /**
+   * Continue deep research after clarification
+   */
+  @Post('deep-research/continue')
+  @HttpCode(200)
+  async continueDeepResearch(
+    @Body() dto: any,
+    @AuthUser() user: any,
+    @AuthWorkspace() workspace: any,
+  ) {
+    this.ensureConfigured();
+
+    // This endpoint is used to continue after clarification
+    // The actual continuation happens via the stream endpoint
+    return { status: 'ready' };
   }
 
   // ── FAQ Chat (lightweight assistant) ─────────────────────────────────────

@@ -22,6 +22,7 @@ export interface AiProvider {
     systemPrompt: string,
     content: string,
     model?: string,
+    signal?: AbortSignal,
   ): Promise<string>;
 
   /**

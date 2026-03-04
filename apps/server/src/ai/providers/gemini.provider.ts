@@ -32,12 +32,14 @@ export class GeminiProvider implements AiProvider {
     systemPrompt: string,
     content: string,
     model?: string,
+    signal?: AbortSignal,
   ): Promise<string> {
     const targetModel = model ? this.google(model) : this.languageModel;
     const { text } = await aiGenerateText({
       model: targetModel,
       system: systemPrompt,
       prompt: content,
+      abortSignal: signal,
     });
     return text;
   }
