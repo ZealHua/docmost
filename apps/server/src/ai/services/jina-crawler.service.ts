@@ -19,17 +19,21 @@ export class JinaCrawlerService {
   private readonly logger = new Logger(JinaCrawlerService.name);
   private readonly JINA_API_URL = 'https://r.jina.ai/http://';
   private readonly JINA_API_KEY?: string;
-  private readonly DEFAULT_TIMEOUT = 30000; // 30 seconds
+  private readonly DEFAULT_TIMEOUT: number;
   private readonly DEFAULT_CONCURRENCY = 3;
 
   constructor(private readonly configService: ConfigService) {
     this.JINA_API_KEY = this.configService.get<string>('JINA_API_KEY');
+    const configuredTimeout = Number(this.configService.get<string>('JINA_CRAWL_TIMEOUT_MS') || '15000');
+    this.DEFAULT_TIMEOUT = Number.isFinite(configuredTimeout) && configuredTimeout >= 1000
+      ? configuredTimeout
+      : 15000;
   }
 
   /**
    * Crawl a single URL and return the HTML content
    */
-  async crawlUrl(url: string, signal?: AbortSignal): Promise<CrawlResult> {
+  async crawlUrl(url: string, signal?: AbortSignal, timeoutMs?: number): Promise<CrawlResult> {
     const startTime = Date.now();
     
     try {
@@ -61,7 +65,7 @@ export class JinaCrawlerService {
 
       // Fetch with timeout and abort signal
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.DEFAULT_TIMEOUT);
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs ?? this.DEFAULT_TIMEOUT);
       
       // Chain abort signals if provided
       const abortHandler = () => controller.abort();
@@ -176,7 +180,7 @@ export class JinaCrawlerService {
         activeCount++;
 
         try {
-          const result = await this.crawlUrl(url, signal);
+          const result = await this.crawlUrl(url, signal, options.timeoutMs);
           results[currentIndex] = result;
         } finally {
           activeCount--;

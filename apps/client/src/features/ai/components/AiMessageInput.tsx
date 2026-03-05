@@ -43,7 +43,6 @@ import styles from "./AiMessageInput.module.css";
 import { PageTreePicker } from "./PageTreePicker";
 import { useDeepResearch } from "../hooks/use-deep-research";
 import { ClarificationModal } from "./ClarificationModal";
-import { PlanApprovalDialog } from "./PlanApprovalDialog";
 import { userAtom } from "@/features/user/atoms/current-user-atom";
 
 interface AiMessageInputProps {
@@ -411,14 +410,6 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
         onSubmit={(answer) => deepResearch.provideClarification(answer)}
         question={deepResearch.state.context.clarificationQuestion}
         round={deepResearch.state.context.clarificationRound}
-      />
-
-      <PlanApprovalDialog
-        opened={deepResearch.state.matches('awaitingPlanApproval')}
-        onClose={() => undefined}
-        plan={deepResearch.state.context.researchPlan}
-        onApprove={() => deepResearch.approvePlan()}
-        onReject={() => deepResearch.rejectPlan()}
       />
 
       {deepResearch.state.matches('error') && deepResearch.state.context.error ? (

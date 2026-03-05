@@ -36,5 +36,6 @@ export class AiMessageResponseDto {
   role: 'user' | 'assistant';
   content: string;
   sources: any[];
+  audit?: Record<string, any>;
   createdAt: string;
 }

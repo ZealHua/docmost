@@ -1,5 +1,6 @@
 import { IsArray, IsBoolean, IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 import { Type } from 'class-transformer';
+import { ResearchPlan } from '../services/planning.service';
 
 export interface ResearchMessage {
   role: 'user' | 'assistant';
@@ -32,16 +33,30 @@ export class DeepResearchDto {
   @IsInt()
   @Min(0)
   clarificationRound?: number;
+
+  @IsOptional()
+  @IsUUID()
+  researchSessionId?: string;
+
+  @IsOptional()
+  @Type(() => Object)
+  approvedPlan?: ResearchPlan;
 }
 
 export class ContinueDeepResearchDto {
   @IsUUID()
-  sessionId: string;
+  researchSessionId: string;
 
+  @IsOptional()
   @IsString()
-  clarificationAnswer: string;
+  expectedPlanHash?: string;
 
-  @IsArray()
+  @IsOptional()
   @Type(() => Object)
-  messages: ResearchMessage[];
+  approvedPlan?: ResearchPlan;
+}
+
+export class RejectDeepResearchDto {
+  @IsUUID()
+  researchSessionId: string;
 }

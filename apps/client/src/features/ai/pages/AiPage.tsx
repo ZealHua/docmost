@@ -115,6 +115,7 @@ export default function AiPage() {
                 role: m.role,
                 content: m.content,
                 sources: m.sources || [],
+                audit: m.audit,
                 createdAt: m.createdAt,
               })),
             );
@@ -186,6 +187,7 @@ export default function AiPage() {
           role: m.role,
           content: m.content,
           sources: m.sources || [],
+          audit: m.audit,
           createdAt: m.createdAt,
         })),
       );

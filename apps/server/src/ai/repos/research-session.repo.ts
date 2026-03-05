@@ -17,8 +17,11 @@ export interface ResearchSessionRecord {
   llmInputTokens: number;
   llmOutputTokens: number;
   estimatedCost: number;
-  status: 'in_progress' | 'completed' | 'failed' | 'cancelled';
+  status: 'awaiting_approval' | 'in_progress' | 'completed' | 'failed' | 'cancelled';
   errorMessage?: string;
+  approvedAt?: Date;
+  approvedById?: string;
+  approvedPlanHash?: string;
   startedAt: Date;
   completedAt?: Date;
   createdAt: Date;
@@ -50,6 +53,7 @@ export class ResearchSessionRepo {
     query: string;
     plan?: ResearchPlan;
     estimatedCost?: number;
+    status?: 'awaiting_approval' | 'in_progress' | 'completed' | 'failed' | 'cancelled';
   }): Promise<ResearchSessionRecord> {
     const result = await this.db
       .insertInto('researchSessions')
@@ -60,6 +64,7 @@ export class ResearchSessionRepo {
         query: data.query,
         plan: data.plan ? JSON.stringify(data.plan) : undefined,
         estimatedCost: data.estimatedCost ?? 0,
+        status: data.status,
       })
       .returningAll()
       .executeTakeFirstOrThrow();
@@ -79,6 +84,9 @@ export class ResearchSessionRepo {
       estimatedCost: parseFloat(result.estimatedCost.toString()),
       status: result.status as ResearchSessionRecord['status'],
       errorMessage: result.errorMessage || undefined,
+      approvedAt: result.approvedAt || undefined,
+      approvedById: result.approvedById || undefined,
+      approvedPlanHash: result.approvedPlanHash || undefined,
       startedAt: result.startedAt,
       completedAt: result.completedAt || undefined,
       createdAt: result.createdAt,
@@ -115,6 +123,9 @@ export class ResearchSessionRepo {
       estimatedCost: parseFloat(result.estimatedCost.toString()),
       status: result.status as ResearchSessionRecord['status'],
       errorMessage: result.errorMessage || undefined,
+      approvedAt: result.approvedAt || undefined,
+      approvedById: result.approvedById || undefined,
+      approvedPlanHash: result.approvedPlanHash || undefined,
       startedAt: result.startedAt,
       completedAt: result.completedAt || undefined,
       createdAt: result.createdAt,
@@ -134,9 +145,12 @@ export class ResearchSessionRepo {
       crawlUrlsCount: number;
       llmInputTokens: number;
       llmOutputTokens: number;
-      status: 'in_progress' | 'completed' | 'failed' | 'cancelled';
+      status: 'awaiting_approval' | 'in_progress' | 'completed' | 'failed' | 'cancelled';
       errorMessage: string;
       completedAt: Date;
+      approvedAt: Date;
+      approvedById: string;
+      approvedPlanHash: string;
     }>
   ): Promise<void> {
     const updateData: any = {
@@ -169,6 +183,15 @@ export class ResearchSessionRepo {
     }
     if (data.completedAt !== undefined) {
       updateData.completedAt = data.completedAt;
+    }
+    if (data.approvedAt !== undefined) {
+      updateData.approvedAt = data.approvedAt;
+    }
+    if (data.approvedById !== undefined) {
+      updateData.approvedById = data.approvedById;
+    }
+    if (data.approvedPlanHash !== undefined) {
+      updateData.approvedPlanHash = data.approvedPlanHash;
     }
 
     await this.db
@@ -254,6 +277,9 @@ export class ResearchSessionRepo {
         estimatedCost: parseFloat(result.estimatedCost.toString()),
         status: result.status as ResearchSessionRecord['status'],
         errorMessage: result.errorMessage || undefined,
+        approvedAt: result.approvedAt || undefined,
+        approvedById: result.approvedById || undefined,
+        approvedPlanHash: result.approvedPlanHash || undefined,
         startedAt: result.startedAt,
         completedAt: result.completedAt || undefined,
         createdAt: result.createdAt,
@@ -333,5 +359,50 @@ export class ResearchSessionRepo {
       .executeTakeFirst();
 
     return result && result.totalCost ? parseFloat(result.totalCost.toString()) : 0;
+  }
+
+  async countByStatuses(workspaceId: string, userId: string): Promise<{
+    awaitingApproval: number;
+    approved: number;
+    completed: number;
+    cancelled: number;
+  }> {
+    const [awaitingApprovalResult, approvedResult, completedResult, cancelledResult] = await Promise.all([
+      this.db
+        .selectFrom('researchSessions')
+        .where('workspaceId', '=', workspaceId)
+        .where('userId', '=', userId)
+        .where('status', '=', 'awaiting_approval')
+        .select((eb) => eb.fn.countAll().as('count'))
+        .executeTakeFirst(),
+      this.db
+        .selectFrom('researchSessions')
+        .where('workspaceId', '=', workspaceId)
+        .where('userId', '=', userId)
+        .where('approvedAt', 'is not', null)
+        .select((eb) => eb.fn.countAll().as('count'))
+        .executeTakeFirst(),
+      this.db
+        .selectFrom('researchSessions')
+        .where('workspaceId', '=', workspaceId)
+        .where('userId', '=', userId)
+        .where('status', '=', 'completed')
+        .select((eb) => eb.fn.countAll().as('count'))
+        .executeTakeFirst(),
+      this.db
+        .selectFrom('researchSessions')
+        .where('workspaceId', '=', workspaceId)
+        .where('userId', '=', userId)
+        .where('status', '=', 'cancelled')
+        .select((eb) => eb.fn.countAll().as('count'))
+        .executeTakeFirst(),
+    ]);
+
+    return {
+      awaitingApproval: parseInt(awaitingApprovalResult?.count as string || '0'),
+      approved: parseInt(approvedResult?.count as string || '0'),
+      completed: parseInt(completedResult?.count as string || '0'),
+      cancelled: parseInt(cancelledResult?.count as string || '0'),
+    };
   }
 }

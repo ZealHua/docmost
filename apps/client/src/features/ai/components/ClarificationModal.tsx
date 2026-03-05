@@ -1,5 +1,6 @@
-import { Modal, Stack, Text, Button, Group, Box, Badge, Paper } from '@mantine/core';
+import { Modal, Stack, Text, Button, Group, Box, Badge, Paper, Textarea } from '@mantine/core';
 import { useState } from 'react';
+import styles from './ClarificationModal.module.css';
 
 interface ClarificationModalProps {
   opened: boolean;
@@ -34,6 +35,10 @@ export function ClarificationModal({
     }
   };
 
+  const oneShotText = round > 0
+    ? 'Final clarification before research continues.'
+    : 'One clarification before research continues.';
+
   return (
     <Modal
       opened={opened}
@@ -44,15 +49,17 @@ export function ClarificationModal({
     >
       <Stack p="md" gap="md">
         <Group justify="space-between">
-          <Badge color="orange" variant="light">
-            Round {round} of 3
+          <Badge variant="light" className={styles.headerBadge}>
+            One-shot clarification
           </Badge>
-          <Badge color="blue" variant="light">
+          <Badge className={styles.headerBadge} variant="light">
             Deep Research
           </Badge>
         </Group>
 
-        <Paper p="md" withBorder>
+        <Text className={styles.helperText}>{oneShotText}</Text>
+
+        <Paper p="md" withBorder className={styles.contextCard}>
           <Text size="sm" c="dimmed" mb="xs">
             Context:
           </Text>
@@ -74,15 +81,8 @@ export function ClarificationModal({
                   variant={selectedOption === option ? 'filled' : 'outline'}
                   onClick={() => setSelectedOption(option)}
                   fullWidth
-                  styles={(theme) => ({
-                    root: {
-                      justifyContent: 'flex-start',
-                      height: 'auto',
-                      padding: theme.spacing.sm,
-                      whiteSpace: 'normal',
-                      textAlign: 'left',
-                    },
-                  })}
+                  className={styles.optionButton}
+                  data-selected={selectedOption === option ? 'true' : 'false'}
                 >
                   {option}
                 </Button>
@@ -93,20 +93,13 @@ export function ClarificationModal({
           <Text size="sm" c="dimmed" mb="xs">
             Or provide a custom answer:
           </Text>
-          <textarea
+          <Textarea
+            className={styles.customInput}
             value={customAnswer}
             onChange={(e) => setCustomAnswer(e.target.value)}
             placeholder="Type your answer here..."
-            style={{
-              width: '100%',
-              minHeight: '80px',
-              padding: '12px',
-              border: '1px solid #e9ecef',
-              borderRadius: '4px',
-              resize: 'vertical',
-              fontFamily: 'inherit',
-              fontSize: '14px',
-            }}
+            minRows={4}
+            autosize
           />
         </Box>
 

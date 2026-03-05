@@ -28,6 +28,7 @@ export type Numeric = ColumnType<string, number | string, number | string>;
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 export interface AiMessages {
+  audit: Json | null;
   content: string;
   createdAt: Generated<Timestamp>;
   id: Generated<string>;
@@ -304,6 +305,9 @@ export interface ResearchOperations {
 }
 
 export interface ResearchSessions {
+  approvedAt: Timestamp | null;
+  approvedById: string | null;
+  approvedPlanHash: string | null;
   completedAt: Timestamp | null;
   crawlUrlsCount: Generated<number>;
   createdAt: Generated<Timestamp>;

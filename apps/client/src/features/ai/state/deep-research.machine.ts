@@ -76,8 +76,6 @@ export interface DeepResearchContext {
 export type DeepResearchEvent =
   | { type: 'START_RESEARCH'; query: string; workspaceId: string; userId: string; model?: string; isWebSearchEnabled?: boolean; selectedPageIds?: string[] }
   | { type: 'PROVIDE_CLARIFICATION'; answer: string }
-  | { type: 'APPROVE_PLAN' }
-  | { type: 'REJECT_PLAN' }
   | { type: 'MODIFY_PLAN'; plan: ResearchPlan }
   | { type: 'SSE_EVENT'; event: any }
   | { type: 'CANCEL' }
@@ -101,9 +99,6 @@ export const deepResearchMachine = setup({
   },
   actions: {
     resetContext: assign(initialContext),
-    sendPlanApproval: () => {
-      console.log('Plan approved, processing buffered events...');
-    },
   },
   guards: {
     isQuotaCheck: ({ event }) =>
@@ -222,9 +217,10 @@ export const deepResearchMachine = setup({
           },
           {
             guard: 'isPlanGenerated',
-            target: 'awaitingPlanApproval',
+            target: 'researching',
             actions: assign({
               researchPlan: ({ event }) => event.event.data,
+              modifiedPlan: ({ event }) => event.event.data,
             }),
           },
           {
@@ -264,29 +260,6 @@ export const deepResearchMachine = setup({
             actions: () => undefined,
           },
         ],
-        CANCEL: {
-          target: 'idle',
-          actions: 'resetContext',
-        },
-      },
-    },
-
-    awaitingPlanApproval: {
-      on: {
-        APPROVE_PLAN: {
-          target: 'researching',
-          actions: 'sendPlanApproval',
-        },
-        REJECT_PLAN: {
-          target: 'idle',
-          actions: 'resetContext',
-        },
-        MODIFY_PLAN: {
-          actions: assign({
-            modifiedPlan: ({ event }) => event.plan,
-            researchPlan: ({ event }) => event.plan,
-          }),
-        },
         CANCEL: {
           target: 'idle',
           actions: 'resetContext',

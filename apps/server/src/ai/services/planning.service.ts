@@ -153,15 +153,17 @@ AVAILABLE RESOURCES:
 
 RESEARCH PLAN REQUIREMENTS:
 1. Break down the research into logical, sequential steps
-2. Include specific search queries for each search step
-3. Identify which URLs to crawl for detailed information
-4. Include analysis steps for processing collected data
-5. Add a synthesis step for creating the final report
-6. Estimate time and resources needed
-7. Mark critical (required) vs optional steps
-8. Consider the depth and breadth of research needed
-9. For crawl steps, URLS must be either concrete http/https URLs or "none".
-10. Never use placeholders such as "[URLs from step X results]".
+2. Keep plan concise: target 4-6 steps total
+3. Include specific search queries for each search step
+4. Identify which URLs to crawl for detailed information
+5. Include analysis steps for processing collected data
+6. Add a synthesis step for creating the final report
+7. Estimate time and resources needed
+8. Mark critical (required) vs optional steps
+9. Consider the depth and breadth of research needed
+10. For crawl steps, URLS must be either concrete http/https URLs or "none".
+11. Never use placeholders such as "[URLs from step X results]".
+12. Keep search and crawl breadth focused to control cost and latency.
 
 RESPOND IN THIS EXACT FORMAT:
 

@@ -293,4 +293,8 @@ export class EnvironmentService {
   getMiniMaxApiUrl(): string {
     return this.configService.get<string>('MINIMAX_API_URL');
   }
+
+  getTavilyApiKey(): string {
+    return this.configService.get<string>('TAVILY_API_KEY');
+  }
 }

@@ -31,11 +31,12 @@ import { AiPageSearchDto } from './dto/ai-page-search.dto';
 import { GetPageTreeDto } from './dto/ai-page-tree.dto';
 import { CreateAiSessionDto, UpdateAiSessionTitleDto, UpdateAiSessionThreadIdDto, AiSessionResponseDto, AiMessageResponseDto } from './dto/ai-session.dto';
 import { AiFaqStreamDto } from './dto/ai-faq.dto';
-import { DeepResearchDto } from './dto/deep-research.dto';
+import { ContinueDeepResearchDto, DeepResearchDto, RejectDeepResearchDto } from './dto/deep-research.dto';
+import { ResearchSessionRepo } from './repos/research-session.repo';
 
 import { buildEditorSystemPrompt, buildFaqSystemPrompt } from './utils/prompt.utils';
 import { Mem0Service } from '@/mem0/mem0.service';
-import { DeepResearchService } from './services/deep-research.service';
+import { DeepResearchService, ResearchSessionAudit } from './services/deep-research.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('ai')
@@ -50,6 +51,7 @@ export class AiController {
     private readonly webSearchService: WebSearchService,
     private readonly sessionRepo: AiSessionRepo,
     private readonly messageRepo: AiMessageRepo,
+    private readonly researchSessionRepo: ResearchSessionRepo,
     private readonly pageRepo: PageRepo,
     private readonly configService: ConfigService,
     private readonly mem0Service: Mem0Service,
@@ -92,6 +94,7 @@ export class AiController {
       role: message.role,
       content: message.content,
       sources: message.sources,
+      audit: message.audit || undefined,
       createdAt: message.createdAt.toISOString(),
     };
   }
@@ -279,7 +282,7 @@ export class AiController {
   @Post('sessions/:id/messages')
   async createMessage(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: { role: 'user' | 'assistant'; content: string; sources?: any[] },
+    @Body() dto: { role: 'user' | 'assistant'; content: string; sources?: any[]; audit?: Record<string, any> },
     @AuthUser() user: any,
     @AuthWorkspace() workspace: any,
   ): Promise<AiMessageResponseDto> {
@@ -294,6 +297,7 @@ export class AiController {
       role: dto.role,
       content: dto.content,
       sources: dto.sources,
+      audit: dto.audit,
     });
 
     await this.sessionRepo.touch(id);
@@ -666,11 +670,10 @@ export class AiController {
   /**
    * Streaming deep research endpoint with multi-phase flow:
    * 1. Quota check
-   * 2. Clarification (if needed, up to 3 rounds)
+    * 2. Clarification (if needed, up to 1 round)
    * 3. Plan generation and validation
-   * 4. Plan approval (human-in-the-loop)
-   * 5. Research execution (search → crawl → extract)
-   * 6. Synthesis and report generation
+    * 4. Plan preview + automatic execution
+    * 5. Synthesis and report generation
    */
   @Post('deep-research/stream')
   async streamDeepResearch(
@@ -714,6 +717,8 @@ export class AiController {
           isWebSearchEnabled: dto.isWebSearchEnabled,
           selectedPageIds: dto.selectedPageIds,
           clarificationRound: dto.clarificationRound ?? 0,
+          researchSessionId: dto.researchSessionId,
+          approvedPlan: dto.approvedPlan,
         },
         (event) => {
           // Stream all events to client
@@ -751,15 +756,72 @@ export class AiController {
   @Post('deep-research/continue')
   @HttpCode(200)
   async continueDeepResearch(
-    @Body() dto: any,
+    @Body() dto: ContinueDeepResearchDto,
     @AuthUser() user: any,
     @AuthWorkspace() workspace: any,
   ) {
     this.ensureConfigured();
 
-    // This endpoint is used to continue after clarification
-    // The actual continuation happens via the stream endpoint
-    return { status: 'ready' };
+    const audit = await this.deepResearchService.validatePlanContinuation({
+      researchSessionId: dto.researchSessionId,
+      workspaceId: workspace.id,
+      userId: user.id,
+      expectedPlanHash: dto.expectedPlanHash,
+      approvedPlan: dto.approvedPlan,
+    });
+
+    return { status: 'ready', audit };
+  }
+
+  @Get('deep-research/sessions/:researchSessionId/audit')
+  async getDeepResearchSessionAudit(
+    @Param('researchSessionId', ParseUUIDPipe) researchSessionId: string,
+    @AuthUser() user: any,
+    @AuthWorkspace() workspace: any,
+  ): Promise<ResearchSessionAudit> {
+    this.ensureConfigured();
+
+    return this.deepResearchService.getSessionAudit({
+      researchSessionId,
+      workspaceId: workspace.id,
+      userId: user.id,
+    });
+  }
+
+  @Get('deep-research/audit/stats')
+  async getDeepResearchAuditStats(
+    @AuthUser() user: any,
+    @AuthWorkspace() workspace: any,
+  ) {
+    this.ensureConfigured();
+
+    const [assistantMessagesWithApprovalAudit, sessions] = await Promise.all([
+      this.messageRepo.countAssistantMessagesWithApprovalAudit(workspace.id, user.id),
+      this.researchSessionRepo.countByStatuses(workspace.id, user.id),
+    ]);
+
+    return {
+      assistantMessagesWithApprovalAudit,
+      sessions,
+    };
+  }
+
+  @Post('deep-research/reject')
+  @HttpCode(200)
+  async rejectDeepResearch(
+    @Body() dto: RejectDeepResearchDto,
+    @AuthUser() user: any,
+    @AuthWorkspace() workspace: any,
+  ) {
+    this.ensureConfigured();
+
+    await this.deepResearchService.rejectPlanContinuation({
+      researchSessionId: dto.researchSessionId,
+      workspaceId: workspace.id,
+      userId: user.id,
+    });
+
+    return { status: 'cancelled' };
   }
 
   // ── FAQ Chat (lightweight assistant) ─────────────────────────────────────

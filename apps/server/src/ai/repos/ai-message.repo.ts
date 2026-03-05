@@ -13,6 +13,7 @@ export class AiMessageRepo {
     role: 'user' | 'assistant';
     content: string;
     sources?: Record<string, any>[];
+    audit?: Record<string, any>;
   }): Promise<AiMessage> {
     const row: InsertableAiMessage = {
       sessionId: data.sessionId,
@@ -20,6 +21,7 @@ export class AiMessageRepo {
       role: data.role,
       content: data.content,
       sources: data.sources ?? [],
+      audit: data.audit,
       createdAt: new Date(),
     };
 
@@ -54,5 +56,20 @@ export class AiMessageRepo {
       .where('sessionId', '=', sessionId)
       .where('createdAt', '>=', fromCreatedAt)
       .execute();
+  }
+
+  async countAssistantMessagesWithApprovalAudit(workspaceId: string, userId: string): Promise<number> {
+    const result = await this.db
+      .selectFrom('aiMessages as m')
+      .innerJoin('aiSessions as s', 's.id', 'm.sessionId')
+      .where('m.workspaceId', '=', workspaceId)
+      .where('s.workspaceId', '=', workspaceId)
+      .where('s.userId', '=', userId)
+      .where('m.role', '=', 'assistant')
+      .where('m.audit', 'is not', null)
+      .select((eb) => eb.fn.countAll().as('count'))
+      .executeTakeFirst();
+
+    return parseInt(result?.count as string || '0');
   }
 }

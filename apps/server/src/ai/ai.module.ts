@@ -19,6 +19,7 @@ import { ClarificationService } from './services/clarification.service';
 import { PlanningService } from './services/planning.service';
 import { JinaCrawlerService } from './services/jina-crawler.service';
 import { ContentExtractorService } from './services/content-extractor.service';
+import { TavilyResearchService } from './services/tavily-research.service';
 import { QuotaRepo } from './repos/quota.repo';
 import { ResearchSessionRepo } from './repos/research-session.repo';
 
@@ -47,6 +48,7 @@ import { ResearchSessionRepo } from './repos/research-session.repo';
     PlanningService,
     JinaCrawlerService,
     ContentExtractorService,
+    TavilyResearchService,
     // Repos
     PageEmbeddingRepo,
     AiSessionRepo,

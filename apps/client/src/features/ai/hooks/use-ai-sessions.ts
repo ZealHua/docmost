@@ -89,6 +89,13 @@ export function useAiSessions(workspaceId: string | undefined) {
         role: "user" | "assistant";
         content: string;
         sources: any[];
+        audit?: {
+          approval?: {
+            approvedAt?: string;
+            approvedById?: string;
+            approvedPlanHash?: string;
+          };
+        };
         createdAt: string;
       }>;
     }>(`/ai/sessions/${sessionId}`);

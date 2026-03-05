@@ -12,6 +12,14 @@ export interface RagSource {
   url?: string;
 }
 
+export interface AiMessageAudit {
+  approval?: {
+    approvedAt?: string;
+    approvedById?: string;
+    approvedPlanHash?: string;
+  };
+}
+
 // ── Messages ────────────────────────────────────────────────────
 export interface AiMessage {
   id: string;
@@ -20,6 +28,7 @@ export interface AiMessage {
   content: string;
   thinking?: string;
   sources: RagSource[];
+  audit?: AiMessageAudit;
   createdAt: string;
 }
 

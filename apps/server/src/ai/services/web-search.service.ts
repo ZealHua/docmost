@@ -163,7 +163,7 @@ ${conversationContext}`;
           title: c.title,
           url: c.link,
           content: c.snippet || '',
-        })).slice(0, 10);
+        })).slice(0, 5);
 
         this.log(`Web search returned ${results.length} results`);
         return { results };

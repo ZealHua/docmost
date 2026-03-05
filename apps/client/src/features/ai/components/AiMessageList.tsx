@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { Box, ActionIcon, Tooltip, Textarea, Button, Group } from "@mantine/core";
+import { Box, ActionIcon, Tooltip, Textarea, Button, Group, Popover, Text } from "@mantine/core";
 import { IconChevronDown, IconChevronUp, IconCopy, IconPencil, IconRefresh } from "@tabler/icons-react";
 import { useAtomValue } from "jotai";
 import {
@@ -35,11 +35,19 @@ function AiMessageFooter({
   content,
   timestamp,
   isLatest,
+  recovered,
+  recoverySummary,
+  approved,
+  approvalSummary,
   onRegenerate,
 }: {
   content: string;
   timestamp: string;
   isLatest: boolean;
+  recovered?: boolean;
+  recoverySummary?: string;
+  approved?: boolean;
+  approvalSummary?: string;
   onRegenerate?: () => void;
 }) {
   const [copied, setCopied] = useState(false);
@@ -77,10 +85,77 @@ function AiMessageFooter({
             </ActionIcon>
           </Tooltip>
         )}
+        {recovered && (
+          <Popover position="top" withArrow shadow="md" withinPortal>
+            <Popover.Target>
+              <button type="button" className={cardStyles.recoveryBadgeButton}>
+                <span className={cardStyles.recoveryBadge}>Recovered via retry</span>
+              </button>
+            </Popover.Target>
+            <Popover.Dropdown>
+              <Text size="xs" fw={600} mb={4}>Recovery Details</Text>
+              <Text size="xs" c="dimmed">
+                {recoverySummary || "Automatic recovery pass retried search/crawl before final answer."}
+              </Text>
+            </Popover.Dropdown>
+          </Popover>
+        )}
+        {approved && (
+          <Popover position="top" withArrow shadow="md" withinPortal>
+            <Popover.Target>
+              <button type="button" className={cardStyles.approvalBadgeButton}>
+                <span className={cardStyles.approvalBadge}>Plan approved</span>
+              </button>
+            </Popover.Target>
+            <Popover.Dropdown>
+              <Text size="xs" fw={600} mb={4}>Approval Audit</Text>
+              <Text size="xs" c="dimmed">
+                {approvalSummary || "Approval audit metadata was recorded for this research session."}
+              </Text>
+            </Popover.Dropdown>
+          </Popover>
+        )}
       </div>
       <div className={cardStyles.footerTimestamp}>{timestamp}</div>
     </div>
   );
+}
+
+function extractRecoverySummary(thinking?: string): string | undefined {
+  if (!thinking) {
+    return undefined;
+  }
+
+  const lines = thinking.split("\n").map((line) => line.trim());
+  const completedLine = lines.find((line) => line.startsWith("✅ "));
+  const latestRecoveryLine = [...lines].reverse().find((line) => line.includes("🔁 Recovery"));
+
+  return completedLine || latestRecoveryLine;
+}
+
+function formatApprovalSummaryFromAudit(audit?: { approval?: { approvedAt?: string; approvedPlanHash?: string } }): string | undefined {
+  const approval = audit?.approval;
+  if (!approval) {
+    return undefined;
+  }
+
+  const approvedAtText = approval.approvedAt
+    ? new Date(approval.approvedAt).toLocaleTimeString()
+    : undefined;
+  const hashText = approval.approvedPlanHash
+    ? `${approval.approvedPlanHash.slice(0, 10)}…`
+    : undefined;
+
+  if (!approvedAtText && !hashText) {
+    return "Approval audit metadata was recorded for this research session.";
+  }
+
+  const parts = [
+    approvedAtText ? `at ${approvedAtText}` : undefined,
+    hashText ? `(hash ${hashText})` : undefined,
+  ].filter(Boolean);
+
+  return `Approval recorded ${parts.join(" ")}`.trim();
 }
 
 const MAX_LINES = 5;
@@ -316,6 +391,13 @@ export function AiMessageList({
   return (
     <Box className={styles.messageContainer}>
       {messages.map((message) => (
+        (() => {
+          const recoverySummary = extractRecoverySummary(message.thinking);
+          const recovered = Boolean(recoverySummary);
+          const approvalSummary = formatApprovalSummaryFromAudit(message.audit);
+          const approved = Boolean(approvalSummary);
+
+          return (
         <div
           key={message.id}
           className={`${styles.messageRow} ${message.role === "user" ? styles.user : ""} ${styles.messageNew}`}
@@ -356,6 +438,10 @@ export function AiMessageList({
                   content={message.content}
                   timestamp={formatTime(message.createdAt)}
                   isLatest={message.id === latestAssistantMessageId}
+                  recovered={recovered}
+                  recoverySummary={recoverySummary}
+                  approved={approved}
+                  approvalSummary={approvalSummary}
                   onRegenerate={
                     message.id === latestAssistantMessageId
                       ? () => onRegenerate?.(message.id)
@@ -374,6 +460,8 @@ export function AiMessageList({
             </AiMessageCard>
           )}
         </div>
+          );
+        })()
       ))}
 
       {isStreaming && (

@@ -2,7 +2,7 @@ import { useCallback, useRef } from 'react';
 import { useMachine } from '@xstate/react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAtom, useAtomValue } from 'jotai';
-import { deepResearchMachine, DeepResearchEvent, ResearchMessage } from '../state/deep-research.machine';
+import { deepResearchMachine, DeepResearchEvent, ResearchMessage, ResearchPlan } from '../state/deep-research.machine';
 import {
   aiActiveSessionAtom,
   aiIsStreamingAtom,
@@ -23,9 +23,9 @@ export interface UseDeepResearchReturn {
     selectedPageIds?: string[];
   }) => void;
   provideClarification: (answer: string) => void;
-  approvePlan: () => void;
-  rejectPlan: () => void;
-  modifyPlan: (plan: any) => void;
+  approvePlan: (plan?: ResearchPlan) => Promise<void>;
+  rejectPlan: () => Promise<void>;
+  modifyPlan: (plan: ResearchPlan) => void;
   cancelResearch: () => void;
   resetResearch: () => void;
 }
@@ -45,7 +45,11 @@ export function useDeepResearch(workspaceId?: string, userId?: string): UseDeepR
   const collectedContentRef = useRef('');
   const collectedSourcesRef = useRef<RagSource[]>([]);
   const finalizedRef = useRef(false);
+  const recoverySummaryRef = useRef<string | null>(null);
   const sessionIdRef = useRef<string | undefined>(undefined);
+  const researchSessionIdRef = useRef<string | undefined>(undefined);
+  const planHashRef = useRef<string | undefined>(undefined);
+  const approvalAuditRef = useRef<{ approvedAt?: string; approvedById?: string; approvedPlanHash?: string } | undefined>(undefined);
 
   const [state, send] = useMachine(deepResearchMachine);
   const [, setChatMessages] = useAtom(aiMessagesAtom);
@@ -77,7 +81,7 @@ export function useDeepResearch(workspaceId?: string, userId?: string): UseDeepR
 
   const persistMessage = useCallback(async (
     sessionId: string | undefined,
-    payload: { role: 'user' | 'assistant'; content: string; sources?: any[] }
+    payload: { role: 'user' | 'assistant'; content: string; sources?: any[]; audit?: Record<string, any> }
   ) => {
     if (!sessionId) {
       return;
@@ -109,7 +113,7 @@ export function useDeepResearch(workspaceId?: string, userId?: string): UseDeepR
       title: source.title || `Source ${index + 1}`,
       slugId: '',
       spaceSlug: '',
-      excerpt: source.excerpt || '',
+      excerpt: source.excerpt || (typeof source.content === 'string' ? source.content.slice(0, 260) : ''),
       similarity: 1,
       chunkIndex: index,
       url: source.url,
@@ -141,6 +145,10 @@ export function useDeepResearch(workspaceId?: string, userId?: string): UseDeepR
     collectedContentRef.current = '';
     collectedSourcesRef.current = [];
     finalizedRef.current = false;
+    recoverySummaryRef.current = null;
+    researchSessionIdRef.current = undefined;
+    planHashRef.current = undefined;
+    approvalAuditRef.current = undefined;
   }, [setIsStreaming, setSources, setStreamingContent, setStreamingThinking]);
 
   const finalizeAssistantMessage = useCallback((fallbackContent?: string) => {
@@ -157,6 +165,7 @@ export function useDeepResearch(workspaceId?: string, userId?: string): UseDeepR
       content,
       thinking: collectedThinkingRef.current || undefined,
       sources: collectedSourcesRef.current,
+      audit: approvalAuditRef.current ? { approval: approvalAuditRef.current } : undefined,
       createdAt: new Date().toISOString(),
       sessionId: sessionIdRef.current,
     };
@@ -166,6 +175,7 @@ export function useDeepResearch(workspaceId?: string, userId?: string): UseDeepR
       role: 'assistant',
       content,
       sources: collectedSourcesRef.current,
+      audit: approvalAuditRef.current ? { approval: approvalAuditRef.current } : undefined,
     });
     setIsStreaming(false);
     setStreamingThinking('');
@@ -184,16 +194,22 @@ export function useDeepResearch(workspaceId?: string, userId?: string): UseDeepR
         break;
       }
       case 'clarification_needed': {
-        appendThinkingLine(`Clarification needed: ${parsed.data?.question || 'Please provide more details.'}`);
+        appendThinkingLine(`One-shot clarification needed: ${parsed.data?.question || 'Please provide more details.'}`);
         break;
       }
       case 'clarification_complete': {
-        appendThinkingLine('Clarification accepted. Proceeding to execution.');
+        appendThinkingLine('Clarification received. Proceeding to execution.');
         break;
       }
       case 'plan_generated': {
         const stepCount = Array.isArray(parsed.data?.steps) ? parsed.data.steps.length : 0;
-        appendThinkingLine(`Plan generated with ${stepCount} steps. Waiting for your approval.`);
+        if (parsed.data?.researchSessionId) {
+          researchSessionIdRef.current = parsed.data.researchSessionId;
+        }
+        if (typeof parsed.data?.planHash === 'string' && parsed.data.planHash.length > 0) {
+          planHashRef.current = parsed.data.planHash;
+        }
+        appendThinkingLine(`Plan generated with ${stepCount} steps. Starting execution automatically.`);
         break;
       }
       case 'plan_validated': {
@@ -205,8 +221,18 @@ export function useDeepResearch(workspaceId?: string, userId?: string): UseDeepR
         break;
       }
       case 'step_progress': {
+        const stepId = parsed.data?.stepId || 'Step';
         const progress = typeof parsed.data?.progress === 'number' ? `${parsed.data.progress}%` : 'in progress';
-        appendThinkingLine(`… ${parsed.data?.stepId || 'Step'} ${progress}`);
+        const status = typeof parsed.data?.status === 'string' ? parsed.data.status : '';
+
+        if (stepId === 'recovery') {
+          appendThinkingLine(`🔁 Recovery ${progress}${status ? ` — ${status}` : ''}`);
+          if (parsed.data?.progress === 100) {
+            recoverySummaryRef.current = status || `Recovery finished (${progress})`;
+          }
+        } else {
+          appendThinkingLine(`… ${stepId} ${progress}${status ? ` — ${status}` : ''}`);
+        }
         break;
       }
       case 'step_completed': {
@@ -218,7 +244,21 @@ export function useDeepResearch(workspaceId?: string, userId?: string): UseDeepR
         collectedSourcesRef.current = mergeSources(collectedSourcesRef.current, incoming);
         setSources(collectedSourcesRef.current);
         if (incoming.length > 0) {
-          appendThinkingLine(`Collected ${incoming.length} source${incoming.length > 1 ? 's' : ''}.`);
+          appendThinkingLine(`Collected ${incoming.length} usable source${incoming.length > 1 ? 's' : ''}.`);
+        }
+        break;
+      }
+      case 'source_summary': {
+        const scope = parsed.data?.scope;
+        const delta = typeof parsed.data?.delta === 'number' ? parsed.data.delta : 0;
+        const total = typeof parsed.data?.total === 'number' ? parsed.data.total : 0;
+
+        if (scope === 'discovered' && delta > 0) {
+          appendThinkingLine(`Discovered ${delta} candidate source${delta > 1 ? 's' : ''} (${total} total discovered).`);
+        } else if (scope === 'usable' && delta > 0) {
+          appendThinkingLine(`Retained ${delta} usable source${delta > 1 ? 's' : ''} (${total} total usable).`);
+        } else if (scope === 'filtered_low_content' && delta > 0) {
+          appendThinkingLine(`Filtered ${delta} low-content source${delta > 1 ? 's' : ''} (${total} filtered).`);
         }
         break;
       }
@@ -241,7 +281,25 @@ export function useDeepResearch(workspaceId?: string, userId?: string): UseDeepR
         break;
       }
       case 'complete': {
+        const completeSources = mapDeepResearchSources(Array.isArray(parsed.data?.sources) ? parsed.data.sources : []);
+        if (completeSources.length > 0) {
+          collectedSourcesRef.current = mergeSources(collectedSourcesRef.current, completeSources);
+          setSources(collectedSourcesRef.current);
+        }
+
+        const metrics = parsed.data?.metrics;
+        if (metrics && typeof metrics === 'object') {
+          const usable = typeof metrics.usableSources === 'number' ? metrics.usableSources : undefined;
+          const cited = typeof metrics.citedSources === 'number' ? metrics.citedSources : undefined;
+          if (usable !== undefined && cited !== undefined) {
+            appendThinkingLine(`Final source coverage: ${cited} cited from ${usable} usable source${usable === 1 ? '' : 's'}.`);
+          }
+        }
+
         const report = parsed.data?.report;
+        if (recoverySummaryRef.current) {
+          appendThinkingLine(`✅ ${recoverySummaryRef.current}`);
+        }
         finalizeAssistantMessage(typeof report === 'string' ? report : undefined);
         break;
       }
@@ -286,10 +344,13 @@ export function useDeepResearch(workspaceId?: string, userId?: string): UseDeepR
   const streamDeepResearch = useCallback(async (
     payload: {
       messages: ResearchMessage[];
+      sessionId?: string;
       model: string;
       isWebSearchEnabled: boolean;
       selectedPageIds: string[];
       clarificationRound?: number;
+      researchSessionId?: string;
+      approvedPlan?: any;
     },
     abortController: AbortController
   ) => {
@@ -354,10 +415,13 @@ export function useDeepResearch(workspaceId?: string, userId?: string): UseDeepR
   const runResearchStream = useCallback(async (
     payload: {
       messages: ResearchMessage[];
+      sessionId?: string;
       model: string;
       isWebSearchEnabled: boolean;
       selectedPageIds: string[];
       clarificationRound?: number;
+      researchSessionId?: string;
+      approvedPlan?: any;
     }
   ) => {
     if (abortControllerRef.current) {
@@ -412,6 +476,8 @@ export function useDeepResearch(workspaceId?: string, userId?: string): UseDeepR
       isWebSearchEnabled: options.isWebSearchEnabled ?? false,
       selectedPageIds: options.selectedPageIds || [],
     };
+    researchSessionIdRef.current = undefined;
+    planHashRef.current = undefined;
     appendUserMessage(query);
     startStreamingBubble('Starting deep research…');
 
@@ -427,9 +493,12 @@ export function useDeepResearch(workspaceId?: string, userId?: string): UseDeepR
 
     await runResearchStream({
       messages: messagesRef.current,
+      sessionId: sessionIdRef.current,
       model: options.model || '',
       isWebSearchEnabled: options.isWebSearchEnabled ?? false,
       selectedPageIds: options.selectedPageIds || [],
+      researchSessionId: undefined,
+      approvedPlan: undefined,
     });
   }, [appendUserMessage, ensureSession, runResearchStream, send, startStreamingBubble, userId, workspaceId]);
 
@@ -447,22 +516,34 @@ export function useDeepResearch(workspaceId?: string, userId?: string): UseDeepR
 
     await runResearchStream({
       messages: messagesRef.current,
+      sessionId: sessionIdRef.current,
       model: requestOptionsRef.current.model || '',
       isWebSearchEnabled: requestOptionsRef.current.isWebSearchEnabled ?? false,
       selectedPageIds: requestOptionsRef.current.selectedPageIds || [],
       clarificationRound: clarificationRoundRef.current,
+      researchSessionId: undefined,
+      approvedPlan: undefined,
     });
   }, [appendThinkingLine, appendUserMessage, ensureSession, runResearchStream, send]);
 
-  const approvePlan = useCallback(() => {
-    send({ type: 'APPROVE_PLAN' });
-  }, [send]);
+  const approvePlan = useCallback(async (plan?: ResearchPlan) => {
+    if (plan) {
+      send({ type: 'MODIFY_PLAN', plan });
+    }
+    appendThinkingLine('Plan approval is no longer required. Research starts automatically after plan generation.');
+  }, [appendThinkingLine, send]);
 
-  const rejectPlan = useCallback(() => {
-    send({ type: 'REJECT_PLAN' });
-  }, [send]);
+  const rejectPlan = useCallback(async () => {
+    appendThinkingLine('Plan rejection is no longer required. Cancelling current research run.');
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    resetStreamingAtoms();
+    send({ type: 'RESET' });
+  }, [appendThinkingLine, resetStreamingAtoms, send]);
 
-  const modifyPlan = useCallback((plan: any) => {
+  const modifyPlan = useCallback((plan: ResearchPlan) => {
     send({ type: 'MODIFY_PLAN', plan });
   }, [send]);
 
@@ -483,6 +564,7 @@ export function useDeepResearch(workspaceId?: string, userId?: string): UseDeepR
     messagesRef.current = [];
     clarificationRoundRef.current = 0;
     sessionIdRef.current = undefined;
+    researchSessionIdRef.current = undefined;
     resetStreamingAtoms();
     send({ type: 'RESET' });
   }, [resetStreamingAtoms, send]);

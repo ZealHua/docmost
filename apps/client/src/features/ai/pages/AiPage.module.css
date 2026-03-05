@@ -86,3 +86,11 @@
   font-family: var(--mantine-font-family);
   letter-spacing: 0.01em;
 }
+
+.devStatsNote {
+  text-align: center;
+  margin-top: 6px;
+  font-size: 10px;
+  color: light-dark(var(--mantine-color-gray-6), var(--mantine-color-dark-2));
+  font-family: var(--mantine-font-family);
+}

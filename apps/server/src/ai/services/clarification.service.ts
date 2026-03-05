@@ -24,7 +24,7 @@ export interface ClarificationContext {
 @Injectable()
 export class ClarificationService {
   private readonly logger = new Logger(ClarificationService.name);
-  private readonly MAX_CLARIFICATION_ROUNDS = 3;
+  private readonly MAX_CLARIFICATION_ROUNDS = 1;
 
   constructor(private readonly orchestrator: AiOrchestratorService) {}
 
@@ -191,17 +191,23 @@ Query: "Who won the Super Bowl?" -> NO:0.90 (clear and specific)`;
 
     const currentDate = new Date().toISOString();
 
-    return `You are an expert at asking clarifying questions to help users refine their research queries. Generate a helpful clarification question based on the conversation.
+    return `You are an expert at asking clarifying questions to help users refine their research queries. Generate a single, one-shot clarification that captures all important missing details.
 
 Current Date: ${currentDate}
 Clarification Round: ${clarificationRound + 1}/${this.MAX_CLARIFICATION_ROUNDS}
 
 Generate a clarification question that:
-1. Identifies what's missing or ambiguous in the query
-2. Asks specific follow-up questions
-3. Provides helpful options when appropriate
+1. Identifies all critical missing or ambiguous parts of the query in one shot
+2. Asks ONE concise question that can cover multiple dimensions when needed (scope, timeframe, region, metric, source type)
+3. Provides helpful options when appropriate (3-6 options max)
 4. Is concise and easy to understand
-5. Helps narrow down the research scope
+5. Helps narrow down the research scope without requiring another follow-up
+
+IMPORTANT:
+- The system allows only one clarification turn.
+- Do not ask multiple separate questions.
+- If multiple details are missing, combine them into one compact question.
+- Keep options short and directly actionable.
 
 Conversation:
 ${conversation}
