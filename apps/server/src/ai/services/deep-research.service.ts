@@ -153,7 +153,7 @@ export class DeepResearchService {
 
     try {
       this.log(`Starting deep research for workspace ${options.workspaceId}`);
-      let messages = [...options.messages];
+      const messages = [...options.messages];
       let plan: ResearchPlan;
 
       if (options.researchSessionId) {
@@ -506,7 +506,7 @@ export class DeepResearchService {
         executionWaveCount += 1;
         const waveStart = Date.now();
 
-        let readySteps = pendingSteps.filter(step =>
+        const readySteps = pendingSteps.filter(step =>
           (step.dependencies || []).every(dep => completedStepIds.has(dep))
         );
 

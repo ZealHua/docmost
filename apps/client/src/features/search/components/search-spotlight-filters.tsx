@@ -140,7 +140,7 @@ export function SearchSpotlightFilters({
           <Switch
             checked={isAiMode}
             onChange={(event) => onAskClick()}
-            label={t("AI Answers")}
+            label={t("Ask AI")}
             size="sm"
             color="blue"
             labelPosition="left"
@@ -279,7 +279,7 @@ export function SearchSpotlightFilters({
                     isAiMode &&
                     option.value === "attachment" && (
                       <Text size="xs" mt={4}>
-                        {t("AI Answers not available for attachments")}
+                        {t("Ask AI not available for attachments")}
                       </Text>
                     )}
                 </div>
