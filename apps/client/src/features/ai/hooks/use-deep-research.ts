@@ -21,6 +21,7 @@ export interface UseDeepResearchReturn {
     model?: string;
     isWebSearchEnabled?: boolean;
     selectedPageIds?: string[];
+    templateId?: string;
   }) => void;
   provideClarification: (answer: string) => void;
   approvePlan: (plan?: ResearchPlan) => Promise<void>;
@@ -39,6 +40,7 @@ export function useDeepResearch(workspaceId?: string, userId?: string): UseDeepR
     model?: string;
     isWebSearchEnabled?: boolean;
     selectedPageIds?: string[];
+    templateId?: string;
   }>({});
 
   const collectedThinkingRef = useRef('');
@@ -194,7 +196,16 @@ export function useDeepResearch(workspaceId?: string, userId?: string): UseDeepR
         break;
       }
       case 'clarification_needed': {
-        appendThinkingLine(`One-shot clarification needed: ${parsed.data?.question || 'Please provide more details.'}`);
+        const clarificationCount = Array.isArray(parsed.data?.questions)
+          ? parsed.data.questions.length
+          : parsed.data?.question
+          ? 1
+          : 0;
+        appendThinkingLine(
+          clarificationCount > 0
+            ? `One-shot clarification needed: ${clarificationCount} question${clarificationCount > 1 ? 's' : ''}.`
+            : 'One-shot clarification needed: Please provide more details.'
+        );
         break;
       }
       case 'clarification_complete': {
@@ -346,6 +357,7 @@ export function useDeepResearch(workspaceId?: string, userId?: string): UseDeepR
       messages: ResearchMessage[];
       sessionId?: string;
       model: string;
+      templateId?: string;
       isWebSearchEnabled: boolean;
       selectedPageIds: string[];
       clarificationRound?: number;
@@ -417,6 +429,7 @@ export function useDeepResearch(workspaceId?: string, userId?: string): UseDeepR
       messages: ResearchMessage[];
       sessionId?: string;
       model: string;
+      templateId?: string;
       isWebSearchEnabled: boolean;
       selectedPageIds: string[];
       clarificationRound?: number;
@@ -461,6 +474,7 @@ export function useDeepResearch(workspaceId?: string, userId?: string): UseDeepR
       model?: string;
       isWebSearchEnabled?: boolean;
       selectedPageIds?: string[];
+      templateId?: string;
     } = {}
   ) => {
     const sessionId = await ensureSession();
@@ -475,6 +489,7 @@ export function useDeepResearch(workspaceId?: string, userId?: string): UseDeepR
       model: options.model,
       isWebSearchEnabled: options.isWebSearchEnabled ?? false,
       selectedPageIds: options.selectedPageIds || [],
+      templateId: options.templateId,
     };
     researchSessionIdRef.current = undefined;
     planHashRef.current = undefined;
@@ -495,6 +510,7 @@ export function useDeepResearch(workspaceId?: string, userId?: string): UseDeepR
       messages: messagesRef.current,
       sessionId: sessionIdRef.current,
       model: options.model || '',
+      templateId: options.templateId,
       isWebSearchEnabled: options.isWebSearchEnabled ?? false,
       selectedPageIds: options.selectedPageIds || [],
       researchSessionId: undefined,
@@ -518,6 +534,7 @@ export function useDeepResearch(workspaceId?: string, userId?: string): UseDeepR
       messages: messagesRef.current,
       sessionId: sessionIdRef.current,
       model: requestOptionsRef.current.model || '',
+      templateId: requestOptionsRef.current.templateId,
       isWebSearchEnabled: requestOptionsRef.current.isWebSearchEnabled ?? false,
       selectedPageIds: requestOptionsRef.current.selectedPageIds || [],
       clarificationRound: clarificationRoundRef.current,

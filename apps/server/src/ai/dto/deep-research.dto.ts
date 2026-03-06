@@ -20,6 +20,10 @@ export class DeepResearchDto {
   @IsString()
   model?: string;
 
+  @IsOptional()
+  @IsString()
+  templateId?: string;
+
   @IsBoolean()
   isWebSearchEnabled: boolean;
 

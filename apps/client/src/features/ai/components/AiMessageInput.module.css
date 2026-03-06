@@ -376,9 +376,38 @@
 .toolbarLeft {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   min-width: 0;
   flex-shrink: 1;
+}
+
+.deepResearchTrigger {
+  margin-left: 2px;
+  height: 28px;
+  padding: 3px 10px;
+  border-radius: 10px;
+}
+
+.templateList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.templateListItem {
+  margin-left: 0;
+}
+
+.templateItemButton {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.templateDescription {
+  text-align: left;
+  padding-left: 8px;
 }
 
 .toolbarRight {

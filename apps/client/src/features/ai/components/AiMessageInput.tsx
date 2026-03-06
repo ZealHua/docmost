@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActionIcon,
   Box,
@@ -19,7 +19,6 @@ import {
   IconSearch,
   IconAdjustments,
   IconX,
-  IconSparkles,
   IconFolderOpen,
 } from "@tabler/icons-react";
 import { useAtom, useAtomValue } from "jotai";
@@ -66,7 +65,9 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
   const { sendMessage, stopStream } = useAiChat(workspaceId);
   const user = useAtomValue(userAtom);
   const deepResearch = useDeepResearch(workspaceId, user?.id || '');
-  const [deepResearchEnabled, setDeepResearchEnabled] = useState(false);
+  const [deepResearchTemplatePickerOpen, setDeepResearchTemplatePickerOpen] = useState(false);
+  const [selectedDeepResearchTemplateId, setSelectedDeepResearchTemplateId] = useState<string | null>(null);
+  const [deepResearchRoundActive, setDeepResearchRoundActive] = useState(false);
   
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -79,6 +80,23 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
 
   const currentModelConfig = MODEL_CONFIG[selectedModel];
   const supportsThinking = currentModelConfig?.supportsThinking ?? false;
+
+  const deepResearchTemplates = [
+    {
+      id: "default",
+      label: t("Research Format"),
+      description: t("Comprehensive report with structured key citations"),
+    },
+    {
+      id: "executive_brief",
+      label: t("Executive Brief"),
+      description: t("Decision-focused summary for leadership"),
+    },
+  ];
+
+  const selectedDeepResearchTemplate = deepResearchTemplates.find(
+    (template) => template.id === selectedDeepResearchTemplateId,
+  );
 
   const handleSearchPages = useCallback(
     async (query: string) => {
@@ -111,9 +129,11 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
     const trimmed = value.trim();
     if (!trimmed || isStreaming) return;
 
-    if (deepResearchEnabled) {
+    if (selectedDeepResearchTemplateId) {
+      setDeepResearchRoundActive(true);
       deepResearch.startResearch(trimmed, {
         model: selectedModel,
+        templateId: selectedDeepResearchTemplateId,
         isWebSearchEnabled: webSearchEnabled,
         selectedPageIds: selectedPages.map(p => p.pageId),
       });
@@ -124,7 +144,7 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
   }, [
     value,
     isStreaming,
-    deepResearchEnabled,
+    selectedDeepResearchTemplateId,
     deepResearch.startResearch,
     selectedModel,
     webSearchEnabled,
@@ -160,6 +180,31 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
   }));
 
   const isDeepResearchActive = !deepResearch.state.matches('idle') && !deepResearch.state.matches('completed') && !deepResearch.state.matches('error');
+
+  useEffect(() => {
+    if (!deepResearchRoundActive) {
+      return;
+    }
+
+    const roundEnded = deepResearch.state.matches('completed') || deepResearch.state.matches('error') || deepResearch.state.matches('idle');
+    if (!roundEnded) {
+      return;
+    }
+
+    setSelectedDeepResearchTemplateId(null);
+    setDeepResearchRoundActive(false);
+
+    if (!deepResearch.state.matches('idle')) {
+      deepResearch.send({ type: 'RESET' });
+    }
+  }, [deepResearch.send, deepResearch.state, deepResearchRoundActive]);
+
+  const isDeepResearchButtonDisabled = !webSearchEnabled || isStreaming || deepResearchRoundActive;
+
+  const handleSelectDeepResearchTemplate = useCallback((templateId: string) => {
+    setSelectedDeepResearchTemplateId(templateId);
+    setDeepResearchTemplatePickerOpen(false);
+  }, []);
 
   const handleStop = useCallback(() => {
     if (isDeepResearchActive) {
@@ -298,6 +343,52 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
                 </Box>
               </Popover.Dropdown>
             </Popover>
+
+            <Popover
+              position="top"
+              withArrow
+              shadow="md"
+              opened={deepResearchTemplatePickerOpen}
+              onChange={setDeepResearchTemplatePickerOpen}
+            >
+              <Popover.Target>
+                <button
+                  className={`${styles.designButton} ${styles.deepResearchTrigger} ${selectedDeepResearchTemplateId ? styles.iconButtonActive : ''}`}
+                  onClick={() => setDeepResearchTemplatePickerOpen(true)}
+                  title={selectedDeepResearchTemplate?.label || t("Deep Research")}
+                  disabled={isDeepResearchButtonDisabled}
+                >
+                  {selectedDeepResearchTemplate?.label || t("Deep Research")}
+                </button>
+              </Popover.Target>
+              <Popover.Dropdown>
+                <Box w={300}>
+                  <Box fw={600} fz="sm" mb={8}>{t("Choose Template")}</Box>
+                  <Box className={styles.templateList}>
+                    {deepResearchTemplates.map((template) => (
+                      <Box key={template.id} className={styles.templateListItem}>
+                        <Button
+                          variant={selectedDeepResearchTemplateId === template.id ? "light" : "subtle"}
+                          size="xs"
+                          fullWidth
+                          className={styles.templateItemButton}
+                          styles={{
+                            inner: { justifyContent: "flex-start" },
+                            label: { width: "100%", textAlign: "left" },
+                          }}
+                          onClick={() => handleSelectDeepResearchTemplate(template.id)}
+                        >
+                          {template.label}
+                        </Button>
+                        <Box c="dimmed" fz="xs" mt={4} mb={6} className={styles.templateDescription}>
+                          {template.description}
+                        </Box>
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+              </Popover.Dropdown>
+            </Popover>
           </div>
 
           <div className={styles.toolbarRight}>
@@ -349,20 +440,6 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
                       aria-label={t("Enable Web Search")}
                     />
                   </div>
-                  <div className={styles.settingsRow}>
-                    <span className={styles.settingsLabel}>
-                      {t("Deep Research")}
-                    </span>
-                    <Switch
-                      size="xs"
-                      checked={deepResearchEnabled}
-                      onChange={(e) =>
-                        setDeepResearchEnabled(e.currentTarget.checked)
-                      }
-                      aria-label={t("Enable Deep Research")}
-                      disabled={!webSearchEnabled}
-                    />
-                  </div>
                 </div>
               </Popover.Dropdown>
             </Popover>
@@ -408,7 +485,8 @@ export function AiMessageInput({ workspaceId }: AiMessageInputProps) {
         opened={deepResearch.state.matches('awaitingClarification')}
         onClose={() => deepResearch.cancelResearch()}
         onSubmit={(answer) => deepResearch.provideClarification(answer)}
-        question={deepResearch.state.context.clarificationQuestion}
+        questions={deepResearch.state.context.clarificationQuestions}
+        context={deepResearch.state.context.clarificationContext}
         round={deepResearch.state.context.clarificationRound}
       />
 

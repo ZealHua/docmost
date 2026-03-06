@@ -6,9 +6,10 @@ export interface ResearchMessage {
 }
 
 export interface ClarificationQuestion {
+  id: string;
   question: string;
   options?: string[];
-  context: string;
+  required?: boolean;
 }
 
 export interface ResearchPlan {
@@ -52,7 +53,8 @@ export interface QuotaCheckResult {
 export interface DeepResearchContext {
   messages: ResearchMessage[];
   clarificationRound: number;
-  clarificationQuestion?: ClarificationQuestion;
+  clarificationQuestions?: ClarificationQuestion[];
+  clarificationContext?: string;
   researchPlan?: ResearchPlan;
   modifiedPlan?: ResearchPlan;
   sources: ResearchSource[];
@@ -171,7 +173,8 @@ export const deepResearchMachine = setup({
             model: ({ event }) => event.model,
             isWebSearchEnabled: ({ event }) => event.isWebSearchEnabled || false,
             selectedPageIds: ({ event }) => event.selectedPageIds,
-            clarificationQuestion: () => undefined,
+            clarificationQuestions: () => undefined,
+            clarificationContext: () => undefined,
             researchPlan: () => undefined,
             modifiedPlan: () => undefined,
             sources: () => [],
@@ -206,13 +209,28 @@ export const deepResearchMachine = setup({
             guard: 'isClarificationNeeded',
             target: 'awaitingClarification',
             actions: assign({
-              clarificationQuestion: ({ event }) => event.event.data,
+              clarificationQuestions: ({ event }) => {
+                const questions = Array.isArray(event.event.data?.questions)
+                  ? event.event.data.questions
+                  : event.event.data?.question
+                  ? [{
+                      id: 'q1',
+                      question: event.event.data.question,
+                      options: event.event.data.options,
+                      required: true,
+                    }]
+                  : [];
+
+                return questions;
+              },
+              clarificationContext: ({ event }) => event.event.data?.context,
             }),
           },
           {
             guard: 'isClarificationComplete',
             actions: assign({
-              clarificationQuestion: () => undefined,
+              clarificationQuestions: () => undefined,
+              clarificationContext: () => undefined,
             }),
           },
           {
@@ -244,7 +262,8 @@ export const deepResearchMachine = setup({
               { role: 'user', content: event.answer },
             ],
             clarificationRound: ({ context }) => context.clarificationRound + 1,
-            clarificationQuestion: () => undefined,
+            clarificationQuestions: () => undefined,
+            clarificationContext: () => undefined,
           }),
         },
         SSE_EVENT: [

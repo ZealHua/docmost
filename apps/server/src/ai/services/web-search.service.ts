@@ -117,6 +117,10 @@ ${conversationContext}`;
     const url = this.configService.get<string>('SERPER_PROXY');
     const token = this.configService.get<string>('SERPER_PROXY_TOKEN');
 
+    // Strip leading/trailing quotes and backticks that LLMs sometimes add,
+    // which cause exact-phrase matching and return 0 results.
+    query = query.replace(/^["'`]+|["'`]+$/g, '').trim();
+
     this.log(`Starting web search for query: "${query}"`);
 
     if (!url) {

@@ -7,8 +7,14 @@ export interface ClarificationResult {
 }
 
 export interface ClarificationQuestion {
+  id: string;
   question: string;
   options?: string[];
+  required?: boolean;
+}
+
+export interface ClarificationBundle {
+  questions: ClarificationQuestion[];
   context: string;
 }
 
@@ -93,7 +99,7 @@ export class ClarificationService {
     }>,
     clarificationRound: number = 0,
     signal?: AbortSignal
-  ): Promise<ClarificationQuestion> {
+  ): Promise<ClarificationBundle> {
     try {
       const prompt = this.buildClarificationPrompt(messages, clarificationRound);
       
@@ -109,14 +115,20 @@ export class ClarificationService {
       // Parse the response to extract question and options
       const parsed = this.parseClarificationResponse(response);
 
-      this.logger.log(`Generated clarification question: ${parsed.question}`);
+      this.logger.log(`Generated ${parsed.questions.length} clarification question(s)`);
 
       return parsed;
     } catch (error: any) {
       this.logger.error(`Error generating clarification: ${error.message}`);
       // Return a generic clarification question as fallback
       return {
-        question: "Can you provide more details about what you're looking for?",
+        questions: [
+          {
+            id: 'q1',
+            question: "Can you provide more details about what you're looking for?",
+            required: true,
+          },
+        ],
         context: "I need more information to provide a helpful response.",
       };
     }
@@ -196,82 +208,171 @@ Query: "Who won the Super Bowl?" -> NO:0.90 (clear and specific)`;
 Current Date: ${currentDate}
 Clarification Round: ${clarificationRound + 1}/${this.MAX_CLARIFICATION_ROUNDS}
 
-Generate a clarification question that:
-1. Identifies all critical missing or ambiguous parts of the query in one shot
-2. Asks ONE concise question that can cover multiple dimensions when needed (scope, timeframe, region, metric, source type)
-3. Provides helpful options when appropriate (3-6 options max)
-4. Is concise and easy to understand
-5. Helps narrow down the research scope without requiring another follow-up
+Generate 2-3 clarification questions in one shot that together capture all critical missing details.
 
 IMPORTANT:
 - The system allows only one clarification turn.
-- Do not ask multiple separate questions.
-- If multiple details are missing, combine them into one compact question.
-- Keep options short and directly actionable.
+- Ask 2-3 compact questions that can be answered quickly in one form.
+- Keep each question short and directly actionable.
+- Each question may include 3-6 options when appropriate.
 
 Conversation:
 ${conversation}
 
-Respond in this format:
-QUESTION: [Your clarifying question here]
-OPTIONS: [Optional: comma-separated list of options]
-CONTEXT: [Brief explanation of why clarification is needed]
+Respond with VALID JSON only in this exact shape:
+{
+  "context": "Brief explanation of why clarification is needed",
+  "questions": [
+    {
+      "id": "q1",
+      "question": "...",
+      "required": true,
+      "options": ["...", "..."]
+    }
+  ]
+}
+
+Rules:
+- questions length must be 2 or 3
+- id must be unique and stable (q1, q2, q3)
+- required must be true for all questions
+- options are optional and should be short labels
+- no markdown, no prose, JSON only
 
 Examples:
 
 Example 1:
 Query: "Tell me about AI in healthcare"
-QUESTION: What aspect of AI in healthcare interests you most?
-OPTIONS: Market size, Applications, Challenges, Regulations, Recent breakthroughs
-CONTEXT: Healthcare AI is a broad field - focusing on a specific aspect will yield better research results.
+{
+  "context": "Healthcare AI is broad. A tighter scope improves research quality.",
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Which healthcare segment should we focus on?",
+      "required": true,
+      "options": ["Hospitals", "Diagnostics", "Pharma", "Payers", "Public health"]
+    },
+    {
+      "id": "q2",
+      "question": "What outcome do you care about most?",
+      "required": true,
+      "options": ["Market size", "Use cases", "ROI", "Risks", "Regulation"]
+    }
+  ]
+}
 
 Example 2:
 Query: "How is the economy doing?"
-QUESTION: Which economy and timeframe are you interested in?
-OPTIONS: US economy, Global economy, European economy, Asian economy
-CONTEXT: Economic conditions vary significantly by region and change over time.
+{
+  "context": "Economic conditions vary by region and period.",
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Which geography should we analyze?",
+      "required": true,
+      "options": ["US", "Global", "Europe", "China", "ASEAN"]
+    },
+    {
+      "id": "q2",
+      "question": "Which time horizon should we use?",
+      "required": true,
+      "options": ["Last 12 months", "Last 3 years", "Current quarter", "Forward 12 months"]
+    }
+  ]
+}
 
 Example 3:
 Query: "Tell me about Tesla"
-QUESTION: What specific information about Tesla would be most useful?
-OPTIONS: Stock performance, Recent news, Product lineup, Financial results, Market position
-CONTEXT: Tesla is a large company with many aspects to research - focusing will provide more valuable insights.`;
+{
+  "context": "Tesla has multiple dimensions requiring scope clarification.",
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Which Tesla topic is the priority?",
+      "required": true,
+      "options": ["Financials", "Vehicle demand", "Autonomy", "Energy business", "Competition"]
+    },
+    {
+      "id": "q2",
+      "question": "What level of depth do you want?",
+      "required": true,
+      "options": ["Executive brief", "Detailed analysis", "Data-heavy benchmarking"]
+    }
+  ]
+}`;
   }
 
   /**
    * Parse clarification response
    */
-  private parseClarificationResponse(response: string): ClarificationQuestion {
-    const lines = response.split('\n').map(line => line.trim()).filter(line => line);
-    
-    const result: ClarificationQuestion = {
-      question: '',
-      context: '',
-    };
+  private parseClarificationResponse(response: string): ClarificationBundle {
+    const trimmed = response.trim();
+
+    try {
+      const parsed = JSON.parse(trimmed) as {
+        context?: string;
+        questions?: Array<{ id?: string; question?: string; options?: string[]; required?: boolean }>;
+      };
+
+      const questions = (parsed.questions || [])
+        .map((item, index) => ({
+          id: item.id?.trim() || `q${index + 1}`,
+          question: item.question?.trim() || '',
+          options: Array.isArray(item.options)
+            ? item.options.map(opt => opt?.trim()).filter(Boolean) as string[]
+            : undefined,
+          required: item.required !== false,
+        }))
+        .filter(item => item.question.length > 0)
+        .slice(0, 3);
+
+      if (questions.length >= 2) {
+        return {
+          context: parsed.context?.trim() || 'A few details are needed before research begins.',
+          questions,
+        };
+      }
+    } catch {
+      // continue to fallback parsing
+    }
+
+    const lines = trimmed.split('\n').map(line => line.trim()).filter(line => line);
+    let fallbackQuestion = '';
+    let fallbackContext = '';
+    let fallbackOptions: string[] | undefined;
 
     for (const line of lines) {
       if (line.startsWith('QUESTION:')) {
-        result.question = line.substring('QUESTION:'.length).trim();
+        fallbackQuestion = line.substring('QUESTION:'.length).trim();
       } else if (line.startsWith('OPTIONS:')) {
         const optionsStr = line.substring('OPTIONS:'.length).trim();
         if (optionsStr) {
-          result.options = optionsStr
+          fallbackOptions = optionsStr
             .split(',')
             .map(opt => opt.trim())
             .filter(opt => opt.length > 0);
         }
       } else if (line.startsWith('CONTEXT:')) {
-        result.context = line.substring('CONTEXT:'.length).trim();
+        fallbackContext = line.substring('CONTEXT:'.length).trim();
       }
     }
 
-    // Fallback if parsing fails
-    if (!result.question) {
-      result.question = "Can you provide more details about what you're looking for?";
-      result.context = "I need more information to provide a helpful response.";
+    if (!fallbackQuestion) {
+      fallbackQuestion = "Can you provide more details about what you're looking for?";
+      fallbackContext = fallbackContext || "I need more information to provide a helpful response.";
     }
 
-    return result;
+    return {
+      context: fallbackContext || 'A few details are needed before research begins.',
+      questions: [
+        {
+          id: 'q1',
+          question: fallbackQuestion,
+          options: fallbackOptions,
+          required: true,
+        },
+      ],
+    };
   }
 
   /**

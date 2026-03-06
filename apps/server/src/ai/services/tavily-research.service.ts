@@ -53,7 +53,7 @@ export class TavilyResearchService {
         : client.research.bind(client);
 
       const response = await Promise.race([
-        requestFn(query.trim()),
+        requestFn(query.trim(), { days: 365 }),
         new Promise<never>((_, reject) => {
           setTimeout(() => reject(new Error('Timeout')), this.timeoutMs);
         }),

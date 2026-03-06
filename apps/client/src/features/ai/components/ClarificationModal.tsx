@@ -1,16 +1,18 @@
-import { Modal, Stack, Text, Button, Group, Box, Badge, Paper, Textarea } from '@mantine/core';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { IconSparkles } from '@tabler/icons-react';
 import styles from './ClarificationModal.module.css';
 
 interface ClarificationModalProps {
   opened: boolean;
   onClose: () => void;
   onSubmit: (answer: string) => void;
-  question?: {
+  questions?: Array<{
+    id: string;
     question: string;
     options?: string[];
-    context: string;
-  };
+    required?: boolean;
+  }>;
+  context?: string;
   round: number;
 }
 
@@ -18,103 +20,165 @@ export function ClarificationModal({
   opened,
   onClose,
   onSubmit,
-  question,
+  questions,
+  context,
   round,
 }: ClarificationModalProps) {
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  const [customAnswer, setCustomAnswer] = useState('');
+  const activeQuestions = questions || [];
 
-  if (!question) return null;
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+  const [customAnswers, setCustomAnswers] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!opened) return;
+    setSelectedOptions({});
+    setCustomAnswers({});
+  }, [opened]);
+
+  // Lock body scroll when open
+  useEffect(() => {
+    if (!opened) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [opened]);
+
+  if (activeQuestions.length === 0 || !opened) return null;
+
+  const getFinalAnswer = (questionId: string) =>
+    selectedOptions[questionId] || customAnswers[questionId] || '';
 
   const handleSubmit = () => {
-    const answer = selectedOption || customAnswer;
-    if (answer.trim()) {
-      onSubmit(answer);
-      setSelectedOption(null);
-      setCustomAnswer('');
-    }
+    const lines = activeQuestions
+      .map((item, index) => {
+        const answer = getFinalAnswer(item.id).trim();
+        return answer
+          ? `Q${index + 1}: ${item.question.trim()}\nAnswer: ${answer}`
+          : '';
+      })
+      .filter(Boolean);
+
+    if (lines.length === 0) return;
+
+    onSubmit(`Clarification details:\n${lines.join('\n\n')}`);
+    setSelectedOptions({});
+    setCustomAnswers({});
   };
 
-  const oneShotText = round > 0
+  const isSubmitDisabled = activeQuestions.some(item => {
+    const answer = getFinalAnswer(item.id).trim();
+    return (item.required ?? true) && !answer;
+  });
+
+  const helperText = round > 0
     ? 'Final clarification before research continues.'
-    : 'One clarification before research continues.';
+    : 'Answer all questions below before research continues.';
 
   return (
-    <Modal
-      opened={opened}
-      onClose={onClose}
-      title="Clarification Needed"
-      size="lg"
-      centered
-    >
-      <Stack p="md" gap="md">
-        <Group justify="space-between">
-          <Badge variant="light" className={styles.headerBadge}>
-            One-shot clarification
-          </Badge>
-          <Badge className={styles.headerBadge} variant="light">
-            Deep Research
-          </Badge>
-        </Group>
+    <div className={styles.overlay} onClick={onClose}>
+      <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
+        {/* Decorative elements */}
+        <span className={`${styles.corner} ${styles.cornerTL}`} />
+        <span className={`${styles.corner} ${styles.cornerTR}`} />
+        <span className={`${styles.corner} ${styles.cornerBL}`} />
+        <span className={`${styles.corner} ${styles.cornerBR}`} />
 
-        <Text className={styles.helperText}>{oneShotText}</Text>
+        <div className={styles.inner}>
+          {/* Header */}
+          <div className={styles.header}>
+            <div className={styles.headerIcon}>
+              <IconSparkles size={16} />
+            </div>
+            <span className={styles.headerTitle}>Deep Research</span>
+            <span className={styles.headerBadge}>Clarification</span>
+          </div>
 
-        <Paper p="md" withBorder className={styles.contextCard}>
-          <Text size="sm" c="dimmed" mb="xs">
-            Context:
-          </Text>
-          <Text size="sm" style={{ fontStyle: 'italic' }}>
-            {question.context}
-          </Text>
-        </Paper>
+          {/* Helper text */}
+          <p className={styles.helperText}>{helperText}</p>
 
-        <Box>
-          <Text size="lg" fw={500} mb="md">
-            {question.question}
-          </Text>
+          {/* Context card */}
+          <div className={styles.contextCard}>
+            <div className={styles.contextLabel}>Context</div>
+            <div className={styles.contextText}>
+              {context || 'A few details are needed before research begins.'}
+            </div>
+          </div>
 
-          {question.options && question.options.length > 0 && (
-            <Stack gap="xs" mb="md">
-              {question.options.map((option) => (
-                <Button
-                  key={option}
-                  variant={selectedOption === option ? 'filled' : 'outline'}
-                  onClick={() => setSelectedOption(option)}
-                  fullWidth
-                  className={styles.optionButton}
-                  data-selected={selectedOption === option ? 'true' : 'false'}
-                >
-                  {option}
-                </Button>
-              ))}
-            </Stack>
-          )}
+          {/* Questions */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {activeQuestions.map((item, index) => (
+              <div key={item.id} className={styles.questionBlock}>
+                <div className={styles.questionNumber}>{index + 1}</div>
+                <div className={styles.questionText}>{item.question}</div>
 
-          <Text size="sm" c="dimmed" mb="xs">
-            Or provide a custom answer:
-          </Text>
-          <Textarea
-            className={styles.customInput}
-            value={customAnswer}
-            onChange={(e) => setCustomAnswer(e.target.value)}
-            placeholder="Type your answer here..."
-            minRows={4}
-            autosize
-          />
-        </Box>
+                {/* Option chips */}
+                {item.options && item.options.length > 0 && (
+                  <div className={styles.chipRow}>
+                    {item.options.map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        className={`${styles.chip} ${
+                          selectedOptions[item.id] === option ? styles.chipSelected : ''
+                        }`}
+                        onClick={() => {
+                          setSelectedOptions(prev => ({ ...prev, [item.id]: option }));
+                          setCustomAnswers(prev => ({ ...prev, [item.id]: '' }));
+                        }}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                )}
 
-        <Group justify="space-between" mt="md">
-          <Button variant="outline" onClick={onClose}>
-            Cancel Research
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={!selectedOption && !customAnswer.trim()}
-          >
-            Submit Answer
-          </Button>
-        </Group>
-      </Stack>
-    </Modal>
+                {/* Custom answer */}
+                <div className={styles.customAnswerLabel}>
+                  {item.options && item.options.length > 0
+                    ? 'Or provide a custom answer'
+                    : 'Your answer'}
+                </div>
+                <textarea
+                  className={styles.customInput}
+                  value={customAnswers[item.id] || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setCustomAnswers(prev => ({ ...prev, [item.id]: value }));
+                    if (value.trim()) {
+                      setSelectedOptions(prev => ({ ...prev, [item.id]: '' }));
+                    }
+                  }}
+                  placeholder="Type your answer here…"
+                  rows={3}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Divider */}
+          <div className={styles.divider} />
+
+          {/* Footer */}
+          <div className={styles.footer}>
+            <button
+              type="button"
+              className={styles.cancelButton}
+              onClick={onClose}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className={styles.submitButton}
+              onClick={handleSubmit}
+              disabled={isSubmitDisabled}
+            >
+              Continue Research
+              <span className={styles.submitArrow}>→</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

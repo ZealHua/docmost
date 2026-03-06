@@ -712,6 +712,7 @@ export class AiController {
           messages,
           sessionId: dto.sessionId,
           model: dto.model,
+          templateId: dto.templateId,
           workspaceId: workspace.id,
           userId: user.id,
           isWebSearchEnabled: dto.isWebSearchEnabled,

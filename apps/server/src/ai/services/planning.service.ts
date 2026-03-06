@@ -164,6 +164,9 @@ RESEARCH PLAN REQUIREMENTS:
 10. For crawl steps, URLS must be either concrete http/https URLs or "none".
 11. Never use placeholders such as "[URLs from step X results]".
 12. Keep search and crawl breadth focused to control cost and latency.
+13. Include the current year (${new Date().getFullYear()}) in search queries to bias toward recent, up-to-date content.
+14. NEVER wrap search queries in quotes (single or double). Output the raw keyword query only.
+15. Prefer queries that will surface recent information rather than historical content.
 
 RESPOND IN THIS EXACT FORMAT:
 
