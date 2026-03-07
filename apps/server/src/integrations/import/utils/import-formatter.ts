@@ -35,7 +35,8 @@ export async function formatImportHtml(opts: {
     sourcePageId,
     workspaceId,
   } = opts;
-  const $: CheerioAPI = load(html);
+  const cleanedHtml = cleanupXWikiHtml(html);
+  const $: CheerioAPI = load(cleanedHtml);
   const $root: Cheerio<any> = $.root();
 
   let pageIcon: string | null = null;
@@ -67,6 +68,55 @@ export async function formatImportHtml(opts: {
     backlinks,
     pageIcon: pageIcon || undefined,
   };
+}
+
+/**
+ * Remove empty paragraphs, spans, divs, and font tags from XWiki HTML.
+ * - Ignores tags if they contain attributes, comments or non-empty children.
+ * - Cleans up whitespace-only tags if they have no attributes or comments.
+ */
+export function cleanupXWikiHtml(html: string): string {
+  const tags = new Set(['p', 'span', 'div', 'font']);
+  const $ = load(html);
+
+  let changed = false;
+
+  do {
+    changed = false;
+
+    $(Array.from(tags).join(',')).each((_, el) => {
+      const $el = $(el);
+      const node = $el.get(0);
+
+      if (!node || node.type !== 'tag') {
+        return;
+      }
+
+      if (Object.keys(node.attribs ?? {}).length > 0) {
+        return;
+      }
+
+      const hasComment = $el
+        .contents()
+        .toArray()
+        .some((node) => node.type === 'comment');
+      if (hasComment) {
+        return;
+      }
+
+      const hasElementChildren = $el.children().length > 0;
+      if (hasElementChildren) {
+        return;
+      }
+
+      if ($el.text().trim().length === 0) {
+        $el.remove();
+        changed = true;
+      }
+    });
+  } while (changed);
+
+  return $.root().html() ?? '';
 }
 
 export function defaultHtmlFormatter($: CheerioAPI, $root: Cheerio<any>) {
