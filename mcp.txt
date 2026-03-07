@@ -1,0 +1,2439 @@
+  MCP Feature Summary
+
+  The mcp.txt file contains a commit (60848ea9037c2edd8ab90bce11c215a5d6cc9a50) that introduces Model Context Protocol (MCP) support to Docmost. This is
+  an enterprise feature that allows AI assistants and tools to interact with workspace content through a standardized protocol.
+
+  Key Changes:
+
+  1. Frontend Changes (apps/client)
+
+  New Components:
+   - apps/client/src/ee/ai/components/mcp-settings.tsx - New MCP settings component with:
+     - Toggle to enable/disable MCP server
+     - Display of MCP server URL (/api/mcp)
+     - List of supported tools (page operations, space operations, comments, etc.)
+     - Enterprise-only restriction alerts
+
+  UI Updates:
+   - apps/client/src/ee/ai/pages/ai-settings.tsx - Added tabs to separate AI and MCP settings
+   - apps/client/src/App.tsx - Added route for /ai/mcp
+   - apps/client/src/components/settings/settings-sidebar.tsx - Updated label from "AI settings" to "AI"
+   - apps/client/src/ee/api-key/pages/user-api-keys.tsx - Added MCP-specific alerts and documentation links
+
+  Zod Migration:
+   - Major change: Upgraded from zod v3.25.76 to v4.3.6
+   - Updated all form validations from zodResolver to zod4Resolver
+   - Updated imports from zod to zod/v4
+   - This affects ~20+ form components across authentication, security, settings, and editor features
+
+  Type Updates:
+   - apps/client/src/features/workspace/types/workspace.types.ts - Added mcpEnabled?: boolean to workspace and AI settings interfaces
+   - apps/client/src/ee/audit/types/audit.types.ts - Added optional avatarUrl to actor type
+   - apps/client/src/components/ui/custom-avatar.tsx - Made avatarUrl optional
+
+  Localization:
+   - Added 19 new translation keys for MCP features in en-US/translation.json
+
+  2. Backend Changes (apps/server)
+
+  New Dependencies:
+   - Added @modelcontextprotocol/sdk v1.27.1
+   - Added zod v4.3.6
+
+  Workspace Updates:
+   - apps/server/src/core/workspace/dto/update-workspace.dto.ts - Added mcpEnabled boolean field
+   - apps/server/src/core/workspace/services/workspace.service.ts - Added MCP settings update logic with audit trail
+   - apps/server/src/core/search/search.module.ts - Exported SearchService for MCP usage
+
+  EE Module Update:
+   - Updated apps/server/src/ee git submodule commit
+
+  3. Supported MCP Tools
+
+  The MCP server exposes these tools for AI assistants:
+   - Pages: search_pages, get_page, create_page, update_page, list_pages, list_child_pages, duplicate_page, copy_page_to_space, move_page,
+     move_page_to_space
+   - Spaces: get_space, list_spaces, create_space, update_space
+   - Comments: get_comments, create_comment, update_comment
+   - Attachments & Users: search_attachments, list_workspace_members, get_current_user
+
+  4. Authentication & Integration
+
+   - MCP server endpoint: /api/mcp
+   - Authentication via API keys (managed in account settings)
+   - Enterprise-only feature with upgrade prompts
+
+  What This Brings:
+
+   1. AI Integration: Enables external AI assistants (like Claude, ChatGPT, or custom agents) to interact with Docmost workspaces through the MCP protocol
+   2. Standardized Interface: Provides a consistent, protocol-based way for AI tools to read and manipulate workspace content
+   3. Enterprise Feature: Monetization opportunity - MCP is locked behind enterprise edition
+   4. Enhanced API: Extends Docmost's API capabilities with a modern, AI-friendly protocol
+   5. Tool Ecosystem: Allows integration with the growing MCP ecosystem of AI tools and assistants
+
+  Current State Comparison:
+
+  Not in current codebase:
+   - MCP server implementation (backend /api/mcp endpoint)
+   - MCP settings UI components
+   - MCP-related workspace settings
+   - Zod v4 migration (currently on v3.25.76)
+   - MCP SDK dependency
+
+  Already present in current codebase:
+   - Basic AI infrastructure
+   - API key management
+   - Enterprise feature framework
+   - Settings UI patterns
+
+✦ The changes represent a significant addition to Docmost's AI capabilities, positioning it as an AI-native workspace platform that can integrate with
+  modern AI tools and assistants.
+
+
+commit 60848ea9037c2edd8ab90bce11c215a5d6cc9a50
+Author: Philip Okugbe <16838612+Philipinho@users.noreply.github.com>
+Date:   Sun Mar 1 18:37:39 2026 +0000
+
+    feat(ee): mcp (#1976)
+    
+    * feat: MCP
+    * sync
+    * sync
+
+diff --git a/apps/client/package.json b/apps/client/package.json
+index 617bf447..60ceae35 100644
+--- a/apps/client/package.json
++++ b/apps/client/package.json
+@@ -55,7 +55,7 @@
+     "semver": "^7.7.3",
+     "socket.io-client": "^4.8.3",
+     "tiptap-extension-global-drag-handle": "^0.1.18",
+-    "zod": "^3.25.76"
++    "zod": "^4.3.6"
+   },
+   "devDependencies": {
+     "@eslint/js": "^9.16.0",
+diff --git a/apps/client/public/locales/en-US/translation.json b/apps/client/public/locales/en-US/translation.json
+index 7b87e3eb..5c64c3e5 100644
+--- a/apps/client/public/locales/en-US/translation.json
++++ b/apps/client/public/locales/en-US/translation.json
+@@ -607,6 +607,25 @@
+   "Generative AI (Ask AI)": "Generative AI (Ask AI)",
+   "Enable AI-powered content generation in the editor. Allows users to generate, improve, translate and transform text.": "Enable AI-powered content generation in the editor. Allows users to generate, improve, translate and transform text.",
+   "Toggle generative AI": "Toggle generative AI",
++  "Enterprise feature": "Enterprise feature",
++  "AI is only available in the Docmost enterprise edition. Contact sales@docmost.com.": "AI is only available in the Docmost enterprise edition. Contact sales@docmost.com.",
++  "AI & MCP": "AI & MCP",
++  "AI": "AI",
++  "MCP": "MCP",
++  "Model Context Protocol (MCP)": "Model Context Protocol (MCP)",
++  "Enable the MCP server to allow AI assistants and tools to interact with your workspace content.": "Enable the MCP server to allow AI assistants and tools to interact with your workspace content.",
++  "MCP is only available in the Docmost enterprise edition. Contact sales@docmost.com.": "MCP is only available in the Docmost enterprise edition. Contact sales@docmost.com.",
++  "MCP documentation": "MCP documentation",
++  "MCP Server URL": "MCP Server URL",
++  "Use your API key for authentication. You can manage API keys in your account settings.": "Use your API key for authentication. You can manage API keys in your account settings.",
++  "Supported tools": "Supported tools",
++  "Your workspace has MCP enabled. Use your API key to connect AI assistants.": "Your workspace has MCP enabled. Use your API key to connect AI assistants.",
++  "MCP server URL:": "MCP server URL:",
++  "Learn more": "Learn more",
++  "View the": "View the",
++  "for usage details.": "for usage details.",
++  "for setup instructions.": "for setup instructions.",
++  "API documentation": "API documentation",
+   "Sources": "Sources",
+   "AI Answers not available for attachments": "AI Answers not available for attachments",
+   "No answer available": "No answer available",
+diff --git a/apps/client/src/App.tsx b/apps/client/src/App.tsx
+index 3a1eb621..c290157c 100644
+--- a/apps/client/src/App.tsx
++++ b/apps/client/src/App.tsx
+@@ -103,6 +103,7 @@ export default function App() {
+             <Route path={"sharing"} element={<Shares />} />
+             <Route path={"security"} element={<Security />} />
+             <Route path={"ai"} element={<AiSettings />} />
++            <Route path={"ai/mcp"} element={<AiSettings />} />
+             <Route path={"audit"} element={<AuditLogs />} />
+             {!isCloud() && <Route path={"license"} element={<License />} />}
+             {isCloud() && <Route path={"billing"} element={<Billing />} />}
+diff --git a/apps/client/src/components/settings/settings-sidebar.tsx b/apps/client/src/components/settings/settings-sidebar.tsx
+index 1c49f918..70f20782 100644
+--- a/apps/client/src/components/settings/settings-sidebar.tsx
++++ b/apps/client/src/components/settings/settings-sidebar.tsx
+@@ -113,7 +113,7 @@ const groupedData: DataGroup[] = [
+         showDisabledInNonEE: true,
+       },
+       {
+-        label: "AI settings",
++        label: "AI",
+         icon: IconSparkles,
+         path: "/settings/ai",
+         isAdmin: true,
+diff --git a/apps/client/src/components/ui/custom-avatar.tsx b/apps/client/src/components/ui/custom-avatar.tsx
+index 54730127..1342cdfb 100644
+--- a/apps/client/src/components/ui/custom-avatar.tsx
++++ b/apps/client/src/components/ui/custom-avatar.tsx
+@@ -4,7 +4,7 @@ import { getAvatarUrl } from "@/lib/config.ts";
+ import { AvatarIconType } from "@/features/attachments/types/attachment.types.ts";
+ 
+ interface CustomAvatarProps {
+-  avatarUrl: string;
++  avatarUrl?: string;
+   name: string;
+   color?: string;
+   size?: string | number;
+diff --git a/apps/client/src/ee/ai/components/mcp-settings.tsx b/apps/client/src/ee/ai/components/mcp-settings.tsx
+new file mode 100644
+index 00000000..396e74ff
+--- /dev/null
++++ b/apps/client/src/ee/ai/components/mcp-settings.tsx
+@@ -0,0 +1,138 @@
++import {
++  Anchor,
++  Group,
++  List,
++  Text,
++  Switch,
++  TextInput,
++  ActionIcon,
++  Tooltip,
++  Stack,
++  Alert,
++} from "@mantine/core";
++import { useAtom } from "jotai";
++import { workspaceAtom } from "@/features/user/atoms/current-user-atom.ts";
++import React, { useState } from "react";
++import { useTranslation } from "react-i18next";
++import { updateWorkspace } from "@/features/workspace/services/workspace-service.ts";
++import { notifications } from "@mantine/notifications";
++import { useIsCloudEE } from "@/hooks/use-is-cloud-ee.tsx";
++import { getAppUrl } from "@/lib/config.ts";
++import { IconCheck, IconCopy, IconInfoCircle } from "@tabler/icons-react";
++import { CopyButton } from "@/components/common/copy-button.tsx";
++
++export default function McpSettings() {
++  const { t } = useTranslation();
++  const [workspace, setWorkspace] = useAtom(workspaceAtom);
++  const [checked, setChecked] = useState(workspace?.settings?.ai?.mcp);
++  const hasAccess = useIsCloudEE();
++
++  const mcpUrl = `${getAppUrl()}/api/mcp`;
++
++  const handleChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
++    const value = event.currentTarget.checked;
++    try {
++      const updatedWorkspace = await updateWorkspace({ mcpEnabled: value });
++      setChecked(value);
++      setWorkspace(updatedWorkspace);
++    } catch (err) {
++      notifications.show({
++        message: err?.response?.data?.message,
++        color: "red",
++      });
++    }
++  };
++
++  return (
++    <Stack gap="lg">
++      {!hasAccess && (
++        <Alert
++          icon={<IconInfoCircle />}
++          title={t("Enterprise feature")}
++          color="blue"
++        >
++          {t(
++            "MCP is only available in the Docmost enterprise edition. Contact sales@docmost.com.",
++          )}
++        </Alert>
++      )}
++
++      <Group justify="space-between" wrap="nowrap" gap="xl">
++        <div>
++          <Text size="md">{t("Model Context Protocol (MCP)")}</Text>
++          <Text size="sm" c="dimmed">
++            {t(
++              "Enable the MCP server to allow AI assistants and tools to interact with your workspace content.",
++            )}{" "}
++            {t("View the")}{" "}
++            <Anchor
++              href="https://docmost.com/docs/user-guide/mcp"
++              target="_blank"
++              size="sm"
++            >
++              {t("MCP documentation")}
++            </Anchor>
++            .
++          </Text>
++        </div>
++
++        <Switch
++          defaultChecked={checked}
++          onChange={handleChange}
++          disabled={!hasAccess}
++        />
++      </Group>
++
++      {checked && (
++        <div>
++          <Text size="sm" fw={500} mb={4}>
++            {t("MCP Server URL")}
++          </Text>
++          <Group gap="xs">
++            <TextInput
++              value={mcpUrl}
++              readOnly
++              style={{ flex: 1 }}
++            />
++            <CopyButton value={mcpUrl} timeout={2000}>
++              {({ copied, copy }) => (
++                <Tooltip
++                  label={copied ? t("Copied") : t("Copy")}
++                  withArrow
++                  position="right"
++                >
++                  <ActionIcon
++                    color={copied ? "teal" : "gray"}
++                    variant="subtle"
++                    onClick={copy}
++                  >
++                    {copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
++                  </ActionIcon>
++                </Tooltip>
++              )}
++            </CopyButton>
++          </Group>
++          <Text size="sm" c="dimmed" mt="xs">
++            {t(
++              "Use your API key for authentication. You can manage API keys in your account settings.",
++            )}
++          </Text>
++
++          <div>
++            <Text size="sm" fw={500} mt="md" mb={4}>
++              {t("Supported tools")}
++            </Text>
++            <List size="sm" spacing={2}>
++              <List.Item><Text size="sm" c="dimmed" span>search_pages, get_page, create_page, update_page</Text></List.Item>
++              <List.Item><Text size="sm" c="dimmed" span>list_pages, list_child_pages, duplicate_page</Text></List.Item>
++              <List.Item><Text size="sm" c="dimmed" span>copy_page_to_space, move_page, move_page_to_space</Text></List.Item>
++              <List.Item><Text size="sm" c="dimmed" span>get_space, list_spaces, create_space, update_space</Text></List.Item>
++              <List.Item><Text size="sm" c="dimmed" span>get_comments, create_comment, update_comment</Text></List.Item>
++              <List.Item><Text size="sm" c="dimmed" span>search_attachments, list_workspace_members, get_current_user</Text></List.Item>
++            </List>
++          </div>
++        </div>
++      )}
++    </Stack>
++  );
++}
+diff --git a/apps/client/src/ee/ai/pages/ai-settings.tsx b/apps/client/src/ee/ai/pages/ai-settings.tsx
+index 441f91b9..d0aaeafe 100644
+--- a/apps/client/src/ee/ai/pages/ai-settings.tsx
++++ b/apps/client/src/ee/ai/pages/ai-settings.tsx
+@@ -6,44 +6,75 @@ import useUserRole from "@/hooks/use-user-role.tsx";
+ import { useTranslation } from "react-i18next";
+ import EnableAiSearch from "@/ee/ai/components/enable-ai-search.tsx";
+ import EnableGenerativeAi from "@/ee/ai/components/enable-generative-ai.tsx";
+-import { Alert, Stack } from "@mantine/core";
++import McpSettings from "@/ee/ai/components/mcp-settings.tsx";
++import { Alert, Stack, Tabs } from "@mantine/core";
+ import { IconInfoCircle } from "@tabler/icons-react";
+ import { useIsCloudEE } from "@/hooks/use-is-cloud-ee.tsx";
+ import { isCloud } from "@/lib/config.ts";
++import { useLocation, useNavigate } from "react-router-dom";
+ 
+ export default function AiSettings() {
+   const { t } = useTranslation();
+   const { isAdmin } = useUserRole();
+   const hasAccess = useIsCloudEE();
++  const location = useLocation();
++  const navigate = useNavigate();
++
++  const activeTab = location.pathname.endsWith("/mcp") ? "mcp" : "ai";
+ 
+   if (!isAdmin) {
+     return null;
+   }
+ 
++  const handleTabChange = (value: string | null) => {
++    if (value === "mcp") {
++      navigate("/settings/ai/mcp");
++    } else {
++      navigate("/settings/ai");
++    }
++  };
++
+   return (
+     <>
+       <Helmet>
+         <title>AI - {getAppName()}</title>
+       </Helmet>
+-      <SettingsTitle title={t("AI settings")} />
+-
+-      {!hasAccess && (
+-        <Alert
+-          icon={<IconInfoCircle />}
+-          title={t("Enterprise feature")}
+-          color="blue"
+-          mb="lg"
+-        >
+-          {t(
+-            "AI is only available in the Docmost enterprise edition. Contact sales@docmost.com.",
++      <SettingsTitle title={t("AI")} />
++
++      <Tabs color="dark" value={activeTab} onChange={handleTabChange}>
++        <Tabs.List>
++          <Tabs.Tab fw={500} value="ai">
++            {t("AI")}
++          </Tabs.Tab>
++          <Tabs.Tab fw={500} value="mcp">
++            {t("MCP")}
++          </Tabs.Tab>
++        </Tabs.List>
++
++        <Tabs.Panel value="ai" pt="md">
++          {!hasAccess && (
++            <Alert
++              icon={<IconInfoCircle />}
++              title={t("Enterprise feature")}
++              color="blue"
++              mb="lg"
++            >
++              {t(
++                "AI is only available in the Docmost enterprise edition. Contact sales@docmost.com.",
++              )}
++            </Alert>
+           )}
+-        </Alert>
+-      )}
+ 
+-      <Stack gap="md">
+-        {!isCloud() && <EnableAiSearch />}
+-        <EnableGenerativeAi />
+-      </Stack>
++          <Stack gap="md">
++            {!isCloud() && <EnableAiSearch />}
++            <EnableGenerativeAi />
++          </Stack>
++        </Tabs.Panel>
++
++        <Tabs.Panel value="mcp" pt="md">
++          <McpSettings />
++        </Tabs.Panel>
++      </Tabs>
+     </>
+   );
+ }
+diff --git a/apps/client/src/ee/api-key/components/create-api-key-modal.tsx b/apps/client/src/ee/api-key/components/create-api-key-modal.tsx
+index cade36e8..ab19552c 100644
+--- a/apps/client/src/ee/api-key/components/create-api-key-modal.tsx
++++ b/apps/client/src/ee/api-key/components/create-api-key-modal.tsx
+@@ -1,8 +1,8 @@
+ import { lazy, Suspense, useState } from "react";
+ import { Modal, TextInput, Button, Group, Stack, Select } from "@mantine/core";
+ import { useForm } from "@mantine/form";
+-import { zodResolver } from "mantine-form-zod-resolver";
+-import { z } from "zod";
++import { zod4Resolver } from "mantine-form-zod-resolver";
++import { z } from "zod/v4";
+ import { useTranslation } from "react-i18next";
+ import { useCreateApiKeyMutation } from "@/ee/api-key/queries/api-key-query";
+ import { IconCalendar } from "@tabler/icons-react";
+@@ -36,7 +36,7 @@ export function CreateApiKeyModal({
+   const createApiKeyMutation = useCreateApiKeyMutation();
+ 
+   const form = useForm<FormValues>({
+-    validate: zodResolver(formSchema),
++    validate: zod4Resolver(formSchema),
+     initialValues: {
+       name: "",
+       expiresAt: "",
+diff --git a/apps/client/src/ee/api-key/components/update-api-key-modal.tsx b/apps/client/src/ee/api-key/components/update-api-key-modal.tsx
+index 6edeb1c3..e4370eac 100644
+--- a/apps/client/src/ee/api-key/components/update-api-key-modal.tsx
++++ b/apps/client/src/ee/api-key/components/update-api-key-modal.tsx
+@@ -1,7 +1,7 @@
+ import { Modal, TextInput, Button, Group, Stack } from "@mantine/core";
+ import { useForm } from "@mantine/form";
+-import { zodResolver } from "mantine-form-zod-resolver";
+-import { z } from "zod";
++import { zod4Resolver } from "mantine-form-zod-resolver";
++import { z } from "zod/v4";
+ import { useTranslation } from "react-i18next";
+ import { useUpdateApiKeyMutation } from "@/ee/api-key/queries/api-key-query";
+ import { IApiKey } from "@/ee/api-key";
+@@ -27,7 +27,7 @@ export function UpdateApiKeyModal({
+   const updateApiKeyMutation = useUpdateApiKeyMutation();
+ 
+   const form = useForm<FormValues>({
+-    validate: zodResolver(formSchema),
++    validate: zod4Resolver(formSchema),
+     initialValues: {
+       name: "",
+     },
+diff --git a/apps/client/src/ee/api-key/pages/user-api-keys.tsx b/apps/client/src/ee/api-key/pages/user-api-keys.tsx
+index 49fd9cab..9e7c3446 100644
+--- a/apps/client/src/ee/api-key/pages/user-api-keys.tsx
++++ b/apps/client/src/ee/api-key/pages/user-api-keys.tsx
+@@ -1,9 +1,9 @@
+ import React, { useState } from "react";
+-import { Button, Group, Space } from "@mantine/core";
++import { Anchor, Alert, Button, Group, Space, Text } from "@mantine/core";
+ import { Helmet } from "react-helmet-async";
+ import { useTranslation } from "react-i18next";
+ import SettingsTitle from "@/components/settings/settings-title";
+-import { getAppName } from "@/lib/config";
++import { getAppName, getAppUrl } from "@/lib/config";
+ import { ApiKeyTable } from "@/ee/api-key/components/api-key-table";
+ import { CreateApiKeyModal } from "@/ee/api-key/components/create-api-key-modal";
+ import { ApiKeyCreatedModal } from "@/ee/api-key/components/api-key-created-modal";
+@@ -13,6 +13,8 @@ import Paginate from "@/components/common/paginate";
+ import { useCursorPaginate } from "@/hooks/use-cursor-paginate";
+ import { useGetApiKeysQuery } from "@/ee/api-key/queries/api-key-query.ts";
+ import { IApiKey } from "@/ee/api-key";
++import { useAtom } from "jotai";
++import { workspaceAtom } from "@/features/user/atoms/current-user-atom.ts";
+ 
+ export default function UserApiKeys() {
+   const { t } = useTranslation();
+@@ -23,6 +25,8 @@ export default function UserApiKeys() {
+   const [revokeModalOpened, setRevokeModalOpened] = useState(false);
+   const [selectedApiKey, setSelectedApiKey] = useState<IApiKey | null>(null);
+   const { data, isLoading } = useGetApiKeysQuery({ cursor });
++  const [workspace] = useAtom(workspaceAtom);
++  const mcpEnabled = workspace?.settings?.ai?.mcp === true;
+ 
+   const handleCreateSuccess = (response: IApiKey) => {
+     setCreatedApiKey(response);
+@@ -48,6 +52,37 @@ export default function UserApiKeys() {
+ 
+       <SettingsTitle title={t("API keys")} />
+ 
++      <Text size="sm" c="dimmed" mb="md">
++        {t("View the")}{" "}
++        <Anchor href="https://docmost.com/api-docs" target="_blank" size="sm">
++          {t("API documentation")}
++        </Anchor>{" "}
++        {t("for usage details.")}
++      </Text>
++
++      {mcpEnabled && (
++        <Alert variant="light" color="blue" mb="md" p="sm">
++          <Text size="sm">
++            {t(
++              "Your workspace has MCP enabled. Use your API key to connect AI assistants.",
++            )}{" "}
++            <Anchor
++              href="https://docmost.com/docs/user-guide/mcp"
++              target="_blank"
++              size="sm"
++            >
++              {t("Learn more")}
++            </Anchor>
++          </Text>
++          <Text size="sm" mt={4}>
++            {t("MCP server URL:")}{" "}
++            <Text size="sm" fw={500} span ff="monospace">
++              {`${getAppUrl()}/api/mcp`}
++            </Text>
++          </Text>
++        </Alert>
++      )}
++
+       <Group justify="flex-end" mb="md">
+         <Button onClick={() => setCreateModalOpened(true)}>
+           {t("Create API Key")}
+diff --git a/apps/client/src/ee/api-key/pages/workspace-api-keys.tsx b/apps/client/src/ee/api-key/pages/workspace-api-keys.tsx
+index 979f4e05..98cbb41e 100644
+--- a/apps/client/src/ee/api-key/pages/workspace-api-keys.tsx
++++ b/apps/client/src/ee/api-key/pages/workspace-api-keys.tsx
+@@ -1,5 +1,5 @@
+ import React, { useState } from "react";
+-import { Button, Group, Space, Text } from "@mantine/core";
++import { Anchor, Button, Group, Space, Text } from "@mantine/core";
+ import { Helmet } from "react-helmet-async";
+ import { useTranslation } from "react-i18next";
+ import SettingsTitle from "@/components/settings/settings-title";
+@@ -54,8 +54,13 @@ export default function WorkspaceApiKeys() {
+ 
+       <SettingsTitle title={t("API management")} />
+ 
+-      <Text size="md" c="dimmed" mb="md">
+-        {t("Manage API keys for all users in the workspace")}
++      <Text size="sm" c="dimmed" mb="md">
++        {t("Manage API keys for all users in the workspace.")}{" "}
++        {t("View the")}{" "}
++        <Anchor href="https://docmost.com/api-docs" target="_blank" size="sm">
++          {t("API documentation")}
++        </Anchor>{" "}
++        {t("for usage details.")}
+       </Text>
+ 
+       <Group justify="flex-end" mb="md">
+diff --git a/apps/client/src/ee/audit/components/audit-logs-table.tsx b/apps/client/src/ee/audit/components/audit-logs-table.tsx
+index 9f29d51d..3d977213 100644
+--- a/apps/client/src/ee/audit/components/audit-logs-table.tsx
++++ b/apps/client/src/ee/audit/components/audit-logs-table.tsx
+@@ -235,6 +235,7 @@ export default function AuditLogsTable({
+                         {entry.actor ? (
+                           <Group gap="sm" wrap="nowrap">
+                             <CustomAvatar
++                              avatarUrl={entry.actor.avatarUrl}
+                               name={entry.actor.name}
+                               size={36}
+                             />
+diff --git a/apps/client/src/ee/audit/types/audit.types.ts b/apps/client/src/ee/audit/types/audit.types.ts
+index 0f1c858e..43813f97 100644
+--- a/apps/client/src/ee/audit/types/audit.types.ts
++++ b/apps/client/src/ee/audit/types/audit.types.ts
+@@ -18,6 +18,7 @@ export type IAuditLog = {
+     id: string;
+     name: string;
+     email: string;
++    avatarUrl?: string;
+   };
+   resource?: {
+     id: string;
+diff --git a/apps/client/src/ee/components/cloud-login-form.tsx b/apps/client/src/ee/components/cloud-login-form.tsx
+index cb1af8a7..01ddd031 100644
+--- a/apps/client/src/ee/components/cloud-login-form.tsx
++++ b/apps/client/src/ee/components/cloud-login-form.tsx
+@@ -1,5 +1,6 @@
+-import * as z from "zod";
+-import { useForm, zodResolver } from "@mantine/form";
++import { z } from "zod/v4";
++import { useForm } from "@mantine/form";
++import { zod4Resolver } from "mantine-form-zod-resolver";
+ import {
+   Container,
+   Title,
+@@ -30,7 +31,7 @@ export function CloudLoginForm() {
+   const { data: joinedWorkspaces } = useJoinedWorkspacesQuery();
+ 
+   const form = useForm<any>({
+-    validate: zodResolver(formSchema),
++    validate: zod4Resolver(formSchema),
+     initialValues: {
+       hostname: "",
+     },
+diff --git a/apps/client/src/ee/components/ldap-login-modal.tsx b/apps/client/src/ee/components/ldap-login-modal.tsx
+index 0a456946..dd1fbbac 100644
+--- a/apps/client/src/ee/components/ldap-login-modal.tsx
++++ b/apps/client/src/ee/components/ldap-login-modal.tsx
+@@ -1,8 +1,8 @@
+ import React, { useState } from "react";
+ import { Modal, TextInput, PasswordInput, Button, Stack } from "@mantine/core";
+ import { useForm } from "@mantine/form";
+-import { zodResolver } from "mantine-form-zod-resolver";
+-import { z } from "zod";
++import { zod4Resolver } from "mantine-form-zod-resolver";
++import { z } from "zod/v4";
+ import { notifications } from "@mantine/notifications";
+ import { useNavigate } from "react-router-dom";
+ import { useTranslation } from "react-i18next";
+@@ -34,7 +34,7 @@ export function LdapLoginModal({
+   const [error, setError] = useState<string | null>(null);
+ 
+   const form = useForm({
+-    validate: zodResolver(formSchema),
++    validate: zod4Resolver(formSchema),
+     initialValues: {
+       username: "",
+       password: "",
+diff --git a/apps/client/src/ee/components/manage-hostname.tsx b/apps/client/src/ee/components/manage-hostname.tsx
+index c7a595ff..50090206 100644
+--- a/apps/client/src/ee/components/manage-hostname.tsx
++++ b/apps/client/src/ee/components/manage-hostname.tsx
+@@ -1,16 +1,17 @@
+ import { Button, Group, Text, Modal, TextInput } from "@mantine/core";
+-import * as z from "zod";
++import { z } from "zod/v4";
+ import { useState } from "react";
+ import { useDisclosure } from "@mantine/hooks";
+ import * as React from "react";
+-import { useForm, zodResolver } from "@mantine/form";
++import { useForm } from "@mantine/form";
++import { zod4Resolver } from "mantine-form-zod-resolver";
+ import { notifications } from "@mantine/notifications";
+ import { useTranslation } from "react-i18next";
+ import { getSubdomainHost } from "@/lib/config.ts";
+ import { IWorkspace } from "@/features/workspace/types/workspace.types.ts";
+ import { updateWorkspace } from "@/features/workspace/services/workspace-service.ts";
+ import { getHostnameUrl } from "@/ee/utils.ts";
+-import { useAtom } from "jotai/index";
++import { useAtom } from "jotai";
+ import {
+   currentUserAtom,
+   workspaceAtom,
+@@ -66,7 +67,7 @@ function ChangeHostnameForm({ onClose }: ChangeHostnameFormProps) {
+   const [currentUser, setCurrentUser] = useAtom(currentUserAtom);
+ 
+   const form = useForm<FormValues>({
+-    validate: zodResolver(formSchema),
++    validate: zod4Resolver(formSchema),
+     initialValues: {
+       hostname: currentUser?.workspace?.hostname,
+     },
+diff --git a/apps/client/src/ee/licence/components/activate-license-modal.tsx b/apps/client/src/ee/licence/components/activate-license-modal.tsx
+index 9d81f29e..d9f68b22 100644
+--- a/apps/client/src/ee/licence/components/activate-license-modal.tsx
++++ b/apps/client/src/ee/licence/components/activate-license-modal.tsx
+@@ -1,7 +1,8 @@
+-import * as z from "zod";
++import { z } from "zod/v4";
+ import React from "react";
+ import { Button, Group, Modal, Textarea } from "@mantine/core";
+-import { useForm, zodResolver } from "@mantine/form";
++import { useForm } from "@mantine/form";
++import { zod4Resolver } from "mantine-form-zod-resolver";
+ import { useTranslation } from "react-i18next";
+ import { useActivateMutation } from "@/ee/licence/queries/license-query.ts";
+ import { useDisclosure } from "@mantine/hooks";
+@@ -49,7 +50,7 @@ export function ActivateLicenseForm({ onClose }: ActivateLicenseFormProps) {
+   const activateLicenseMutation = useActivateMutation();
+ 
+   const form = useForm<FormValues>({
+-    validate: zodResolver(formSchema),
++    validate: zod4Resolver(formSchema),
+     initialValues: {
+       licenseKey: "",
+     },
+diff --git a/apps/client/src/ee/mfa/components/mfa-backup-codes-modal.tsx b/apps/client/src/ee/mfa/components/mfa-backup-codes-modal.tsx
+index 6b439ef5..c1215335 100644
+--- a/apps/client/src/ee/mfa/components/mfa-backup-codes-modal.tsx
++++ b/apps/client/src/ee/mfa/components/mfa-backup-codes-modal.tsx
+@@ -23,8 +23,8 @@ import { notifications } from "@mantine/notifications";
+ import { useTranslation } from "react-i18next";
+ import { regenerateBackupCodes } from "@/ee/mfa";
+ import { useForm } from "@mantine/form";
+-import { zodResolver } from "mantine-form-zod-resolver";
+-import { z } from "zod";
++import { zod4Resolver } from "mantine-form-zod-resolver";
++import { z } from "zod/v4";
+ import useCurrentUser from "@/features/user/hooks/use-current-user";
+ 
+ interface MfaBackupCodesModalProps {
+@@ -51,7 +51,7 @@ export function MfaBackupCodesModal({
+       });
+ 
+   const form = useForm({
+-    validate: zodResolver(formSchema),
++    validate: zod4Resolver(formSchema),
+     initialValues: {
+       confirmPassword: "",
+     },
+diff --git a/apps/client/src/ee/mfa/components/mfa-challenge.tsx b/apps/client/src/ee/mfa/components/mfa-challenge.tsx
+index 413494ef..e1d15965 100644
+--- a/apps/client/src/ee/mfa/components/mfa-challenge.tsx
++++ b/apps/client/src/ee/mfa/components/mfa-challenge.tsx
+@@ -12,7 +12,7 @@ import {
+   ThemeIcon,
+ } from "@mantine/core";
+ import { useForm } from "@mantine/form";
+-import { zodResolver } from "mantine-form-zod-resolver";
++import { zod4Resolver } from "mantine-form-zod-resolver";
+ import { IconDeviceMobile, IconLock } from "@tabler/icons-react";
+ import { useNavigate } from "react-router-dom";
+ import { notifications } from "@mantine/notifications";
+@@ -20,7 +20,7 @@ import classes from "./mfa-challenge.module.css";
+ import { verifyMfa } from "@/ee/mfa";
+ import APP_ROUTE, { getPostLoginRedirect } from "@/lib/app-route";
+ import { useTranslation } from "react-i18next";
+-import * as z from "zod";
++import { z } from "zod/v4";
+ import { MfaBackupCodeInput } from "./mfa-backup-code-input";
+ 
+ const formSchema = z.object({
+@@ -43,7 +43,7 @@ export function MfaChallenge() {
+   const [useBackupCode, setUseBackupCode] = useState(false);
+ 
+   const form = useForm<MfaChallengeFormValues>({
+-    validate: zodResolver(formSchema),
++    validate: zod4Resolver(formSchema),
+     initialValues: {
+       code: "",
+     },
+diff --git a/apps/client/src/ee/mfa/components/mfa-disable-modal.tsx b/apps/client/src/ee/mfa/components/mfa-disable-modal.tsx
+index 72bcbeca..45d912e2 100644
+--- a/apps/client/src/ee/mfa/components/mfa-disable-modal.tsx
++++ b/apps/client/src/ee/mfa/components/mfa-disable-modal.tsx
+@@ -9,11 +9,11 @@ import {
+ } from "@mantine/core";
+ import { IconShieldOff, IconAlertTriangle } from "@tabler/icons-react";
+ import { useForm } from "@mantine/form";
+-import { zodResolver } from "mantine-form-zod-resolver";
++import { zod4Resolver } from "mantine-form-zod-resolver";
+ import { useMutation } from "@tanstack/react-query";
+ import { notifications } from "@mantine/notifications";
+ import { useTranslation } from "react-i18next";
+-import { z } from "zod";
++import { z } from "zod/v4";
+ import { disableMfa } from "@/ee/mfa";
+ import useCurrentUser from "@/features/user/hooks/use-current-user";
+ 
+@@ -41,7 +41,7 @@ export function MfaDisableModal({
+       });
+ 
+   const form = useForm({
+-    validate: zodResolver(formSchema),
++    validate: zod4Resolver(formSchema),
+     initialValues: {
+       confirmPassword: "",
+     },
+@@ -63,7 +63,7 @@ export function MfaDisableModal({
+ 
+   const handleSubmit = async (values: { confirmPassword?: string }) => {
+     // Only send confirmPassword if it's required (non-SSO users)
+-    const payload = requiresPassword 
++    const payload = requiresPassword
+       ? { confirmPassword: values.confirmPassword }
+       : {};
+     await disableMutation.mutateAsync(payload);
+diff --git a/apps/client/src/ee/mfa/components/mfa-setup-modal.tsx b/apps/client/src/ee/mfa/components/mfa-setup-modal.tsx
+index 89d479d7..0046db6b 100644
+--- a/apps/client/src/ee/mfa/components/mfa-setup-modal.tsx
++++ b/apps/client/src/ee/mfa/components/mfa-setup-modal.tsx
+@@ -36,8 +36,8 @@ import { useMutation } from "@tanstack/react-query";
+ import { notifications } from "@mantine/notifications";
+ import { useTranslation } from "react-i18next";
+ import { setupMfa, enableMfa } from "@/ee/mfa";
+-import { zodResolver } from "mantine-form-zod-resolver";
+-import { z } from "zod";
++import { zod4Resolver } from "mantine-form-zod-resolver";
++import { z } from "zod/v4";
+ 
+ interface MfaSetupModalProps {
+   opened: boolean;
+@@ -71,7 +71,7 @@ export function MfaSetupModal({
+   const [manualEntryOpen, setManualEntryOpen] = useState(false);
+ 
+   const form = useForm({
+-    validate: zodResolver(formSchema),
++    validate: zod4Resolver(formSchema),
+     initialValues: {
+       verificationCode: "",
+     },
+diff --git a/apps/client/src/ee/security/components/allowed-domains.tsx b/apps/client/src/ee/security/components/allowed-domains.tsx
+index d1050975..8c22b001 100644
+--- a/apps/client/src/ee/security/components/allowed-domains.tsx
++++ b/apps/client/src/ee/security/components/allowed-domains.tsx
+@@ -1,7 +1,7 @@
+ import { useAtom } from "jotai";
+-import * as z from "zod";
++import { z } from "zod/v4";
+ import { useForm } from "@mantine/form";
+-import { zodResolver } from "mantine-form-zod-resolver";
++import { zod4Resolver } from "mantine-form-zod-resolver";
+ import { workspaceAtom } from "@/features/user/atoms/current-user-atom.ts";
+ import React, { useState } from "react";
+ import { Button, Text, TagsInput } from "@mantine/core";
+@@ -22,7 +22,7 @@ export default function AllowedDomains() {
+   const [, setDomains] = useState<string[]>([]);
+ 
+   const form = useForm<FormValues>({
+-    validate: zodResolver(formSchema),
++    validate: zod4Resolver(formSchema),
+     initialValues: {
+       emailDomains: workspace?.emailDomains || [],
+     },
+diff --git a/apps/client/src/ee/security/components/sso-google-form.tsx b/apps/client/src/ee/security/components/sso-google-form.tsx
+index ddd14b0f..61bfc226 100644
+--- a/apps/client/src/ee/security/components/sso-google-form.tsx
++++ b/apps/client/src/ee/security/components/sso-google-form.tsx
+@@ -1,7 +1,7 @@
+ import React from "react";
+-import { z } from "zod";
++import { z } from "zod/v4";
+ import { useForm } from "@mantine/form";
+-import { zodResolver } from "mantine-form-zod-resolver";
++import { zod4Resolver } from "mantine-form-zod-resolver";
+ import { Box, Button, Group, Stack, Switch, TextInput } from "@mantine/core";
+ import classes from "@/ee/security/components/sso.module.css";
+ import { IAuthProvider } from "@/ee/security/types/security.types.ts";
+@@ -30,7 +30,7 @@ export function SsoGoogleForm({ provider, onClose }: SsoFormProps) {
+       isEnabled: provider.isEnabled,
+       allowSignup: provider.allowSignup,
+     },
+-    validate: zodResolver(ssoSchema),
++    validate: zod4Resolver(ssoSchema),
+   });
+ 
+   const handleSubmit = async (values: SSOFormValues) => {
+diff --git a/apps/client/src/ee/security/components/sso-ldap-form.tsx b/apps/client/src/ee/security/components/sso-ldap-form.tsx
+index 662e8458..95e410b4 100644
+--- a/apps/client/src/ee/security/components/sso-ldap-form.tsx
++++ b/apps/client/src/ee/security/components/sso-ldap-form.tsx
+@@ -1,7 +1,7 @@
+ import React from "react";
+-import { z } from "zod";
++import { z } from "zod/v4";
+ import { useForm } from "@mantine/form";
+-import { zodResolver } from "mantine-form-zod-resolver";
++import { zod4Resolver } from "mantine-form-zod-resolver";
+ import {
+   Box,
+   Button,
+@@ -59,7 +59,7 @@ export function SsoLDAPForm({ provider, onClose }: SsoFormProps) {
+       allowSignup: provider.allowSignup,
+       groupSync: provider.groupSync || false,
+     },
+-    validate: zodResolver(ssoSchema),
++    validate: zod4Resolver(ssoSchema),
+   });
+ 
+   const handleSubmit = async (values: SSOFormValues) => {
+diff --git a/apps/client/src/ee/security/components/sso-oidc-form.tsx b/apps/client/src/ee/security/components/sso-oidc-form.tsx
+index 6f12e5d2..3c98e00a 100644
+--- a/apps/client/src/ee/security/components/sso-oidc-form.tsx
++++ b/apps/client/src/ee/security/components/sso-oidc-form.tsx
+@@ -1,6 +1,7 @@
+ import React from "react";
+-import { z } from "zod";
+-import { useForm, zodResolver } from "@mantine/form";
++import { z } from "zod/v4";
++import { useForm } from "@mantine/form";
++import { zod4Resolver } from "mantine-form-zod-resolver";
+ import { Box, Button, Group, Stack, Switch, TextInput } from "@mantine/core";
+ import { buildCallbackUrl } from "@/ee/security/sso.utils.ts";
+ import classes from "@/ee/security/components/sso.module.css";
+@@ -39,7 +40,7 @@ export function SsoOIDCForm({ provider, onClose }: SsoFormProps) {
+       allowSignup: provider.allowSignup,
+       groupSync: provider.groupSync || false,
+     },
+-    validate: zodResolver(ssoSchema),
++    validate: zod4Resolver(ssoSchema),
+   });
+ 
+   const callbackUrl = buildCallbackUrl({
+diff --git a/apps/client/src/ee/security/components/sso-saml-form.tsx b/apps/client/src/ee/security/components/sso-saml-form.tsx
+index bf374697..16160572 100644
+--- a/apps/client/src/ee/security/components/sso-saml-form.tsx
++++ b/apps/client/src/ee/security/components/sso-saml-form.tsx
+@@ -1,7 +1,7 @@
+ import React from "react";
+-import { z } from "zod";
++import { z } from "zod/v4";
+ import { useForm } from "@mantine/form";
+-import { zodResolver } from "mantine-form-zod-resolver";
++import { zod4Resolver } from "mantine-form-zod-resolver";
+ import {
+   Box,
+   Button,
+@@ -49,7 +49,7 @@ export function SsoSamlForm({ provider, onClose }: SsoFormProps) {
+       allowSignup: provider.allowSignup,
+       groupSync: provider.groupSync || false,
+     },
+-    validate: zodResolver(ssoSchema),
++    validate: zod4Resolver(ssoSchema),
+   });
+ 
+   const callbackUrl = buildCallbackUrl({
+diff --git a/apps/client/src/features/auth/components/forgot-password-form.tsx b/apps/client/src/features/auth/components/forgot-password-form.tsx
+index 2860242e..b5987b49 100644
+--- a/apps/client/src/features/auth/components/forgot-password-form.tsx
++++ b/apps/client/src/features/auth/components/forgot-password-form.tsx
+@@ -1,8 +1,8 @@
+ import { useState } from "react";
+-import * as z from "zod";
+-import { useForm, zodResolver } from "@mantine/form";
++import { z } from "zod/v4";
++import { useForm } from "@mantine/form";
++import { zod4Resolver } from "mantine-form-zod-resolver";
+ import useAuth from "@/features/auth/hooks/use-auth";
+-import { IForgotPassword } from "@/features/auth/types/auth.types";
+ import { Box, Button, Container, Text, TextInput, Title } from "@mantine/core";
+ import classes from "./auth.module.css";
+ import { useRedirectIfAuthenticated } from "@/features/auth/hooks/use-redirect-if-authenticated.ts";
+@@ -10,10 +10,10 @@ import { useTranslation } from "react-i18next";
+ 
+ const formSchema = z.object({
+   email: z
+-    .string()
+-    .min(1, { message: "Email is required" })
+-    .email({ message: "Invalid email address" }),
++    .email()
++    .min(1, { message: "Email is required" }),
+ });
++type FormValues = z.infer<typeof formSchema>;
+ 
+ export function ForgotPasswordForm() {
+   const { t } = useTranslation();
+@@ -21,14 +21,14 @@ export function ForgotPasswordForm() {
+   const [isTokenSent, setIsTokenSent] = useState<boolean>(false);
+   useRedirectIfAuthenticated();
+ 
+-  const form = useForm<IForgotPassword>({
+-    validate: zodResolver(formSchema),
++  const form = useForm<FormValues>({
++    validate: zod4Resolver(formSchema),
+     initialValues: {
+       email: "",
+     },
+   });
+ 
+-  async function onSubmit(data: IForgotPassword) {
++  async function onSubmit(data: FormValues) {
+     if (await forgotPassword(data)) {
+       setIsTokenSent(true);
+     }
+diff --git a/apps/client/src/features/auth/components/invite-sign-up-form.tsx b/apps/client/src/features/auth/components/invite-sign-up-form.tsx
+index 37397ef8..d06ef307 100644
+--- a/apps/client/src/features/auth/components/invite-sign-up-form.tsx
++++ b/apps/client/src/features/auth/components/invite-sign-up-form.tsx
+@@ -1,5 +1,5 @@
+ import * as React from "react";
+-import * as z from "zod";
++import { z } from "zod/v4";
+ 
+ import { useForm } from "@mantine/form";
+ import {
+@@ -11,9 +11,8 @@ import {
+   Box,
+   Stack,
+ } from "@mantine/core";
+-import { zodResolver } from "mantine-form-zod-resolver";
++import { zod4Resolver } from "mantine-form-zod-resolver";
+ import { useParams, useSearchParams } from "react-router-dom";
+-import { IRegister } from "@/features/auth/types/auth.types";
+ import useAuth from "@/features/auth/hooks/use-auth";
+ import classes from "@/features/auth/components/auth.module.css";
+ import { useGetInvitationQuery } from "@/features/workspace/queries/workspace-query.ts";
+@@ -40,14 +39,14 @@ export function InviteSignUpForm() {
+   useRedirectIfAuthenticated();
+ 
+   const form = useForm<FormValues>({
+-    validate: zodResolver(formSchema),
++    validate: zod4Resolver(formSchema),
+     initialValues: {
+       name: "",
+       password: "",
+     },
+   });
+ 
+-  async function onSubmit(data: IRegister) {
++  async function onSubmit(data: FormValues) {
+     const invitationToken = searchParams.get("token");
+ 
+     await invitationSignup({
+diff --git a/apps/client/src/features/auth/components/login-form.tsx b/apps/client/src/features/auth/components/login-form.tsx
+index e182bb32..c07ebe02 100644
+--- a/apps/client/src/features/auth/components/login-form.tsx
++++ b/apps/client/src/features/auth/components/login-form.tsx
+@@ -1,7 +1,7 @@
+-import * as z from "zod";
+-import { useForm, zodResolver } from "@mantine/form";
++import { z } from "zod/v4";
++import { useForm } from "@mantine/form";
++import { zod4Resolver } from "mantine-form-zod-resolver";
+ import useAuth from "@/features/auth/hooks/use-auth";
+-import { ILogin } from "@/features/auth/types/auth.types";
+ import {
+   Container,
+   Title,
+@@ -24,11 +24,11 @@ import React from "react";
+ 
+ const formSchema = z.object({
+   email: z
+-    .string()
+-    .min(1, { message: "email is required" })
+-    .email({ message: "Invalid email address" }),
++    .email()
++    .min(1, { message: "email is required" }),
+   password: z.string().min(1, { message: "Password is required" }),
+ });
++type FormValues = z.infer<typeof formSchema>;
+ 
+ export function LoginForm() {
+   const { t } = useTranslation();
+@@ -41,15 +41,15 @@ export function LoginForm() {
+     error,
+   } = useWorkspacePublicDataQuery();
+ 
+-  const form = useForm<ILogin>({
+-    validate: zodResolver(formSchema),
++  const form = useForm<FormValues>({
++    validate: zod4Resolver(formSchema),
+     initialValues: {
+       email: "",
+       password: "",
+     },
+   });
+ 
+-  async function onSubmit(data: ILogin) {
++  async function onSubmit(data: FormValues) {
+     await signIn(data);
+   }
+ 
+diff --git a/apps/client/src/features/auth/components/password-reset-form.tsx b/apps/client/src/features/auth/components/password-reset-form.tsx
+index 351dcb61..4fe836ec 100644
+--- a/apps/client/src/features/auth/components/password-reset-form.tsx
++++ b/apps/client/src/features/auth/components/password-reset-form.tsx
+@@ -1,7 +1,7 @@
+-import * as z from "zod";
+-import { useForm, zodResolver } from "@mantine/form";
++import { z } from "zod/v4";
++import { useForm } from "@mantine/form";
++import { zod4Resolver } from "mantine-form-zod-resolver";
+ import useAuth from "@/features/auth/hooks/use-auth";
+-import { IPasswordReset } from "@/features/auth/types/auth.types";
+ import { Box, Button, Container, PasswordInput, Title } from "@mantine/core";
+ import classes from "./auth.module.css";
+ import { useRedirectIfAuthenticated } from "@/features/auth/hooks/use-redirect-if-authenticated.ts";
+@@ -12,6 +12,7 @@ const formSchema = z.object({
+     .string()
+     .min(8, { message: "Password must contain at least 8 characters" }),
+ });
++type FormValues = z.infer<typeof formSchema>;
+ 
+ interface PasswordResetFormProps {
+   resetToken?: string;
+@@ -22,14 +23,14 @@ export function PasswordResetForm({ resetToken }: PasswordResetFormProps) {
+   const { passwordReset, isLoading } = useAuth();
+   useRedirectIfAuthenticated();
+ 
+-  const form = useForm<IPasswordReset>({
+-    validate: zodResolver(formSchema),
++  const form = useForm<FormValues>({
++    validate: zod4Resolver(formSchema),
+     initialValues: {
+       newPassword: "",
+     },
+   });
+ 
+-  async function onSubmit(data: IPasswordReset) {
++  async function onSubmit(data: FormValues) {
+     await passwordReset({
+       token: resetToken,
+       newPassword: data.newPassword,
+diff --git a/apps/client/src/features/auth/components/setup-workspace-form.tsx b/apps/client/src/features/auth/components/setup-workspace-form.tsx
+index adba98e5..261412a9 100644
+--- a/apps/client/src/features/auth/components/setup-workspace-form.tsx
++++ b/apps/client/src/features/auth/components/setup-workspace-form.tsx
+@@ -1,6 +1,7 @@
+ import * as React from "react";
+-import * as z from "zod";
+-import { useForm, zodResolver } from "@mantine/form";
++import { z } from "zod/v4";
++import { useForm } from "@mantine/form";
++import { zod4Resolver } from "mantine-form-zod-resolver";
+ import {
+   Container,
+   Title,
+@@ -11,7 +12,6 @@ import {
+   Anchor,
+   Text,
+ } from "@mantine/core";
+-import { ISetupWorkspace } from "@/features/auth/types/auth.types";
+ import useAuth from "@/features/auth/hooks/use-auth";
+ import classes from "@/features/auth/components/auth.module.css";
+ import { useTranslation } from "react-i18next";
+@@ -24,19 +24,19 @@ const formSchema = z.object({
+   workspaceName: z.string().trim().max(50).optional(),
+   name: z.string().min(1).max(50),
+   email: z
+-    .string()
+-    .min(1, { message: "email is required" })
+-    .email({ message: "Invalid email address" }),
++    .email()
++    .min(1, { message: "email is required" }),
+   password: z.string().min(8),
+ });
++type FormValues = z.infer<typeof formSchema>;
+ 
+ export function SetupWorkspaceForm() {
+   const { t } = useTranslation();
+   const { setupWorkspace, isLoading } = useAuth();
+   // useRedirectIfAuthenticated();
+ 
+-  const form = useForm<ISetupWorkspace>({
+-    validate: zodResolver(formSchema),
++  const form = useForm<FormValues>({
++    validate: zod4Resolver(formSchema),
+     initialValues: {
+       workspaceName: "",
+       name: "",
+@@ -45,7 +45,7 @@ export function SetupWorkspaceForm() {
+     },
+   });
+ 
+-  async function onSubmit(data: ISetupWorkspace) {
++  async function onSubmit(data: FormValues) {
+     await setupWorkspace(data);
+   }
+ 
+diff --git a/apps/client/src/features/editor/components/embed/embed-view.tsx b/apps/client/src/features/editor/components/embed/embed-view.tsx
+index efdaa950..52db19b2 100644
+--- a/apps/client/src/features/editor/components/embed/embed-view.tsx
++++ b/apps/client/src/features/editor/components/embed/embed-view.tsx
+@@ -12,9 +12,9 @@ import {
+   TextInput,
+ } from "@mantine/core";
+ import { IconEdit } from "@tabler/icons-react";
+-import { z } from "zod";
++import { z } from "zod/v4";
+ import { useForm } from "@mantine/form";
+-import { zodResolver } from "mantine-form-zod-resolver";
++import { zod4Resolver } from "mantine-form-zod-resolver";
+ import { notifications } from "@mantine/notifications";
+ import { useTranslation } from "react-i18next";
+ import i18n from "i18next";
+@@ -49,7 +49,7 @@ export default function EmbedView(props: NodeViewProps) {
+     initialValues: {
+       url: "",
+     },
+-    validate: zodResolver(schema),
++    validate: zod4Resolver(schema),
+   });
+ 
+   const handleResize = useCallback(
+diff --git a/apps/client/src/features/group/components/create-group-form.tsx b/apps/client/src/features/group/components/create-group-form.tsx
+index c11be8f2..701fa9c5 100644
+--- a/apps/client/src/features/group/components/create-group-form.tsx
++++ b/apps/client/src/features/group/components/create-group-form.tsx
+@@ -2,11 +2,11 @@ import { Group, Box, Button, TextInput, Stack, Textarea } from "@mantine/core";
+ import React, { useState } from "react";
+ import { useCreateGroupMutation } from "@/features/group/queries/group-query.ts";
+ import { useForm } from "@mantine/form";
+-import * as z from "zod";
++import { z } from "zod/v4";
+ import { useNavigate } from "react-router-dom";
+ import { MultiUserSelect } from "@/features/group/components/multi-user-select.tsx";
+ import { useTranslation } from "react-i18next";
+-import { zodResolver } from 'mantine-form-zod-resolver';
++import { zod4Resolver } from 'mantine-form-zod-resolver';
+ 
+ const formSchema = z.object({
+   name: z.string().trim().min(2).max(100),
+@@ -22,7 +22,7 @@ export function CreateGroupForm() {
+   const navigate = useNavigate();
+ 
+   const form = useForm<FormValues>({
+-    validate: zodResolver(formSchema),
++    validate: zod4Resolver(formSchema),
+     initialValues: {
+       name: "",
+       description: "",
+diff --git a/apps/client/src/features/group/components/edit-group-form.tsx b/apps/client/src/features/group/components/edit-group-form.tsx
+index d4708ef7..f8b1671c 100644
+--- a/apps/client/src/features/group/components/edit-group-form.tsx
++++ b/apps/client/src/features/group/components/edit-group-form.tsx
+@@ -5,10 +5,10 @@ import {
+   useUpdateGroupMutation,
+ } from "@/features/group/queries/group-query.ts";
+ import { useForm } from "@mantine/form";
+-import * as z from "zod";
++import { z } from "zod/v4";
+ import { useParams } from "react-router-dom";
+ import { useTranslation } from "react-i18next";
+-import { zodResolver } from "mantine-form-zod-resolver";
++import { zod4Resolver } from "mantine-form-zod-resolver";
+ 
+ const formSchema = z.object({
+   name: z.string().min(2).max(100),
+@@ -35,7 +35,7 @@ export function EditGroupForm({ onClose }: EditGroupFormProps) {
+   }, [isSuccess]);
+ 
+   const form = useForm<FormValues>({
+-    validate: zodResolver(formSchema),
++    validate: zod4Resolver(formSchema),
+     initialValues: {
+       name: group?.name,
+       description: group?.description,
+diff --git a/apps/client/src/features/space/components/create-space-form.tsx b/apps/client/src/features/space/components/create-space-form.tsx
+index 02ac65ce..896b599b 100644
+--- a/apps/client/src/features/space/components/create-space-form.tsx
++++ b/apps/client/src/features/space/components/create-space-form.tsx
+@@ -1,8 +1,8 @@
+ import { Group, Box, Button, TextInput, Stack, Textarea } from "@mantine/core";
+ import React, { useEffect } from "react";
+ import { useForm } from "@mantine/form";
+-import { zodResolver } from "mantine-form-zod-resolver";
+-import * as z from "zod";
++import { zod4Resolver } from "mantine-form-zod-resolver";
++import { z } from "zod/v4";
+ import { useNavigate } from "react-router-dom";
+ import { useCreateSpaceMutation } from "@/features/space/queries/space-query.ts";
+ import { computeSpaceSlug } from "@/lib";
+@@ -30,7 +30,7 @@ export function CreateSpaceForm() {
+   const navigate = useNavigate();
+ 
+   const form = useForm<FormValues>({
+-    validate: zodResolver(formSchema),
++    validate: zod4Resolver(formSchema),
+     validateInputOnChange: ["slug"],
+     initialValues: {
+       name: "",
+diff --git a/apps/client/src/features/space/components/edit-space-form.tsx b/apps/client/src/features/space/components/edit-space-form.tsx
+index d4406873..fae8de11 100644
+--- a/apps/client/src/features/space/components/edit-space-form.tsx
++++ b/apps/client/src/features/space/components/edit-space-form.tsx
+@@ -1,7 +1,8 @@
+ import { Group, Box, Button, TextInput, Stack, Textarea } from "@mantine/core";
+ import React from "react";
+-import { useForm, zodResolver } from "@mantine/form";
+-import * as z from "zod";
++import { useForm } from "@mantine/form";
++import { zod4Resolver } from "mantine-form-zod-resolver";
++import { z } from "zod/v4";
+ import { useUpdateSpaceMutation } from "@/features/space/queries/space-query.ts";
+ import { ISpace } from "@/features/space/types/space.types.ts";
+ import { useTranslation } from "react-i18next";
+@@ -29,7 +30,7 @@ export function EditSpaceForm({ space, readOnly }: EditSpaceFormProps) {
+   const updateSpaceMutation = useUpdateSpaceMutation();
+ 
+   const form = useForm<FormValues>({
+-    validate: zodResolver(formSchema),
++    validate: zod4Resolver(formSchema),
+     initialValues: {
+       name: space?.name,
+       description: space?.description || "",
+diff --git a/apps/client/src/features/user/components/account-name-form.tsx b/apps/client/src/features/user/components/account-name-form.tsx
+index 0b829564..98929b04 100644
+--- a/apps/client/src/features/user/components/account-name-form.tsx
++++ b/apps/client/src/features/user/components/account-name-form.tsx
+@@ -1,7 +1,8 @@
+ import { useAtom } from "jotai";
+ import { focusAtom } from "jotai-optics";
+-import * as z from "zod";
+-import { useForm, zodResolver } from "@mantine/form";
++import { z } from "zod/v4";
++import { useForm } from "@mantine/form";
++import { zod4Resolver } from "mantine-form-zod-resolver";
+ import { currentUserAtom } from "@/features/user/atoms/current-user-atom.ts";
+ import { updateUser } from "@/features/user/services/user-service.ts";
+ import { IUser } from "@/features/user/types/user.types.ts";
+@@ -25,7 +26,7 @@ export default function AccountNameForm() {
+   const [, setUser] = useAtom(userAtom);
+ 
+   const form = useForm<FormValues>({
+-    validate: zodResolver(formSchema),
++    validate: zod4Resolver(formSchema),
+     initialValues: {
+       name: currentUser?.user.name,
+     },
+diff --git a/apps/client/src/features/user/components/change-email.tsx b/apps/client/src/features/user/components/change-email.tsx
+index 5e00cbba..16f74b42 100644
+--- a/apps/client/src/features/user/components/change-email.tsx
++++ b/apps/client/src/features/user/components/change-email.tsx
+@@ -6,13 +6,14 @@ import {
+   Group,
+   PasswordInput,
+ } from "@mantine/core";
+-import * as z from "zod";
++import { z } from "zod/v4";
+ import { useState } from "react";
+ import { useAtom } from "jotai";
+ import { currentUserAtom } from "@/features/user/atoms/current-user-atom.ts";
+ import { useDisclosure } from "@mantine/hooks";
+ import * as React from "react";
+-import { useForm, zodResolver } from "@mantine/form";
++import { useForm } from "@mantine/form";
++import { zod4Resolver } from "mantine-form-zod-resolver";
+ import { useTranslation } from "react-i18next";
+ 
+ export default function ChangeEmail() {
+@@ -48,9 +49,9 @@ export default function ChangeEmail() {
+ }
+ 
+ const formSchema = z.object({
+-  email: z.string({ required_error: "New email is required" }).email(),
++  email: z.email({ error: "New email is required" }),
+   password: z
+-    .string({ required_error: "your current password is required" })
++    .string({ error: "your current password is required" })
+     .min(8),
+ });
+ 
+@@ -61,7 +62,7 @@ function ChangeEmailForm() {
+   const [isLoading, setIsLoading] = useState(false);
+ 
+   const form = useForm<FormValues>({
+-    validate: zodResolver(formSchema),
++    validate: zod4Resolver(formSchema),
+     initialValues: {
+       password: "",
+       email: "",
+diff --git a/apps/client/src/features/user/components/change-password.tsx b/apps/client/src/features/user/components/change-password.tsx
+index 63eb25b4..0925cdc4 100644
+--- a/apps/client/src/features/user/components/change-password.tsx
++++ b/apps/client/src/features/user/components/change-password.tsx
+@@ -1,9 +1,10 @@
+ import { Button, Group, Text, Modal, PasswordInput } from "@mantine/core";
+-import * as z from "zod";
++import { z } from "zod/v4";
+ import { useState } from "react";
+ import { useDisclosure } from "@mantine/hooks";
+ import * as React from "react";
+-import { useForm, zodResolver } from "@mantine/form";
++import { useForm } from "@mantine/form";
++import { zod4Resolver } from "mantine-form-zod-resolver";
+ import { changePassword } from "@/features/auth/services/auth-service.ts";
+ import { notifications } from "@mantine/notifications";
+ import { useTranslation } from "react-i18next";
+@@ -42,9 +43,9 @@ export default function ChangePassword() {
+ 
+ const formSchema = z.object({
+   oldPassword: z
+-    .string({ required_error: "your current password is required" })
++    .string({ error: "your current password is required" })
+     .min(8),
+-  newPassword: z.string({ required_error: "New password is required" }).min(8),
++  newPassword: z.string({ error: "New password is required" }).min(8),
+ });
+ 
+ type FormValues = z.infer<typeof formSchema>;
+@@ -57,7 +58,7 @@ function ChangePasswordForm({ onClose }: ChangePasswordFormProps) {
+   const [isLoading, setIsLoading] = useState(false);
+ 
+   const form = useForm<FormValues>({
+-    validate: zodResolver(formSchema),
++    validate: zod4Resolver(formSchema),
+     initialValues: {
+       oldPassword: "",
+       newPassword: "",
+diff --git a/apps/client/src/features/workspace/components/members/components/invite-action-menu.tsx b/apps/client/src/features/workspace/components/members/components/invite-action-menu.tsx
+index e2fcf512..5569f8e8 100644
+--- a/apps/client/src/features/workspace/components/members/components/invite-action-menu.tsx
++++ b/apps/client/src/features/workspace/components/members/components/invite-action-menu.tsx
+@@ -26,7 +26,9 @@ export default function InviteActionMenu({ invitationId }: Props) {
+   const handleCopyLink = async (invitationId: string) => {
+     try {
+       const link = await getInviteLink({ invitationId });
+-      clipboard.copy(link.inviteLink);
++      const url = new URL(link.inviteLink);
++      const inviteLink = `${window.location.origin}${url.pathname}${url.search}`;
++      clipboard.copy(inviteLink);
+       notifications.show({ message: t("Link copied") });
+     } catch (err) {
+       notifications.show({
+diff --git a/apps/client/src/features/workspace/components/settings/components/workspace-name-form.tsx b/apps/client/src/features/workspace/components/settings/components/workspace-name-form.tsx
+index 60b46ed3..6a6c311f 100644
+--- a/apps/client/src/features/workspace/components/settings/components/workspace-name-form.tsx
++++ b/apps/client/src/features/workspace/components/settings/components/workspace-name-form.tsx
+@@ -1,12 +1,12 @@
+ import { workspaceAtom } from "@/features/user/atoms/current-user-atom.ts";
+ import { useAtom } from "jotai";
+-import * as z from "zod";
++import { z } from "zod/v4";
+ import { useState } from "react";
+ import { updateWorkspace } from "@/features/workspace/services/workspace-service.ts";
+ import { IWorkspace } from "@/features/workspace/types/workspace.types.ts";
+ import { TextInput, Button } from "@mantine/core";
+ import { useForm } from "@mantine/form";
+-import { zodResolver } from "mantine-form-zod-resolver";
++import { zod4Resolver } from "mantine-form-zod-resolver";
+ import { notifications } from "@mantine/notifications";
+ import useUserRole from "@/hooks/use-user-role.tsx";
+ import { useTranslation } from "react-i18next";
+@@ -24,7 +24,7 @@ export default function WorkspaceNameForm() {
+   const { isAdmin } = useUserRole();
+ 
+   const form = useForm<FormValues>({
+-    validate: zodResolver(formSchema),
++    validate: zod4Resolver(formSchema),
+     initialValues: {
+       name: workspace?.name,
+     },
+diff --git a/apps/client/src/features/workspace/types/workspace.types.ts b/apps/client/src/features/workspace/types/workspace.types.ts
+index 82c06336..b5a77cfe 100644
+--- a/apps/client/src/features/workspace/types/workspace.types.ts
++++ b/apps/client/src/features/workspace/types/workspace.types.ts
+@@ -25,6 +25,7 @@ export interface IWorkspace {
+   aiSearch?: boolean;
+   generativeAi?: boolean;
+   disablePublicSharing?: boolean;
++  mcpEnabled?: boolean;
+   trashRetentionDays?: number;
+ }
+ 
+@@ -36,6 +37,7 @@ export interface IWorkspaceSettings {
+ export interface IWorkspaceAiSettings {
+   search?: boolean;
+   generative?: boolean;
++  mcp?: boolean;
+ }
+ 
+ export interface IWorkspaceSharingSettings {
+diff --git a/apps/client/src/theme.ts b/apps/client/src/theme.ts
+index e114893d..4c592dc4 100644
+--- a/apps/client/src/theme.ts
++++ b/apps/client/src/theme.ts
+@@ -71,6 +71,7 @@ export const mantineCssResolver: CSSVariablesResolver = (theme) => ({
+     "--input-error-size": theme.fontSizes.sm,
+   },
+   light: {
++    "--mantine-color-dimmed": "#6b7280",
+     "--mantine-color-dark-light-color": "#4e5359",
+     "--mantine-color-dark-light-hover": "var(--mantine-color-gray-light-hover)",
+   },
+diff --git a/apps/server/package.json b/apps/server/package.json
+index 31ba43c4..a154d968 100644
+--- a/apps/server/package.json
++++ b/apps/server/package.json
+@@ -43,6 +43,7 @@
+     "@keyv/redis": "^5.1.6",
+     "@langchain/core": "1.1.18",
+     "@langchain/textsplitters": "1.0.1",
++    "@modelcontextprotocol/sdk": "^1.27.1",
+     "@nestjs-labs/nestjs-ioredis": "^11.0.4",
+     "@nestjs/bullmq": "^11.0.4",
+     "@nestjs/cache-manager": "^3.1.0",
+@@ -110,7 +111,8 @@
+     "tseep": "^1.3.1",
+     "typesense": "^2.1.0",
+     "ws": "^8.19.0",
+-    "yauzl": "^3.2.0"
++    "yauzl": "^3.2.0",
++    "zod": "^4.3.6"
+   },
+   "devDependencies": {
+     "@eslint/js": "^9.20.0",
+diff --git a/apps/server/src/core/search/search.module.ts b/apps/server/src/core/search/search.module.ts
+index 238d0e85..fa74573d 100644
+--- a/apps/server/src/core/search/search.module.ts
++++ b/apps/server/src/core/search/search.module.ts
+@@ -5,5 +5,6 @@ import { SearchService } from './search.service';
+ @Module({
+   controllers: [SearchController],
+   providers: [SearchService],
++  exports: [SearchService],
+ })
+ export class SearchModule {}
+diff --git a/apps/server/src/core/workspace/dto/update-workspace.dto.ts b/apps/server/src/core/workspace/dto/update-workspace.dto.ts
+index 0e805db7..9b822f50 100644
+--- a/apps/server/src/core/workspace/dto/update-workspace.dto.ts
++++ b/apps/server/src/core/workspace/dto/update-workspace.dto.ts
+@@ -42,6 +42,10 @@ export class UpdateWorkspaceDto extends PartialType(CreateWorkspaceDto) {
+   @IsBoolean()
+   disablePublicSharing: boolean;
+ 
++  @IsOptional()
++  @IsBoolean()
++  mcpEnabled: boolean;
++
+   @IsOptional()
+   @IsInt()
+   @Min(1)
+diff --git a/apps/server/src/core/workspace/services/workspace.service.ts b/apps/server/src/core/workspace/services/workspace.service.ts
+index d7f61b49..f344efe1 100644
+--- a/apps/server/src/core/workspace/services/workspace.service.ts
++++ b/apps/server/src/core/workspace/services/workspace.service.ts
+@@ -326,7 +326,8 @@ export class WorkspaceService {
+ 
+     if (
+       typeof updateWorkspaceDto.disablePublicSharing !== 'undefined' ||
+-      typeof updateWorkspaceDto.trashRetentionDays !== 'undefined'
++      typeof updateWorkspaceDto.trashRetentionDays !== 'undefined' ||
++      typeof updateWorkspaceDto.mcpEnabled !== 'undefined'
+     ) {
+       const ws = await this.db
+         .selectFrom('workspaces')
+@@ -424,10 +425,25 @@ export class WorkspaceService {
+         }
+       }
+ 
++      if (typeof updateWorkspaceDto.mcpEnabled !== 'undefined') {
++        const prev = settingsBefore?.ai?.mcp ?? false;
++        if (prev !== updateWorkspaceDto.mcpEnabled) {
++          before.mcpEnabled = prev;
++          after.mcpEnabled = updateWorkspaceDto.mcpEnabled;
++        }
++        await this.workspaceRepo.updateAiSettings(
++          workspaceId,
++          'mcp',
++          updateWorkspaceDto.mcpEnabled,
++          trx,
++        );
++      }
++
+       delete updateWorkspaceDto.restrictApiToAdmins;
+       delete updateWorkspaceDto.aiSearch;
+       delete updateWorkspaceDto.generativeAi;
+       delete updateWorkspaceDto.disablePublicSharing;
++      delete updateWorkspaceDto.mcpEnabled;
+ 
+       await this.workspaceRepo.updateWorkspace(
+         updateWorkspaceDto,
+diff --git a/apps/server/src/ee b/apps/server/src/ee
+index 27c69314..db079782 160000
+--- a/apps/server/src/ee
++++ b/apps/server/src/ee
+@@ -1 +1 @@
+-Subproject commit 27c69314881979f9b308609854bdfb2b56e45182
++Subproject commit db0797821e7b66d152b1845eff8487f69c5ac1ff
+diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
+index bfd70602..7e91325f 100644
+--- a/pnpm-lock.yaml
++++ b/pnpm-lock.yaml
+@@ -328,7 +328,7 @@ importers:
+         version: 3.3.0
+       mantine-form-zod-resolver:
+         specifier: ^1.3.0
+-        version: 1.3.0(@mantine/form@8.3.14(react@18.3.1))(zod@3.25.76)
++        version: 1.3.0(@mantine/form@8.3.14(react@18.3.1))(zod@4.3.6)
+       mermaid:
+         specifier: ^11.12.2
+         version: 11.12.2
+@@ -375,8 +375,8 @@ importers:
+         specifier: ^0.1.18
+         version: 0.1.18
+       zod:
+-        specifier: ^3.25.76
+-        version: 3.25.76
++        specifier: ^4.3.6
++        version: 4.3.6
+     devDependencies:
+       '@eslint/js':
+         specifier: ^9.16.0
+@@ -489,6 +489,9 @@ importers:
+       '@langchain/textsplitters':
+         specifier: 1.0.1
+         version: 1.0.1(@langchain/core@1.1.18(@opentelemetry/api@1.9.0)(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(openai@6.2.0(ws@8.19.0)(zod@4.3.6)))
++      '@modelcontextprotocol/sdk':
++        specifier: ^1.27.1
++        version: 1.27.1(@cfworker/json-schema@4.1.1)(zod@4.3.6)
+       '@nestjs-labs/nestjs-ioredis':
+         specifier: ^11.0.4
+         version: 11.0.4(@nestjs/common@11.1.11(class-transformer@0.5.1)(class-validator@0.14.3)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.13)(ioredis@5.4.1)
+@@ -693,6 +696,9 @@ importers:
+       yauzl:
+         specifier: ^3.2.0
+         version: 3.2.0
++      zod:
++        specifier: ^4.3.6
++        version: 4.3.6
+     devDependencies:
+       '@eslint/js':
+         specifier: ^9.20.0
+@@ -2161,6 +2167,12 @@ packages:
+       y-prosemirror: 1.3.7
+       yjs: ^13.6.8
+ 
++  '@hono/node-server@1.19.9':
++    resolution: {integrity: sha512-vHL6w3ecZsky+8P5MD+eFfaGTyCeOHUIFYMGpQGbrBTSmNNoxv0if69rEZ5giu36weC5saFuznL411gRX7bJDw==}
++    engines: {node: '>=18.14.1'}
++    peerDependencies:
++      hono: ^4
++
+   '@humanfs/core@0.19.1':
+     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
+     engines: {node: '>=18.18.0'}
+@@ -2674,6 +2686,16 @@ packages:
+   '@mermaid-js/parser@0.6.3':
+     resolution: {integrity: sha512-lnjOhe7zyHjc+If7yT4zoedx2vo4sHaTmtkl1+or8BRTnCtDmcTpAjpzDSfCZrshM5bCoz0GyidzadJAH1xobA==}
+ 
++  '@modelcontextprotocol/sdk@1.27.1':
++    resolution: {integrity: sha512-sr6GbP+4edBwFndLbM60gf07z0FQ79gaExpnsjMGePXqFcSSb7t6iscpjk9DhFhwd+mTEQrzNafGP8/iGGFYaA==}
++    engines: {node: '>=18'}
++    peerDependencies:
++      '@cfworker/json-schema': ^4.1.1
++      zod: ^3.25 || ^4.0
++    peerDependenciesMeta:
++      '@cfworker/json-schema':
++        optional: true
++
+   '@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.2':
+     resolution: {integrity: sha512-9bfjwDxIDWmmOKusUcqdS4Rw+SETlp9Dy39Xui9BEGEk19dDwH0jhipwFzEff/pFg95NKymc6TOTbRKcWeRqyQ==}
+     cpu: [arm64]
+@@ -5464,6 +5486,10 @@ packages:
+     resolution: {integrity: sha512-PYAthTa2m2VKxuvSD3DPC/Gy+U+sOA1LAuT8mkmRuvw+NACSaeXEQ+NHcVF7rONl6qcaxV3Uuemwawk+7+SJLw==}
+     engines: {node: '>= 0.6'}
+ 
++  accepts@2.0.0:
++    resolution: {integrity: sha512-5cvg6CtKwfgdmVqY1WIiXKc3Q1bkRqGLi+2W/6ao+6Y7gu/RCwRuAhGEzh5B4KlszSuTLgZYuqFqo5bImjNKng==}
++    engines: {node: '>= 0.6'}
++
+   acorn-import-phases@1.0.4:
+     resolution: {integrity: sha512-wKmbr/DDiIXzEOiWrTTUcDm24kQ2vGfZQvM2fwg2vXqR5uW6aapr7ObPtj1th32b9u90/Pf4AItvdTh42fBmVQ==}
+     engines: {node: '>=10.13.0'}
+@@ -5754,6 +5780,10 @@ packages:
+   blueimp-load-image@5.16.0:
+     resolution: {integrity: sha512-3DUSVdOtlfNRk7moRZuTwDmA3NnG8KIJuLcq3c0J7/BIr6X3Vb/EpX3kUH1joxUhmoVF4uCpDfz7wHkz8pQajA==}
+ 
++  body-parser@2.2.2:
++    resolution: {integrity: sha512-oP5VkATKlNwcgvxi0vM0p/D3n2C3EReYVX+DNYs5TjZFn/oQt2j+4sVJtSMr18pdRr8wjTcBl6LoV+FUwzPmNA==}
++    engines: {node: '>=18'}
++
+   boolbase@1.0.0:
+     resolution: {integrity: sha512-JZOSA7Mo9sNGB8+UjSgzdLtokWAky1zbztM3WRLCbZ70/3cTANmQmOdR7y2g+J0e2WXywy1yS468tY+IruqEww==}
+ 
+@@ -6070,6 +6100,10 @@ packages:
+     resolution: {integrity: sha512-oIXISMynqSqm241k6kcQ5UwttDILMK4BiurCfGEREw6+X9jkkpEe5T9FZaApyLGGOnFuyMWZpdolTXMtvEJ08Q==}
+     engines: {node: '>=18'}
+ 
++  content-type@1.0.5:
++    resolution: {integrity: sha512-nTjqfcBFEipKdXCv4YDQWCfmcLZKm81ldF0pAopTvyrFGVbcR6P/VAAd5G7N+0tTr8QqiU0tFadD6FK4NtJwOA==}
++    engines: {node: '>= 0.6'}
++
+   convert-source-map@2.0.0:
+     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
+ 
+@@ -6569,6 +6603,9 @@ packages:
+   ecdsa-sig-formatter@1.0.11:
+     resolution: {integrity: sha512-nagl3RYrbNv6kQkeJIpt6NJZy8twLB/2vtz6yN9Z4vRKHN4/QZJIEbqohALSgwKdnksuY3k5Addp5lg8sVoVcQ==}
+ 
++  ee-first@1.1.1:
++    resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
++
+   ejs@3.1.10:
+     resolution: {integrity: sha512-UeJmFfOrAQS8OJWPZ4qtgHyWExa088/MtK5UEyoJGFH67cDEXkZSviOiKRCZ4Xij0zxI3JECgYs3oKx+AizQBA==}
+     engines: {node: '>=0.10.0'}
+@@ -6596,6 +6633,10 @@ packages:
+   emoji-regex@9.2.2:
+     resolution: {integrity: sha512-L18DaJsXSUk2+42pv8mLs5jJT2hqFkFE4j21wOmgbUqsZ2hL72NsUU785g9RXgo3s0ZNgVl42TiHp3ZtOv/Vyg==}
+ 
++  encodeurl@2.0.0:
++    resolution: {integrity: sha512-Q0n9HRi4m6JuGIV1eFlmvJB7ZEVxu93IrMyiMsGC0lrMJMWzRgx6WGquyfQgZVb31vhGgXnfmPNNXmxnOkRBrg==}
++    engines: {node: '>= 0.8'}
++
+   encoding-sniffer@0.2.1:
+     resolution: {integrity: sha512-5gvq20T6vfpekVtqrYQsSCFZ1wEg5+wW0/QaZMWkFr6BqD3NfKs0rLCx4rrVlSWJeZb5NBJgVLswK/w2MWU+Gw==}
+ 
+@@ -6808,6 +6849,10 @@ packages:
+     resolution: {integrity: sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g==}
+     engines: {node: '>=0.10.0'}
+ 
++  etag@1.8.1:
++    resolution: {integrity: sha512-aIL5Fx7mawVa300al2BnEE4iNvo1qETxLrPI/o05L7z6go7fCw1J6EQmbK4FmJ2AS7kgVF/KEZWufBfdClMcPg==}
++    engines: {node: '>= 0.6'}
++
+   eventemitter2@6.4.9:
+     resolution: {integrity: sha512-JEPTiaOt9f04oa6NOkc4aH+nVp5I3wEjpHbIPqfgCdD5v5bUzy7xQqwcVO2aDQgOWhI28da57HksMrzK9HlRxg==}
+ 
+@@ -6822,6 +6867,10 @@ packages:
+     resolution: {integrity: sha512-Vo1ab+QXPzZ4tCa8SwIHJFaSzy4R6SHf7BY79rFBDf0idraZWAkYrDjDj8uWaSm3S2TK+hJ7/t1CEmZ7jXw+pg==}
+     engines: {node: '>=18.0.0'}
+ 
++  eventsource@3.0.7:
++    resolution: {integrity: sha512-CRT1WTyuQoD771GW56XEZFQ/ZoSfWid1alKGDYMmkt2yl8UXrVR4pspqWNEcqKvVIzg6PAltWjxcSSPrboA4iA==}
++    engines: {node: '>=18.0.0'}
++
+   execa@5.1.1:
+     resolution: {integrity: sha512-8uSpZZocAZRBAPIEINJj3Lo9HyGitllczc27Eh5YYojjMFMn8yHMDMaUHE2Jqfq05D/wucwI4JGURyXt1vchyg==}
+     engines: {node: '>=10'}
+@@ -6834,6 +6883,16 @@ packages:
+     resolution: {integrity: sha512-u/feCi0GPsI+988gU2FLcsHyAHTU0MX1Wg68NhAnN7z/+C5wqG+CY8J53N9ioe8RXgaoz0nBR/TYMf3AycUuPw==}
+     engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
+ 
++  express-rate-limit@8.2.1:
++    resolution: {integrity: sha512-PCZEIEIxqwhzw4KF0n7QF4QqruVTcF73O5kFKUnGOyjbCCgizBBiFaYpd/fnBLUMPw/BWw9OsiN7GgrNYr7j6g==}
++    engines: {node: '>= 16'}
++    peerDependencies:
++      express: '>= 4.11'
++
++  express@5.2.1:
++    resolution: {integrity: sha512-hIS4idWWai69NezIdRt2xFVofaF4j+6INOpJlVOLDO8zXGpUVEVzIYk12UUi2JzjEzWL3IOAxcTubgz9Po0yXw==}
++    engines: {node: '>= 18'}
++
+   exsolve@1.0.7:
+     resolution: {integrity: sha512-VO5fQUzZtI6C+vx4w/4BWJpg3s/5l+6pRQEHzFRM8WFi4XffSP1Z+4qi7GbjWbvRQEbdIco5mIMq+zX4rPuLrw==}
+ 
+@@ -6929,6 +6988,10 @@ packages:
+     resolution: {integrity: sha512-YsGpe3WHLK8ZYi4tWDg2Jy3ebRz2rXowDxnld4bkQB00cc/1Zw9AWnC0i9ztDJitivtQvaI9KaLyKrc+hBW0yg==}
+     engines: {node: '>=8'}
+ 
++  finalhandler@2.1.1:
++    resolution: {integrity: sha512-S8KoZgRZN+a5rNwqTxlZZePjT/4cnm0ROV70LedRHZ0p8u9fRID0hJUZQpkKLzro8LfmC8sx23bY6tVNxv8pQA==}
++    engines: {node: '>= 18.0.0'}
++
+   find-my-way@9.4.0:
+     resolution: {integrity: sha512-5Ye4vHsypZRYtS01ob/iwHzGRUDELlsoCftI/OZFhcLs1M0tkGPcXldE80TAZC5yYuJMBPJQQ43UHlqbJWiX2w==}
+     engines: {node: '>=20'}
+@@ -6983,6 +7046,10 @@ packages:
+     resolution: {integrity: sha512-YikH+7CUTOtP44ZTnUhR7Ic2UASBPOqmaRkRKxRbywPTe5VxF7RRCck4af9wutiZ/QKM5nME9Bie2fFaPz5Gug==}
+     engines: {node: '>=14.0.0'}
+ 
++  forwarded@0.2.0:
++    resolution: {integrity: sha512-buRG0fpBtRHSTCOASe6hD258tEubFoRLb4ZNA6NxMVHNw2gOcwHo9wyablzMzOA5z9xA9L1KNjk/Nt6MT9aYow==}
++    engines: {node: '>= 0.6'}
++
+   fractional-indexing-jittered@1.0.0:
+     resolution: {integrity: sha512-0tLU0FOedVY7lrvN4LK0DVj6FTuYM0pWDpN97/8UTZE2lx1+OwX8+2uL7IOWc2PmktYTHQjMT6FvZZ3SGCdZdg==}
+ 
+@@ -6990,6 +7057,10 @@ packages:
+     resolution: {integrity: sha512-PcOxmqwYCW7O2ovKRU8OoQQj2yqTfEB/yeTYk4gPid6dN5ODRfU1hXd9tTVZzax/0NkO7AxpHykvZnT1aYp/BQ==}
+     engines: {node: ^14.13.1 || >=16.0.0}
+ 
++  fresh@2.0.0:
++    resolution: {integrity: sha512-Rx/WycZ60HOaqLKAi6cHRKKI7zxWbJ31MhntmtwMoaTeF7XFH9hhBp8vITaMidfljRQ6eYWCKkaTK+ykVJHP2A==}
++    engines: {node: '>= 0.8'}
++
+   front-matter@4.0.2:
+     resolution: {integrity: sha512-I8ZuJ/qG92NWX8i5x1Y8qyj3vizhXS31OxjKDu3LKP+7/qBgfIKValiZIEwoVoJKUHlhWtYrktkxV1XsX+pPlg==}
+ 
+@@ -7189,6 +7260,10 @@ packages:
+   hoist-non-react-statics@3.3.2:
+     resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
+ 
++  hono@4.12.3:
++    resolution: {integrity: sha512-SFsVSjp8sj5UumXOOFlkZOG6XS9SJDKw0TbwFeV+AJ8xlST8kxK5Z/5EYa111UY8732lK2S/xB653ceuaoGwpg==}
++    engines: {node: '>=16.9.0'}
++
+   hookified@1.15.1:
+     resolution: {integrity: sha512-MvG/clsADq1GPM2KGo2nyfaWVyn9naPiXrqIe4jYjXNZQt238kWyOGrsyc/DmRAQ+Re6yeo6yX/yoNCG5KAEVg==}
+ 
+@@ -7219,6 +7294,10 @@ packages:
+     resolution: {integrity: sha512-FtwrG/euBzaEjYeRqOgly7G0qviiXoJWnvEH2Z1plBdXgbyjv34pHTSb9zoeHMyDy33+DWy5Wt9Wo+TURtOYSQ==}
+     engines: {node: '>= 0.8'}
+ 
++  http-errors@2.0.1:
++    resolution: {integrity: sha512-4FbRdAX+bSdmo4AUFuS0WNiPz8NgFt+r8ThgNWmlrjQjt1Q7ZR9+zTlce2859x4KSXrwIsaeTqDoKQmtP8pLmQ==}
++    engines: {node: '>= 0.8'}
++
+   http-proxy-agent@7.0.2:
+     resolution: {integrity: sha512-T1gkAiYYDWYx3V5Bmyu7HcfcvL7mUrTWiM6yOfa3PIphViJ/gFPbvidQ+veqSOHci/PxBcDabeUNCzpOODJZig==}
+     engines: {node: '>= 14'}
+@@ -7321,6 +7400,14 @@ packages:
+     resolution: {integrity: sha512-C6uC+kleiIMmjViJINWk80sOQw5lEzse1ZmvD+S/s8p8CWapftSaC+kocGTx6xrbrJ4WmYQGC08ffHLr6ToR6Q==}
+     engines: {node: '>=12.22.0'}
+ 
++  ip-address@10.0.1:
++    resolution: {integrity: sha512-NWv9YLW4PoW2B7xtzaS3NCot75m6nK7Icdv0o3lfMceJVRfSoQwqD4wEH5rLwoKJwUiZ/rfpiVBhnaF0FK4HoA==}
++    engines: {node: '>= 12'}
++
++  ipaddr.js@1.9.1:
++    resolution: {integrity: sha512-0KI/607xoxSToH7GjN1FfSbLoU0+btTicjsQSWQlh/hZykN8KpmMf7uYwPW3R+akZ6R/w18ZlXSHBYXiYUPO3g==}
++    engines: {node: '>= 0.10'}
++
+   ipaddr.js@2.2.0:
+     resolution: {integrity: sha512-Ag3wB2o37wslZS19hZqorUnrnzSkpOVy+IiiDEiTqNubEYpYuHWIf6K4psgN2ZWKExS4xhVCrRVfb/wfW8fWJA==}
+     engines: {node: '>= 10'}
+@@ -7419,6 +7506,9 @@ packages:
+   is-potential-custom-element-name@1.0.1:
+     resolution: {integrity: sha512-bCYeRA2rVibKZd+s2625gGnGF/t7DSqDs4dP7CrLA1m7jKWz6pps0LpYLJN8Q64HtmPKJ1hrN3nzPNKFEKOUiQ==}
+ 
++  is-promise@4.0.0:
++    resolution: {integrity: sha512-hvpoI6korhJMnej285dSg6nu1+e6uxs7zG3BYAm5byqDsgJNWwxzM6z6iZiAgQR4TJ30JmBTOwqZUw3WlyH3AQ==}
++
+   is-regex@1.2.0:
+     resolution: {integrity: sha512-B6ohK4ZmoftlUe+uvenXSbPJFo6U37BH7oO1B3nQH8f/7h27N56s85MhUtbFJAziz5dcmuR3i8ovUl35zp8pFA==}
+     engines: {node: '>= 0.4'}
+@@ -7664,6 +7754,9 @@ packages:
+   jose@4.15.9:
+     resolution: {integrity: sha512-1vUQX+IdDMVPj4k8kOxgUqlcK518yluMuGZwqlr44FS1ppZB/5GWh4rZG89erpOBOJjU/OBsnCVFfapsRz6nEA==}
+ 
++  jose@6.1.3:
++    resolution: {integrity: sha512-0TpaTfihd4QMNwrz/ob2Bp7X04yuxJkjRGi4aKmOqwhov54i6u79oCv7T+C7lo70MKH6BesI3vscD1yb/yzKXQ==}
++
+   jotai-optics@0.4.0:
+     resolution: {integrity: sha512-osbEt9AgS55hC4YTZDew2urXKZkaiLmLqkTS/wfW5/l0ib8bmmQ7kBXSFaosV6jDDWSp00IipITcJARFHdp42g==}
+     peerDependencies:
+@@ -8134,6 +8227,10 @@ packages:
+   mdurl@2.0.0:
+     resolution: {integrity: sha512-Lf+9+2r+Tdp5wXDXC4PcIBjTDtq4UKjCPMQhKIuzpJNW0b96kVqSwW0bT7FhRSfmAiFYgP+SCRvdrDozfh0U5w==}
+ 
++  media-typer@1.1.0:
++    resolution: {integrity: sha512-aisnrDP4GNe06UcKFnV5bfMNPBUw4jsLGaWwWfnH3v02GnBuXX2MCVn5RbrWo0j3pczUilYblq7fQ7Nw2t5XKw==}
++    engines: {node: '>= 0.8'}
++
+   memfs@3.5.3:
+     resolution: {integrity: sha512-UERzLsxzllchadvbPs5aolHh65ISpKpM+ccLbOJ8/vvpBKmAWf+la7dXFy7Mr0ySHbdHrFv5kGFCUHHe6GFEmw==}
+     engines: {node: '>= 4.0.0'}
+@@ -8141,6 +8238,10 @@ packages:
+   memoize-one@5.2.1:
+     resolution: {integrity: sha512-zYiwtZUcYyXKo/np96AGZAckk+FWWsUdJ3cHGGmld7+AhvcWmQyGCYUh1hc4Q/pkOhb65dQR/pqCyK0cOaHz4Q==}
+ 
++  merge-descriptors@2.0.0:
++    resolution: {integrity: sha512-Snk314V5ayFLhp3fkUREub6WtjBfPdCPY1Ln8/8munuLuiYhsABgBVWsozAG+MWMbVEvcdcpbi9R7ww22l9Q3g==}
++    engines: {node: '>=18'}
++
+   merge-stream@2.0.0:
+     resolution: {integrity: sha512-abv/qOcuPfk3URPfDzmZU1LKmuw8kT+0nIHvKrKgFrwifol/doWcdA4ZqsWQ8ENrFKkd67Mfpo/LovbIUsbt3w==}
+ 
+@@ -8291,6 +8392,10 @@ packages:
+     resolution: {integrity: sha512-+EUsqGPLsM+j/zdChZjsnX51g4XrHFOIXwfnCVPGlQk/k5giakcKsuxCObBRu6DSm9opw/O6slWbJdghQM4bBg==}
+     engines: {node: '>= 0.6'}
+ 
++  negotiator@1.0.0:
++    resolution: {integrity: sha512-8Ofs/AUQh8MaEcrlq5xOX0CQ9ypTF5dl78mjlMNfOK08fzpgTHQRQPBxcPlEtIw0yRpws+Zo/3r+5WRby7u3Gg==}
++    engines: {node: '>= 0.6'}
++
+   neo-async@2.6.2:
+     resolution: {integrity: sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==}
+ 
+@@ -8447,6 +8552,10 @@ packages:
+     resolution: {integrity: sha512-0eJJY6hXLGf1udHwfNftBqH+g73EU4B504nZeKpz1sYRKafAghwxEJunB2O7rDZkL4PGfsMVnTXZ2EjibbqcsA==}
+     engines: {node: '>=14.0.0'}
+ 
++  on-finished@2.4.1:
++    resolution: {integrity: sha512-oVlzkg3ENAhCk2zdv7IJwd/QUD4z2RxRwpkcGY8psCVcCYZNq4wYnVWALHM+brtuJjePWiYF/ClmuDr8Ch5+kg==}
++    engines: {node: '>= 0.8'}
++
+   once@1.4.0:
+     resolution: {integrity: sha512-lNaJgI+2Q5URQBkccEKHTQOPaXdUxnZZElQTZY0MFUAuaEqe1E+Nyvgdz/aIyNi6Z9MzO5dv1H8n58/GELp3+w==}
+ 
+@@ -8580,6 +8689,10 @@ packages:
+   parseley@0.12.1:
+     resolution: {integrity: sha512-e6qHKe3a9HWr0oMRVDTRhKce+bRO8VGQR3NyVwcjwrbhMmFCX9KszEV35+rn4AdilFAq9VPxP/Fe1wC9Qjd2lw==}
+ 
++  parseurl@1.3.3:
++    resolution: {integrity: sha512-CiyeOxFT/JZyN5m0z9PfXw4SCBJ6Sygz1Dpl0wqjlhDEGGBP1GnsUVEL0p63hoG1fcj3fHynXi9NYO4nWOL+qQ==}
++    engines: {node: '>= 0.8'}
++
+   passport-google-oauth20@2.0.0:
+     resolution: {integrity: sha512-KSk6IJ15RoxuGq7D1UKK/8qKhNfzbLeLrG3gkLZ7p4A6DBCcv7xpyQwuXtWdpyR0+E0mwkpjY1VfPOhxQrKzdQ==}
+     engines: {node: '>= 0.4.0'}
+@@ -8735,6 +8848,10 @@ packages:
+     resolution: {integrity: sha512-TfySrs/5nm8fQJDcBDuUng3VOUKsd7S+zqvbOTiGXHfxX4wK31ard+hoNuvkicM/2YFzlpDgABOevKSsB4G/FA==}
+     engines: {node: '>= 6'}
+ 
++  pkce-challenge@5.0.1:
++    resolution: {integrity: sha512-wQ0b/W4Fr01qtpHlqSqspcj3EhBvimsdh0KlHhH8HRZnMsEa0ea2fTULOXOS9ccQr3om+GcGRk4e+isrZWV8qQ==}
++    engines: {node: '>=16.20.0'}
++
+   pkg-dir@4.2.0:
+     resolution: {integrity: sha512-HRDzbaKjC+AOWVXxAU/x54COGeIv9eb+6CkDSQoNTt4XyWoIJvuPsXizxu/Fr23EiekbtZwmh1IcIG/l/a10GQ==}
+     engines: {node: '>=8'}
+@@ -8950,6 +9067,10 @@ packages:
+     resolution: {integrity: sha512-CvexbZtbov6jW2eXAvLukXjXUW1TzFaivC46BpWc/3BpcCysb5Vffu+B3XHMm8lVEuy2Mm4XGex8hBSg1yapPg==}
+     engines: {node: '>=12.0.0'}
+ 
++  proxy-addr@2.0.7:
++    resolution: {integrity: sha512-llQsMLSUDUPT44jdrU/O37qlnifitDP+ZwrmmZcoSKyLKvtZxpyV0n2/bD/N4tBAAZ/gJEdZU7KMraoK1+XYAg==}
++    engines: {node: '>= 0.10'}
++
+   proxy-from-env@1.1.0:
+     resolution: {integrity: sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==}
+ 
+@@ -9010,6 +9131,14 @@ packages:
+   randombytes@2.1.0:
+     resolution: {integrity: sha512-vYl3iOX+4CKUWuxGi9Ukhie6fsqXqS9FE2Zaic4tNFD2N2QQaXOMFbuKK4QmDHC0JO6B1Zp41J0LpT0oR68amQ==}
+ 
++  range-parser@1.2.1:
++    resolution: {integrity: sha512-Hrgsx+orqoygnmhFbKaHE6c296J+HTAQXoxEF6gNupROmmGJRoyzfG3ccAveqCBrwr/2yxQ5BVd/GTl5agOwSg==}
++    engines: {node: '>= 0.6'}
++
++  raw-body@3.0.2:
++    resolution: {integrity: sha512-K5zQjDllxWkf7Z5xJdV0/B0WTNqx6vxG70zJE4N0kBs4LovmEYWJzQGxC9bS9RAKu3bgM40lrd5zoLJ12MQ5BA==}
++    engines: {node: '>= 0.10'}
++
+   react-arborist@3.4.0:
+     resolution: {integrity: sha512-QI46oRGXJr0oaQfqqVobIiIoqPp5Y5gM69D2A2P7uHVif+X75XWnScR5drC7YDKgJ4CXVaDeFwnYKOWRRfncMg==}
+     peerDependencies:
+@@ -9325,6 +9454,10 @@ packages:
+   roughjs@4.6.6:
+     resolution: {integrity: sha512-ZUz/69+SYpFN/g/lUlo2FXcIjRkSu3nDarreVdGGndHEBJ6cXPdKguS8JGxwj5HA5xIbVKSmLgr5b3AWxtRfvQ==}
+ 
++  router@2.2.0:
++    resolution: {integrity: sha512-nLTrUKm2UyiL7rlhapu/Zl45FwNgkZGaCpZbIHajDYgwlJCOzLSk+cIPAnsEqV955GjILJnKbdQC1nVPz+gAYQ==}
++    engines: {node: '>= 18'}
++
+   rrweb-cssom@0.7.1:
+     resolution: {integrity: sha512-TrEMa7JGdVm0UThDJSx7ddw5nVm3UJS9o9CCIZ72B1vSyEZoziDqBYP3XIoi/12lKrJR8rE3jeFHMok2F/Mnsg==}
+ 
+@@ -9421,9 +9554,17 @@ packages:
+     engines: {node: '>=10'}
+     hasBin: true
+ 
++  send@1.2.1:
++    resolution: {integrity: sha512-1gnZf7DFcoIcajTjTwjwuDjzuz4PPcY2StKPlsGAQ1+YH20IRVrBaXSWmdjowTJ6u8Rc01PoYOGHXfP1mYcZNQ==}
++    engines: {node: '>= 18'}
++
+   serialize-javascript@6.0.2:
+     resolution: {integrity: sha512-Saa1xPByTTq2gdeFZYLLo+RFE35NHZkAbqZeWNd3BpzppeVisAqpDjcp8dyf6uIvEqJRd46jemmyA4iFIeVk8g==}
+ 
++  serve-static@2.2.1:
++    resolution: {integrity: sha512-xRXBn0pPqQTVQiC8wyQrKs2MOlX24zQ0POGaj0kultvoOCstBQM5yvOhAVSUwOMjQtTvsPWoNCHfPGwaaQJhTw==}
++    engines: {node: '>= 18'}
++
+   set-blocking@2.0.0:
+     resolution: {integrity: sha512-KiKBS8AnWGEyLzofFfmvKwpdPzqiy16LvQfK3yv/fVH7Bj13/wl3JSR1J+rfgRE9q7xUJK4qvgS8raSOeLUehw==}
+ 
+@@ -9564,6 +9705,10 @@ packages:
+     resolution: {integrity: sha512-RwNA9Z/7PrK06rYLIzFMlaF+l73iwpzsqRIFgbMLbTcLD6cOao82TaWefPXQvB2fOC4AjuYSEndS7N/mTCbkdQ==}
+     engines: {node: '>= 0.8'}
+ 
++  statuses@2.0.2:
++    resolution: {integrity: sha512-DvEy55V3DB7uknRo+4iOGT5fP1slR8wQohVdknigZPMpMstaKJQWhwiYBACJE3Ul2pTnATihhBYnRhZQHGBiRw==}
++    engines: {node: '>= 0.8'}
++
+   stdin-discarder@0.2.2:
+     resolution: {integrity: sha512-UhDfHmA92YAlNnCfhmq0VeNL5bDbiZGg7sZ2IvPsXubGkiNa9EC+tUTsjBRsYUAz87btI6/1wf4XoVvQ3uRnmQ==}
+     engines: {node: '>=18'}
+@@ -9931,6 +10076,10 @@ packages:
+     resolution: {integrity: sha512-JnTrzGu+zPV3aXIUhnyWJj4z/wigMsdYajGLIYakqyOW1nPllzXEJee0QQbHj+CTIQtXGlAjuK0UY+2xTyjVAw==}
+     engines: {node: '>=20'}
+ 
++  type-is@2.0.1:
++    resolution: {integrity: sha512-OZs6gsjF4vMp32qrCbiVSkrFmXtG/AZhY3t0iAMrMBiAZyV9oALtXO8hsrHbMXF9x6L3grlFuwW2oAz7cav+Gw==}
++    engines: {node: '>= 0.6'}
++
+   typed-array-buffer@1.0.2:
+     resolution: {integrity: sha512-gEymJYKZtKXzzBzM4jqa9w6Q1Jjm7x2d+sh19AdsD4wqnMPDYyvwpsIc2Q/835kHuo3BEQ7CjelGhfTsoBb2MQ==}
+     engines: {node: '>= 0.4'}
+@@ -10051,6 +10200,10 @@ packages:
+     resolution: {integrity: sha512-gptHNQghINnc/vTGIk0SOFGFNXw7JVrlRUtConJRlvaw6DuX0wO5Jeko9sWrMBhh+PsYAZ7oXAiOnf/UKogyiw==}
+     engines: {node: '>= 10.0.0'}
+ 
++  unpipe@1.0.0:
++    resolution: {integrity: sha512-pjy2bYhSsufwWlKwPc+l3cN7+wuJlK6uz0YdJEOlQDbl6jo/YlPi4mb8agUkVC8BF7V8NuzeyPNqRksA3hztKQ==}
++    engines: {node: '>= 0.8'}
++
+   unrs-resolver@1.11.1:
+     resolution: {integrity: sha512-bSjt9pjaEBnNiGgc9rUiHGKv5l4/TGzDmYw3RhnkJGtLhbnnA/5qJj7x3dNDCRx/PJxu774LlH8lCOlB4hEfKg==}
+ 
+@@ -10501,8 +10654,10 @@ packages:
+     resolution: {integrity: sha512-CzhO+pFNo8ajLM2d2IW/R93ipy99LWjtwblvC1RsoSUMZgyLbYFr221TnSNT7GjGdYui6P459mw9JH/g/zW2ug==}
+     engines: {node: '>=18'}
+ 
+-  zod@3.25.76:
+-    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
++  zod-to-json-schema@3.25.1:
++    resolution: {integrity: sha512-pM/SU9d3YAggzi6MtR4h7ruuQlqKtad8e9S0fmxcMi+ueAK5Korys/aWcV9LIIHTVbj01NdzxcnXSN+O74ZIVA==}
++    peerDependencies:
++      zod: ^3.25 || ^4
+ 
+   zod@4.3.6:
+     resolution: {integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==}
+@@ -12401,6 +12556,10 @@ snapshots:
+       y-prosemirror: 1.3.7(prosemirror-model@1.25.1)(prosemirror-state@1.4.3)(prosemirror-view@1.40.0)(y-protocols@1.0.6(yjs@13.6.29))(yjs@13.6.29)
+       yjs: 13.6.29
+ 
++  '@hono/node-server@1.19.9(hono@4.12.3)':
++    dependencies:
++      hono: 4.12.3
++
+   '@humanfs/core@0.19.1': {}
+ 
+   '@humanfs/node@0.16.6':
+@@ -12950,7 +13109,7 @@ snapshots:
+       mustache: 4.2.0
+       p-queue: 6.6.2
+       uuid: 10.0.0
+-      zod: 3.25.76
++      zod: 4.3.6
+     transitivePeerDependencies:
+       - '@opentelemetry/api'
+       - '@opentelemetry/exporter-trace-otlp-proto'
+@@ -13033,6 +13192,30 @@ snapshots:
+     dependencies:
+       langium: 3.3.1
+ 
++  '@modelcontextprotocol/sdk@1.27.1(@cfworker/json-schema@4.1.1)(zod@4.3.6)':
++    dependencies:
++      '@hono/node-server': 1.19.9(hono@4.12.3)
++      ajv: 8.17.1
++      ajv-formats: 3.0.1(ajv@8.17.1)
++      content-type: 1.0.5
++      cors: 2.8.5
++      cross-spawn: 7.0.5
++      eventsource: 3.0.7
++      eventsource-parser: 3.0.6
++      express: 5.2.1
++      express-rate-limit: 8.2.1(express@5.2.1)
++      hono: 4.12.3
++      jose: 6.1.3
++      json-schema-typed: 8.0.2
++      pkce-challenge: 5.0.1
++      raw-body: 3.0.2
++      zod: 4.3.6
++      zod-to-json-schema: 3.25.1(zod@4.3.6)
++    optionalDependencies:
++      '@cfworker/json-schema': 4.1.1
++    transitivePeerDependencies:
++      - supports-color
++
+   '@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.2':
+     optional: true
+ 
+@@ -16035,6 +16218,11 @@ snapshots:
+       mime-types: 2.1.35
+       negotiator: 0.6.3
+ 
++  accepts@2.0.0:
++    dependencies:
++      mime-types: 3.0.2
++      negotiator: 1.0.0
++
+   acorn-import-phases@1.0.4(acorn@8.15.0):
+     dependencies:
+       acorn: 8.15.0
+@@ -16374,6 +16562,20 @@ snapshots:
+ 
+   blueimp-load-image@5.16.0: {}
+ 
++  body-parser@2.2.2:
++    dependencies:
++      bytes: 3.1.2
++      content-type: 1.0.5
++      debug: 4.4.3
++      http-errors: 2.0.0
++      iconv-lite: 0.7.2
++      on-finished: 2.4.1
++      qs: 6.14.2
++      raw-body: 3.0.2
++      type-is: 2.0.1
++    transitivePeerDependencies:
++      - supports-color
++
+   boolbase@1.0.0: {}
+ 
+   bowser@2.11.0: {}
+@@ -16715,6 +16917,8 @@ snapshots:
+ 
+   content-disposition@1.0.1: {}
+ 
++  content-type@1.0.5: {}
++
+   convert-source-map@2.0.0: {}
+ 
+   cookie-signature@1.2.2: {}
+@@ -17211,6 +17415,8 @@ snapshots:
+     dependencies:
+       safe-buffer: 5.2.1
+ 
++  ee-first@1.1.1: {}
++
+   ejs@3.1.10:
+     dependencies:
+       jake: 10.8.7
+@@ -17229,6 +17435,8 @@ snapshots:
+ 
+   emoji-regex@9.2.2: {}
+ 
++  encodeurl@2.0.0: {}
++
+   encoding-sniffer@0.2.1:
+     dependencies:
+       iconv-lite: 0.6.3
+@@ -17563,6 +17771,8 @@ snapshots:
+ 
+   esutils@2.0.3: {}
+ 
++  etag@1.8.1: {}
++
+   eventemitter2@6.4.9: {}
+ 
+   eventemitter3@4.0.7: {}
+@@ -17571,6 +17781,10 @@ snapshots:
+ 
+   eventsource-parser@3.0.6: {}
+ 
++  eventsource@3.0.7:
++    dependencies:
++      eventsource-parser: 3.0.6
++
+   execa@5.1.1:
+     dependencies:
+       cross-spawn: 7.0.5
+@@ -17594,6 +17808,44 @@ snapshots:
+       jest-mock: 30.2.0
+       jest-util: 30.2.0
+ 
++  express-rate-limit@8.2.1(express@5.2.1):
++    dependencies:
++      express: 5.2.1
++      ip-address: 10.0.1
++
++  express@5.2.1:
++    dependencies:
++      accepts: 2.0.0
++      body-parser: 2.2.2
++      content-disposition: 1.0.1
++      content-type: 1.0.5
++      cookie: 0.7.2
++      cookie-signature: 1.2.2
++      debug: 4.4.3
++      depd: 2.0.0
++      encodeurl: 2.0.0
++      escape-html: 1.0.3
++      etag: 1.8.1
++      finalhandler: 2.1.1
++      fresh: 2.0.0
++      http-errors: 2.0.0
++      merge-descriptors: 2.0.0
++      mime-types: 3.0.2
++      on-finished: 2.4.1
++      once: 1.4.0
++      parseurl: 1.3.3
++      proxy-addr: 2.0.7
++      qs: 6.14.2
++      range-parser: 1.2.1
++      router: 2.2.0
++      send: 1.2.1
++      serve-static: 2.2.1
++      statuses: 2.0.1
++      type-is: 2.0.1
++      vary: 1.1.2
++    transitivePeerDependencies:
++      - supports-color
++
+   exsolve@1.0.7: {}
+ 
+   external-editor@3.1.0:
+@@ -17706,6 +17958,17 @@ snapshots:
+     dependencies:
+       to-regex-range: 5.0.1
+ 
++  finalhandler@2.1.1:
++    dependencies:
++      debug: 4.4.3
++      encodeurl: 2.0.0
++      escape-html: 1.0.3
++      on-finished: 2.4.1
++      parseurl: 1.3.3
++      statuses: 2.0.1
++    transitivePeerDependencies:
++      - supports-color
++
+   find-my-way@9.4.0:
+     dependencies:
+       fast-deep-equal: 3.1.3
+@@ -17773,10 +18036,14 @@ snapshots:
+       dezalgo: 1.0.4
+       once: 1.4.0
+ 
++  forwarded@0.2.0: {}
++
+   fractional-indexing-jittered@1.0.0: {}
+ 
+   fractional-indexing@3.2.0: {}
+ 
++  fresh@2.0.0: {}
++
+   front-matter@4.0.2:
+     dependencies:
+       js-yaml: 3.14.2
+@@ -17971,6 +18238,8 @@ snapshots:
+     dependencies:
+       react-is: 16.13.1
+ 
++  hono@4.12.3: {}
++
+   hookified@1.15.1: {}
+ 
+   html-encoding-sniffer@4.0.0:
+@@ -18015,6 +18284,14 @@ snapshots:
+       statuses: 2.0.1
+       toidentifier: 1.0.1
+ 
++  http-errors@2.0.1:
++    dependencies:
++      depd: 2.0.0
++      inherits: 2.0.4
++      setprototypeof: 1.2.0
++      statuses: 2.0.2
++      toidentifier: 1.0.1
++
+   http-proxy-agent@7.0.2:
+     dependencies:
+       agent-base: 7.1.1
+@@ -18130,6 +18407,10 @@ snapshots:
+     transitivePeerDependencies:
+       - supports-color
+ 
++  ip-address@10.0.1: {}
++
++  ipaddr.js@1.9.1: {}
++
+   ipaddr.js@2.2.0: {}
+ 
+   is-array-buffer@3.0.4:
+@@ -18207,6 +18488,8 @@ snapshots:
+ 
+   is-potential-custom-element-name@1.0.1: {}
+ 
++  is-promise@4.0.0: {}
++
+   is-regex@1.2.0:
+     dependencies:
+       call-bind: 1.0.7
+@@ -18678,6 +18961,8 @@ snapshots:
+ 
+   jose@4.15.9: {}
+ 
++  jose@6.1.3: {}
++
+   jotai-optics@0.4.0(jotai@2.16.2(@babel/core@7.28.5)(@babel/template@7.27.2)(@types/react@18.3.12)(react@18.3.1))(optics-ts@2.4.1):
+     dependencies:
+       jotai: 2.16.2(@babel/core@7.28.5)(@babel/template@7.27.2)(@types/react@18.3.12)(react@18.3.1)
+@@ -19093,10 +19378,10 @@ snapshots:
+       underscore: 1.13.7
+       xmlbuilder: 10.1.1
+ 
+-  mantine-form-zod-resolver@1.3.0(@mantine/form@8.3.14(react@18.3.1))(zod@3.25.76):
++  mantine-form-zod-resolver@1.3.0(@mantine/form@8.3.14(react@18.3.1))(zod@4.3.6):
+     dependencies:
+       '@mantine/form': 8.3.14(react@18.3.1)
+-      zod: 3.25.76
++      zod: 4.3.6
+ 
+   markdown-it@14.1.1:
+     dependencies:
+@@ -19117,12 +19402,16 @@ snapshots:
+ 
+   mdurl@2.0.0: {}
+ 
++  media-typer@1.1.0: {}
++
+   memfs@3.5.3:
+     dependencies:
+       fs-monkey: 1.0.5
+ 
+   memoize-one@5.2.1: {}
+ 
++  merge-descriptors@2.0.0: {}
++
+   merge-stream@2.0.0: {}
+ 
+   merge2@1.4.1: {}
+@@ -19262,6 +19551,8 @@ snapshots:
+ 
+   negotiator@0.6.3: {}
+ 
++  negotiator@1.0.0: {}
++
+   neo-async@2.6.2: {}
+ 
+   nestjs-cls@6.2.0(@nestjs/common@11.1.11(class-transformer@0.5.1)(class-validator@0.14.3)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.13)(reflect-metadata@0.2.2)(rxjs@7.8.2):
+@@ -19432,6 +19723,10 @@ snapshots:
+ 
+   on-exit-leak-free@2.1.2: {}
+ 
++  on-finished@2.4.1:
++    dependencies:
++      ee-first: 1.1.1
++
+   once@1.4.0:
+     dependencies:
+       wrappy: 1.0.2
+@@ -19594,6 +19889,8 @@ snapshots:
+       leac: 0.6.0
+       peberminta: 0.9.0
+ 
++  parseurl@1.3.3: {}
++
+   passport-google-oauth20@2.0.0:
+     dependencies:
+       passport-oauth2: 1.8.0
+@@ -19766,6 +20063,8 @@ snapshots:
+ 
+   pirates@4.0.7: {}
+ 
++  pkce-challenge@5.0.1: {}
++
+   pkg-dir@4.2.0:
+     dependencies:
+       find-up: 4.1.0
+@@ -20044,6 +20343,11 @@ snapshots:
+       '@types/node': 22.19.1
+       long: 5.3.2
+ 
++  proxy-addr@2.0.7:
++    dependencies:
++      forwarded: 0.2.0
++      ipaddr.js: 1.9.1
++
+   proxy-from-env@1.1.0: {}
+ 
+   prr@1.0.1:
+@@ -20147,6 +20451,15 @@ snapshots:
+     dependencies:
+       safe-buffer: 5.2.1
+ 
++  range-parser@1.2.1: {}
++
++  raw-body@3.0.2:
++    dependencies:
++      bytes: 3.1.2
++      http-errors: 2.0.1
++      iconv-lite: 0.7.2
++      unpipe: 1.0.0
++
+   react-arborist@3.4.0(patch_hash=419b3b02e24afe928cc006a006f6e906666aff19aa6fd7daaa788ccc2202678a)(@types/node@22.19.1)(@types/react@18.3.12)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+     dependencies:
+       react: 18.3.1
+@@ -20504,6 +20817,16 @@ snapshots:
+       points-on-curve: 0.2.0
+       points-on-path: 0.2.1
+ 
++  router@2.2.0:
++    dependencies:
++      debug: 4.4.3
++      depd: 2.0.0
++      is-promise: 4.0.0
++      parseurl: 1.3.3
++      path-to-regexp: 8.3.0
++    transitivePeerDependencies:
++      - supports-color
++
+   rrweb-cssom@0.7.1: {}
+ 
+   rrweb-cssom@0.8.0: {}
+@@ -20598,10 +20921,35 @@ snapshots:
+ 
+   semver@7.7.3: {}
+ 
++  send@1.2.1:
++    dependencies:
++      debug: 4.4.3
++      encodeurl: 2.0.0
++      escape-html: 1.0.3
++      etag: 1.8.1
++      fresh: 2.0.0
++      http-errors: 2.0.1
++      mime-types: 3.0.2
++      ms: 2.1.3
++      on-finished: 2.4.1
++      range-parser: 1.2.1
++      statuses: 2.0.2
++    transitivePeerDependencies:
++      - supports-color
++
+   serialize-javascript@6.0.2:
+     dependencies:
+       randombytes: 2.1.0
+ 
++  serve-static@2.2.1:
++    dependencies:
++      encodeurl: 2.0.0
++      escape-html: 1.0.3
++      parseurl: 1.3.3
++      send: 1.2.1
++    transitivePeerDependencies:
++      - supports-color
++
+   set-blocking@2.0.0: {}
+ 
+   set-cookie-parser@2.6.0: {}
+@@ -20769,6 +21117,8 @@ snapshots:
+ 
+   statuses@2.0.1: {}
+ 
++  statuses@2.0.2: {}
++
+   stdin-discarder@0.2.2: {}
+ 
+   stream-browserify@3.0.0:
+@@ -21146,6 +21496,12 @@ snapshots:
+     dependencies:
+       tagged-tag: 1.0.0
+ 
++  type-is@2.0.1:
++    dependencies:
++      content-type: 1.0.5
++      media-typer: 1.1.0
++      mime-types: 3.0.2
++
+   typed-array-buffer@1.0.2:
+     dependencies:
+       call-bind: 1.0.7
+@@ -21262,6 +21618,8 @@ snapshots:
+ 
+   universalify@2.0.1: {}
+ 
++  unpipe@1.0.0: {}
++
+   unrs-resolver@1.11.1:
+     dependencies:
+       napi-postinstall: 0.3.4
+@@ -21689,7 +22047,9 @@ snapshots:
+ 
+   yoctocolors@2.1.2: {}
+ 
+-  zod@3.25.76: {}
++  zod-to-json-schema@3.25.1(zod@4.3.6):
++    dependencies:
++      zod: 4.3.6
+ 
+   zod@4.3.6: {}
+ 

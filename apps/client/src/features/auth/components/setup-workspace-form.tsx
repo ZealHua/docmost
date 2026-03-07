@@ -1,6 +1,7 @@
 import * as React from "react";
-import * as z from "zod";
-import { useForm, zodResolver } from "@mantine/form";
+import * as z from "zod/v4";
+import { useForm } from "@mantine/form";
+import { zod4Resolver } from "mantine-form-zod-resolver";
 import {
   Container,
   Title,
@@ -11,7 +12,6 @@ import {
   Anchor,
   Text,
 } from "@mantine/core";
-import { ISetupWorkspace } from "@/features/auth/types/auth.types";
 import useAuth from "@/features/auth/hooks/use-auth";
 import classes from "@/features/auth/components/auth.module.css";
 import { useTranslation } from "react-i18next";
@@ -29,14 +29,15 @@ const formSchema = z.object({
     .email({ message: "Invalid email address" }),
   password: z.string().min(8),
 });
+type FormValues = z.infer<typeof formSchema>;
 
 export function SetupWorkspaceForm() {
   const { t } = useTranslation();
   const { setupWorkspace, isLoading } = useAuth();
   // useRedirectIfAuthenticated();
 
-  const form = useForm<ISetupWorkspace>({
-    validate: zodResolver(formSchema),
+  const form = useForm<FormValues>({
+    validate: zod4Resolver(formSchema),
     initialValues: {
       workspaceName: "",
       name: "",
@@ -45,7 +46,7 @@ export function SetupWorkspaceForm() {
     },
   });
 
-  async function onSubmit(data: ISetupWorkspace) {
+  async function onSubmit(data: FormValues) {
     await setupWorkspace(data);
   }
 

@@ -367,6 +367,27 @@ export class WorkspaceService {
       delete updateWorkspaceDto.generativeAi;
     }
 
+    if (typeof updateWorkspaceDto.mcpEnabled !== 'undefined') {
+      const currentWorkspace = await this.workspaceRepo.findById(workspaceId, {
+        withLicenseKey: true,
+      });
+
+      if (
+        !this.licenseCheckService.isValidEELicense(currentWorkspace.licenseKey)
+      ) {
+        throw new ForbiddenException(
+          'This feature requires a valid enterprise license',
+        );
+      }
+
+      await this.workspaceRepo.updateAiSettings(
+        workspaceId,
+        'mcp',
+        updateWorkspaceDto.mcpEnabled,
+      );
+      delete updateWorkspaceDto.mcpEnabled;
+    }
+
     if (typeof updateWorkspaceDto.aiSoul !== 'undefined') {
       await this.workspaceRepo.updateAiSettings(
         workspaceId,

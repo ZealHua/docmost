@@ -27,6 +27,7 @@ export interface IWorkspace {
   aiSoul?: string;
   userProfile?: string;
   disablePublicSharing?: boolean;
+  mcpEnabled?: boolean;
 }
 
 export interface IWorkspaceSettings {
@@ -39,6 +40,7 @@ export interface IWorkspaceAiSettings {
   generative?: boolean;
   aiSoul?: string;
   userProfile?: string;
+  mcp?: boolean;
 }
 
 export interface IWorkspaceSharingSettings {
