@@ -25,5 +25,6 @@ export type MentionSuggestionItem =
       entityType: "page";
       entityId: string;
       slugId: string;
+      spaceSlug?: string;
       icon: string;
     };

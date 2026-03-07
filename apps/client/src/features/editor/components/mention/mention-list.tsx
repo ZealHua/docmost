@@ -61,7 +61,6 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
     query: props.query,
     includeUsers: true,
     includePages: true,
-    spaceId: space.id,
     limit: 10,
     preload: true,
   });
@@ -104,6 +103,7 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
             entityType: "page",
             entityId: page.id,
             slugId: page.slugId,
+            spaceSlug: page.spaceSlug,
             icon: page.icon,
           })),
         );
@@ -139,6 +139,7 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
             entityType: "page",
             entityId: item.entityId,
             slugId: item.slugId,
+            spaceSlug: item.spaceSlug,
             creatorId: currentUser?.user.id,
           });
         }
@@ -238,6 +239,7 @@ const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
         entityType: "page",
         entityId: createdPage.id,
         slugId: createdPage.slugId,
+        spaceSlug: space.slug,
         creatorId: currentUser?.user.id,
       });
 

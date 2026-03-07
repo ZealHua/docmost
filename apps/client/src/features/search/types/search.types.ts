@@ -1,7 +1,6 @@
 import { IUser } from "@/features/user/types/user.types.ts";
 import { IGroup } from "@/features/group/types/group.types.ts";
 import { ISpace } from "@/features/space/types/space.types.ts";
-import { IPage } from "@/features/page/types/page.types.ts";
 
 export interface IPageSearch {
   id: string;
@@ -26,10 +25,19 @@ export interface SearchSuggestionParams {
   limit?: number;
 }
 
+export interface IPageSuggestion {
+  id: string;
+  slugId: string;
+  title: string;
+  icon: string | null;
+  spaceId: string;
+  spaceSlug: string;
+}
+
 export interface ISuggestionResult {
   users?: Partial<IUser[]>;
   groups?: Partial<IGroup[]>;
-  pages?: Partial<IPage[]>;
+  pages?: IPageSuggestion[];
 }
 
 export interface IPageSearchParams {

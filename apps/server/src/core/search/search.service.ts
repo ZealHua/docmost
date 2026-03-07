@@ -209,7 +209,15 @@ export class SearchService {
     if (suggestion.includePages) {
       let pageSearch = this.db
         .selectFrom('pages')
-        .select(['id', 'slugId', 'title', 'icon', 'spaceId'])
+        .innerJoin('spaces', 'spaces.id', 'pages.spaceId')
+        .select([
+          'pages.id as id',
+          'pages.slugId as slugId',
+          'pages.title as title',
+          'pages.icon as icon',
+          'pages.spaceId as spaceId',
+          'spaces.slug as spaceSlug',
+        ])
         .where((eb) =>
           eb(
             sql`LOWER(f_unaccent(pages.title))`,

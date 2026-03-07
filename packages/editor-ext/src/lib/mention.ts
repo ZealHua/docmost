@@ -30,6 +30,11 @@ export interface MentionNodeAttrs {
   slugId?: string | null;
 
   /**
+   * page space slug
+   */
+  spaceSlug?: string | null;
+
+  /**
    * the id of the user who initiated the mention
    */
   creatorId?: string;
@@ -235,6 +240,20 @@ export const Mention = Node.create<MentionOptions>({
 
           return {
             "data-slug-id": attributes.slugId,
+          };
+        },
+      },
+
+      spaceSlug: {
+        default: null,
+        parseHTML: (element) => element.getAttribute("data-space-slug"),
+        renderHTML: (attributes) => {
+          if (!attributes.spaceSlug) {
+            return {};
+          }
+
+          return {
+            "data-space-slug": attributes.spaceSlug,
           };
         },
       },

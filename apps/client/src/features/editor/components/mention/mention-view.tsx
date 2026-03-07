@@ -12,7 +12,7 @@ import classes from "./mention.module.css";
 
 export default function MentionView(props: NodeViewProps) {
   const { node } = props;
-  const { label, entityType, entityId, slugId, anchorId } = node.attrs;
+  const { label, entityType, entityId, slugId, anchorId, spaceSlug: targetSpaceSlug } = node.attrs;
   const { spaceSlug, pageSlug } = useParams();
   const { shareId } = useParams();
   const navigate = useNavigate();
@@ -27,6 +27,7 @@ export default function MentionView(props: NodeViewProps) {
 
   const currentPageSlugId = extractPageSlugId(pageSlug);
   const isSamePage = currentPageSlugId === slugId;
+  const resolvedSpaceSlug = targetSpaceSlug || page?.space?.slug || spaceSlug;
 
   const handleClick = (e: React.MouseEvent) => {
     if (isSamePage && anchorId) {
@@ -61,7 +62,7 @@ export default function MentionView(props: NodeViewProps) {
           to={
             isShareRoute
               ? shareSlugUrl
-              : buildPageUrl(spaceSlug, slugId, label, anchorId)
+              : buildPageUrl(resolvedSpaceSlug, slugId, label, anchorId)
           }
           onClick={handleClick}
           underline="never"
