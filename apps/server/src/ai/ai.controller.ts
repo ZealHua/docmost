@@ -33,6 +33,8 @@ import { CreateAiSessionDto, UpdateAiSessionTitleDto, UpdateAiSessionThreadIdDto
 import { AiFaqStreamDto } from './dto/ai-faq.dto';
 import { ContinueDeepResearchDto, DeepResearchDto, RejectDeepResearchDto } from './dto/deep-research.dto';
 import { ResearchSessionRepo } from './repos/research-session.repo';
+import { SpaceMemberRepo } from '@docmost/db/repos/space/space-member.repo';
+import { PagePermissionRepo } from '@docmost/db/repos/page/page-permission.repo';
 
 import { buildEditorSystemPrompt, buildFaqSystemPrompt } from './utils/prompt.utils';
 import { Mem0Service } from '@/mem0/mem0.service';
@@ -53,6 +55,8 @@ export class AiController {
     private readonly messageRepo: AiMessageRepo,
     private readonly researchSessionRepo: ResearchSessionRepo,
     private readonly pageRepo: PageRepo,
+    private readonly spaceMemberRepo: SpaceMemberRepo,
+    private readonly pagePermissionRepo: PagePermissionRepo,
     private readonly configService: ConfigService,
     private readonly mem0Service: Mem0Service,
     private readonly deepResearchService: DeepResearchService,
@@ -421,8 +425,33 @@ export class AiController {
     let collectedSources: any[] = [];
     let collectedThinking = '';
     let streamError: Error | null = null;
+    const requestedSelectedPageIds = Array.from(
+      new Set(dto.selectedPageIds ?? []),
+    );
+    let selectedPageIds: string[] = [];
 
     try {
+      if (requestedSelectedPageIds.length > 0) {
+        const userSpaceIds = await this.spaceMemberRepo.getUserSpaceIds(user.id);
+        const pages = await this.pageRepo.findByIds(requestedSelectedPageIds);
+        const validPages = pages.filter(
+          (page) =>
+            page.workspaceId === workspace.id &&
+            userSpaceIds.includes(page.spaceId),
+        );
+
+        if (validPages.length > 0) {
+          const accessibleIds = await this.pagePermissionRepo.filterAccessiblePageIds({
+            pageIds: validPages.map((page) => page.id),
+            userId: user.id,
+          });
+          const accessibleSet = new Set(accessibleIds);
+          selectedPageIds = requestedSelectedPageIds.filter((pageId) =>
+            accessibleSet.has(pageId),
+          );
+        }
+      }
+
       // Step 1: retrieve relevant chunks - parallel hybrid search
       const lastMessage = dto.messages[dto.messages.length - 1];
       let chunks = [];
@@ -432,7 +461,8 @@ export class AiController {
         this.logger.debug('=== AI CHAT REQUEST ===');
         this.logger.debug(`Session ID: ${dto.sessionId || 'none'}`);
         this.logger.debug(`Model: ${dto.model || 'default'}`);
-        this.logger.debug(`Selected Page IDs: ${JSON.stringify(dto.selectedPageIds || [])}`);
+        this.logger.debug(`Requested Selected Page IDs: ${JSON.stringify(requestedSelectedPageIds)}`);
+        this.logger.debug(`Sanitized Selected Page IDs: ${JSON.stringify(selectedPageIds)}`);
         this.logger.debug(`Web Search Enabled: ${dto.isWebSearchEnabled}`);
         this.logger.debug(`Messages: ${JSON.stringify(dto.messages)}`);
       }
@@ -442,8 +472,8 @@ export class AiController {
         dto.isWebSearchEnabled
           ? this.webSearchService.rewriteQuery(dto.messages)
           : Promise.resolve('NO_SEARCH'),
-        (dto.selectedPageIds && dto.selectedPageIds.length > 0)
-          ? this.ragService.retrieveSelectedPages(dto.selectedPageIds, workspace.id)
+        selectedPageIds.length > 0
+          ? this.ragService.retrieveSelectedPages(selectedPageIds, workspace.id)
           : Promise.resolve([]),
       ]);
 
@@ -555,10 +585,10 @@ export class AiController {
                   sources: collectedSources,
                 });
                 // Update session with selected page IDs if provided
-                if (dto.selectedPageIds && dto.selectedPageIds.length > 0) {
+                if (selectedPageIds.length > 0) {
                   await this.sessionRepo.updateSelectedPageIds(
                     dto.sessionId,
-                    dto.selectedPageIds,
+                    selectedPageIds,
                   );
                 }
                 // Touch session to update updatedAt
@@ -896,6 +926,11 @@ export class AiController {
       return [];
     }
 
+    const userSpaceIds = await this.spaceMemberRepo.getUserSpaceIds(user.id);
+    if (dto.spaceId && !userSpaceIds.includes(dto.spaceId)) {
+      return [];
+    }
+
     let pages;
     if (dto.pageIds && dto.pageIds.length > 0) {
       pages = await this.pageRepo.findByIds(dto.pageIds);
@@ -905,6 +940,21 @@ export class AiController {
         dto.query || '',
       );
     }
+
+    pages = pages.filter((p) => userSpaceIds.includes(p.spaceId));
+
+    if (pages.length === 0) {
+      return [];
+    }
+
+    const accessibleIds = await this.pagePermissionRepo.filterAccessiblePageIds({
+      pageIds: pages.map((p) => p.id),
+      userId: user.id,
+      ...(dto.spaceId ? { spaceId: dto.spaceId } : {}),
+    });
+    const accessibleSet = new Set(accessibleIds);
+
+    pages = pages.filter((p) => accessibleSet.has(p.id));
 
     return pages.map((p) => ({
       pageId: p.id,
@@ -927,10 +977,39 @@ export class AiController {
     @AuthUser() user: any,
     @AuthWorkspace() workspace: any,
   ) {
-    const tree = await this.pageRepo.getPagesBySpace(
-      query.spaceId,
-      workspace.id,
-    );
-    return tree;
+    const userSpaceIds = await this.spaceMemberRepo.getUserSpaceIds(user.id);
+    if (!userSpaceIds.includes(query.spaceId)) {
+      return [];
+    }
+
+    const tree = await this.pageRepo.getPagesBySpace(query.spaceId, workspace.id);
+
+    const flatNodes: Array<{ id: string; children: any[] }> = [];
+    const collect = (nodes: any[]) => {
+      for (const node of nodes) {
+        flatNodes.push(node);
+        if (node.children?.length) {
+          collect(node.children);
+        }
+      }
+    };
+    collect(tree as any[]);
+
+    const accessibleIds = await this.pagePermissionRepo.filterAccessiblePageIds({
+      pageIds: flatNodes.map((node) => node.id),
+      userId: user.id,
+      spaceId: query.spaceId,
+    });
+    const accessibleSet = new Set(accessibleIds);
+
+    const prune = (nodes: any[]): any[] =>
+      nodes
+        .filter((node) => accessibleSet.has(node.id))
+        .map((node) => ({
+          ...node,
+          children: prune(node.children || []),
+        }));
+
+    return prune(tree as any[]);
   }
 }

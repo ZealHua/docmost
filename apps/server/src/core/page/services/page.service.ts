@@ -48,6 +48,18 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CollaborationGateway } from '../../../collaboration/collaboration.gateway';
 import { markdownToHtml } from '@docmost/editor-ext';
 import { WatcherService } from '../../watcher/watcher.service';
+import {
+  PageAccessLevel,
+  PagePermissionRole,
+} from '../../../common/helpers/types/permission';
+import { PagePermissionRepo } from '@docmost/db/repos/page/page-permission.repo';
+import { GroupUserRepo } from '@docmost/db/repos/group/group-user.repo';
+import { WsGateway } from '../../../ws/ws.gateway';
+import {
+  AddPagePermissionDto,
+  RemovePagePermissionDto,
+  UpdatePagePermissionDto,
+} from '../dto/page-permission.dto';
 
 @Injectable()
 export class PageService {
@@ -61,9 +73,13 @@ export class PageService {
     @InjectQueue(QueueName.ATTACHMENT_QUEUE) private attachmentQueue: Queue,
     @InjectQueue(QueueName.AI_QUEUE) private aiQueue: Queue,
     @InjectQueue(QueueName.GENERAL_QUEUE) private generalQueue: Queue,
+    @InjectQueue(QueueName.NOTIFICATION_QUEUE) private notificationQueue: Queue,
     private eventEmitter: EventEmitter2,
     private collaborationGateway: CollaborationGateway,
     private readonly watcherService: WatcherService,
+    private readonly pagePermissionRepo: PagePermissionRepo,
+    private readonly groupUserRepo: GroupUserRepo,
+    private readonly wsGateway: WsGateway,
   ) {}
 
   async findById(
@@ -261,6 +277,7 @@ export class PageService {
   async getSidebarPages(
     spaceId: string,
     pagination: PaginationOptions,
+    userId: string,
     pageId?: string,
   ): Promise<CursorPaginationResult<Partial<Page> & { hasChildren: boolean }>> {
     let query = this.db
@@ -286,7 +303,7 @@ export class PageService {
       query = query.where('parentPageId', 'is', null);
     }
 
-    return executeWithCursorPagination(query, {
+    const result = await executeWithCursorPagination(query, {
       perPage: 250,
       cursor: pagination.cursor,
       beforeCursor: pagination.beforeCursor,
@@ -303,6 +320,17 @@ export class PageService {
         id: cursor.id,
       }),
     });
+
+    const items = await this.applyPageAccessFilter(
+      result.items,
+      userId,
+      spaceId,
+    );
+
+    return {
+      ...result,
+      items,
+    };
   }
 
   async movePageToSpace(rootPage: Page, spaceId: string) {
@@ -671,22 +699,50 @@ export class PageService {
   async getRecentSpacePages(
     spaceId: string,
     pagination: PaginationOptions,
-  ): Promise<CursorPaginationResult<Page>> {
-    return this.pageRepo.getRecentPagesInSpace(spaceId, pagination);
+    userId: string,
+  ): Promise<CursorPaginationResult<Page & { canEdit: boolean }>> {
+    const result = await this.pageRepo.getRecentPagesInSpace(spaceId, pagination);
+    const items = await this.applyPageAccessFilter(
+      result.items,
+      userId,
+      spaceId,
+    );
+
+    return {
+      ...result,
+      items,
+    };
   }
 
   async getRecentPages(
     userId: string,
     pagination: PaginationOptions,
-  ): Promise<CursorPaginationResult<Page>> {
-    return this.pageRepo.getRecentPages(userId, pagination);
+  ): Promise<CursorPaginationResult<Page & { canEdit: boolean }>> {
+    const result = await this.pageRepo.getRecentPages(userId, pagination);
+    const items = await this.applyPageAccessFilter(result.items, userId);
+
+    return {
+      ...result,
+      items,
+    };
   }
 
   async getDeletedSpacePages(
     spaceId: string,
     pagination: PaginationOptions,
-  ): Promise<CursorPaginationResult<Page>> {
-    return this.pageRepo.getDeletedPagesInSpace(spaceId, pagination);
+    userId: string,
+  ): Promise<CursorPaginationResult<Page & { canEdit: boolean }>> {
+    const result = await this.pageRepo.getDeletedPagesInSpace(spaceId, pagination);
+    const items = await this.applyPageAccessFilter(
+      result.items,
+      userId,
+      spaceId,
+    );
+
+    return {
+      ...result,
+      items,
+    };
   }
 
   async forceDelete(pageId: string, workspaceId: string): Promise<void> {
@@ -743,6 +799,347 @@ export class PageService {
     workspaceId: string,
   ): Promise<void> {
     await this.pageRepo.removePage(pageId, userId, workspaceId);
+  }
+
+  async restrictPage(page: Page, user: User): Promise<void> {
+    const existingAccess = await this.pagePermissionRepo.findPageAccessByPageId(
+      page.id,
+    );
+
+    if (existingAccess) {
+      return;
+    }
+
+    await executeTx(this.db, async (trx) => {
+      const pageAccess = await this.pagePermissionRepo.insertPageAccess(
+        {
+          pageId: page.id,
+          workspaceId: page.workspaceId,
+          spaceId: page.spaceId,
+          accessLevel: PageAccessLevel.RESTRICTED,
+          creatorId: user.id,
+        },
+        trx,
+      );
+
+      await this.pagePermissionRepo.insertPagePermission(
+        {
+          pageAccessId: pageAccess.id,
+          userId: user.id,
+          role: PagePermissionRole.WRITER,
+          addedById: user.id,
+        },
+        trx,
+      );
+    });
+
+    this.invalidatePagePermissionCaches(page);
+  }
+
+  async addPagePermission(
+    page: Page,
+    user: User,
+    dto: AddPagePermissionDto,
+  ): Promise<void> {
+    this.validatePermissionTarget(dto.userId, dto.groupId);
+
+    const pageAccess = await this.pagePermissionRepo.findPageAccessByPageId(
+      page.id,
+    );
+
+    if (!pageAccess) {
+      throw new BadRequestException('Page is not restricted');
+    }
+
+    const existingPermission = dto.userId
+      ? await this.pagePermissionRepo.findPagePermissionByUserId(
+          pageAccess.id,
+          dto.userId,
+        )
+      : await this.pagePermissionRepo.findPagePermissionByGroupId(
+          pageAccess.id,
+          dto.groupId,
+        );
+
+    if (existingPermission) {
+      throw new BadRequestException('Permission already exists');
+    }
+
+    await this.pagePermissionRepo.insertPagePermission({
+      pageAccessId: pageAccess.id,
+      userId: dto.userId,
+      groupId: dto.groupId,
+      role: dto.role,
+      addedById: user.id,
+    });
+
+    const recipientUserIds = await this.getPermissionRecipientUserIds(dto);
+    await this.queuePermissionGrantedNotifications(
+      page,
+      user.id,
+      recipientUserIds,
+      dto.role,
+    );
+
+    this.invalidatePagePermissionCaches(page);
+  }
+
+  async removePagePermission(
+    page: Page,
+    dto: RemovePagePermissionDto,
+  ): Promise<void> {
+    this.validatePermissionTarget(dto.userId, dto.groupId);
+
+    const pageAccess = await this.pagePermissionRepo.findPageAccessByPageId(
+      page.id,
+    );
+
+    if (!pageAccess) {
+      throw new BadRequestException('Page is not restricted');
+    }
+
+    const permission = dto.userId
+      ? await this.pagePermissionRepo.findPagePermissionByUserId(
+          pageAccess.id,
+          dto.userId,
+        )
+      : await this.pagePermissionRepo.findPagePermissionByGroupId(
+          pageAccess.id,
+          dto.groupId,
+        );
+
+    if (!permission) {
+      return;
+    }
+
+    if (permission.role === PagePermissionRole.WRITER) {
+      const writerCount = await this.pagePermissionRepo.countWritersByPageAccessId(
+        pageAccess.id,
+      );
+
+      if (writerCount <= 1) {
+        throw new BadRequestException('Page must have at least one writer');
+      }
+    }
+
+    if (dto.userId) {
+      await this.pagePermissionRepo.deletePagePermissionByUserId(
+        pageAccess.id,
+        dto.userId,
+      );
+      this.invalidatePagePermissionCaches(page);
+      return;
+    }
+
+    await this.pagePermissionRepo.deletePagePermissionByGroupId(
+      pageAccess.id,
+      dto.groupId,
+    );
+
+    this.invalidatePagePermissionCaches(page);
+  }
+
+  async updatePagePermission(
+    page: Page,
+    user: User,
+    dto: UpdatePagePermissionDto,
+  ): Promise<void> {
+    this.validatePermissionTarget(dto.userId, dto.groupId);
+
+    const pageAccess = await this.pagePermissionRepo.findPageAccessByPageId(
+      page.id,
+    );
+
+    if (!pageAccess) {
+      throw new BadRequestException('Page is not restricted');
+    }
+
+    const permission = dto.userId
+      ? await this.pagePermissionRepo.findPagePermissionByUserId(
+          pageAccess.id,
+          dto.userId,
+        )
+      : await this.pagePermissionRepo.findPagePermissionByGroupId(
+          pageAccess.id,
+          dto.groupId,
+        );
+
+    if (!permission) {
+      throw new BadRequestException('Permission not found');
+    }
+
+    if (
+      permission.role === PagePermissionRole.WRITER &&
+      dto.role === PagePermissionRole.READER
+    ) {
+      const writerCount = await this.pagePermissionRepo.countWritersByPageAccessId(
+        pageAccess.id,
+      );
+
+      if (writerCount <= 1) {
+        throw new BadRequestException('Page must have at least one writer');
+      }
+    }
+
+    await this.pagePermissionRepo.updatePagePermissionRole(
+      pageAccess.id,
+      dto.role,
+      {
+        userId: dto.userId,
+        groupId: dto.groupId,
+      },
+    );
+
+    if (permission.role !== dto.role) {
+      const recipientUserIds = await this.getPermissionRecipientUserIds(dto);
+      await this.queuePermissionGrantedNotifications(
+        page,
+        user.id,
+        recipientUserIds,
+        dto.role,
+      );
+    }
+
+    this.invalidatePagePermissionCaches(page);
+  }
+
+  async removeRestriction(page: Page): Promise<void> {
+    await this.pagePermissionRepo.deletePageAccess(page.id);
+    this.invalidatePagePermissionCaches(page);
+  }
+
+  async getPagePermissions(page: Page, pagination: PaginationOptions) {
+    const pageAccess = await this.pagePermissionRepo.findPageAccessByPageId(
+      page.id,
+    );
+
+    if (!pageAccess) {
+      return {
+        items: [],
+        meta: {
+          limit: pagination.limit,
+          hasNextPage: false,
+          hasPrevPage: false,
+          nextCursor: null,
+          prevCursor: null,
+        },
+      };
+    }
+
+    return this.pagePermissionRepo.getPagePermissionsPaginated(
+      pageAccess.id,
+      pagination,
+    );
+  }
+
+  async getPageRestrictionInfo(page: Page, user: User) {
+    return this.pagePermissionRepo.getUserPageAccessLevel(user.id, page.id);
+  }
+
+  private async applyPageAccessFilter<T extends { id: string }>(
+    items: T[],
+    userId: string,
+    spaceId?: string,
+  ): Promise<Array<T & { canEdit: boolean }>> {
+    if (items.length === 0) {
+      return [];
+    }
+
+    const pageIds = items.map((item) => item.id);
+    const accessibleIds = await this.pagePermissionRepo.filterAccessiblePageIds({
+      pageIds,
+      userId,
+      spaceId,
+    });
+
+    const accessibleSet = new Set(accessibleIds);
+    const visibleItems = items.filter((item) => accessibleSet.has(item.id));
+
+    if (visibleItems.length === 0) {
+      return [];
+    }
+
+    const hasRestrictionsInSpace = spaceId
+      ? await this.pagePermissionRepo.hasRestrictedPagesInSpace(spaceId)
+      : true;
+
+    if (spaceId && !hasRestrictionsInSpace) {
+      return visibleItems.map((item) => ({
+        ...item,
+        canEdit: true,
+      }));
+    }
+
+    const permissionChecks = await Promise.all(
+      visibleItems.map(async (item) => {
+        const access = await this.pagePermissionRepo.canUserEditPage(
+          userId,
+          item.id,
+        );
+
+        return {
+          ...item,
+          canEdit: access.canEdit,
+        };
+      }),
+    );
+
+    return permissionChecks;
+  }
+
+  private validatePermissionTarget(userId?: string, groupId?: string): void {
+    if ((userId && groupId) || (!userId && !groupId)) {
+      throw new BadRequestException(
+        'Provide either userId or groupId, but not both',
+      );
+    }
+  }
+
+  private async getPermissionRecipientUserIds(
+    dto: RemovePagePermissionDto,
+  ): Promise<string[]> {
+    if (dto.userId) {
+      return [dto.userId];
+    }
+
+    if (dto.groupId) {
+      return this.groupUserRepo.getUserIdsByGroupId(dto.groupId);
+    }
+
+    return [];
+  }
+
+  private async queuePermissionGrantedNotifications(
+    page: Page,
+    actorId: string,
+    recipientUserIds: string[],
+    role: PagePermissionRole,
+  ): Promise<void> {
+    const uniqueUserIds = [...new Set(recipientUserIds)].filter(
+      (userId) => userId !== actorId,
+    );
+
+    if (uniqueUserIds.length === 0) {
+      return;
+    }
+
+    await this.notificationQueue.add(
+      QueueJob.PAGE_PERMISSION_GRANTED_NOTIFICATION,
+      {
+        recipientUserIds: uniqueUserIds,
+        actorId,
+        pageId: page.id,
+        spaceId: page.spaceId,
+        workspaceId: page.workspaceId,
+        role,
+      },
+    );
+  }
+
+  private invalidatePagePermissionCaches(page: Pick<Page, 'id' | 'spaceId'>) {
+    this.wsGateway.invalidateSpaceRestrictionCache(page.spaceId);
+    this.wsGateway.invalidatePageRestrictionCache(page.id);
+    this.wsGateway.notifyPagePermissionChanged(page.spaceId, page.id);
   }
 
   private async parseProsemirrorContent(

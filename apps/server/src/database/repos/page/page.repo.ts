@@ -473,6 +473,72 @@ export class PageRepo {
       .execute();
   }
 
+  async getPageAndDescendantsExcludingRestricted(
+    parentPageId: string,
+    opts: { includeContent: boolean },
+  ) {
+    return this.db
+      .withRecursive('page_hierarchy', (db) =>
+        db
+          .selectFrom('pages')
+          .leftJoin('pageAccess', 'pageAccess.pageId', 'pages.id')
+          .select([
+            'pages.id',
+            'pages.slugId',
+            'pages.title',
+            'pages.icon',
+            'pages.position',
+            'pages.parentPageId',
+            'pages.spaceId',
+            'pages.workspaceId',
+            'pages.createdAt',
+            'pages.updatedAt',
+            sql<boolean>`page_access.id IS NOT NULL`.as('isRestricted'),
+          ])
+          .$if(opts?.includeContent, (qb) => qb.select('pages.content'))
+          .where('pages.id', '=', parentPageId)
+          .where('pages.deletedAt', 'is', null)
+          .unionAll((exp) =>
+            exp
+              .selectFrom('pages as p')
+              .innerJoin('page_hierarchy as ph', 'p.parentPageId', 'ph.id')
+              .leftJoin('pageAccess', 'pageAccess.pageId', 'p.id')
+              .select([
+                'p.id',
+                'p.slugId',
+                'p.title',
+                'p.icon',
+                'p.position',
+                'p.parentPageId',
+                'p.spaceId',
+                'p.workspaceId',
+                'p.createdAt',
+                'p.updatedAt',
+                sql<boolean>`page_access.id IS NOT NULL`.as('isRestricted'),
+              ])
+              .$if(opts?.includeContent, (qb) => qb.select('p.content'))
+              .where('p.deletedAt', 'is', null)
+              .where('ph.isRestricted', '=', false),
+          ),
+      )
+      .selectFrom('page_hierarchy')
+      .select([
+        'id',
+        'slugId',
+        'title',
+        'icon',
+        'position',
+        'parentPageId',
+        'spaceId',
+        'workspaceId',
+        'createdAt',
+        'updatedAt',
+      ])
+      .$if(opts?.includeContent, (qb) => qb.select('content'))
+      .where('isRestricted', '=', false)
+      .execute();
+  }
+
   async findByIds(pageIds: string[]): Promise<
     Array<{
       id: string;

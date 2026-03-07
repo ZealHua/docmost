@@ -25,6 +25,7 @@ import {
   SpaceCaslSubject,
 } from '../casl/interfaces/space-ability.type';
 import { CommentRepo } from '@docmost/db/repos/comment/comment.repo';
+import { PageAccessService } from '../page/page-access/page-access.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('comments')
@@ -34,6 +35,7 @@ export class CommentController {
     private readonly commentRepo: CommentRepo,
     private readonly pageRepo: PageRepo,
     private readonly spaceAbility: SpaceAbilityFactory,
+    private readonly pageAccessService: PageAccessService,
   ) {}
 
   @HttpCode(HttpStatus.OK)
@@ -48,10 +50,7 @@ export class CommentController {
       throw new NotFoundException('Page not found');
     }
 
-    const ability = await this.spaceAbility.createForUser(user, page.spaceId);
-    if (ability.cannot(SpaceCaslAction.Create, SpaceCaslSubject.Page)) {
-      throw new ForbiddenException();
-    }
+    await this.pageAccessService.validateCanEdit(page, user);
 
     return this.commentService.create(
       {
@@ -76,10 +75,8 @@ export class CommentController {
       throw new NotFoundException('Page not found');
     }
 
-    const ability = await this.spaceAbility.createForUser(user, page.spaceId);
-    if (ability.cannot(SpaceCaslAction.Read, SpaceCaslSubject.Page)) {
-      throw new ForbiddenException();
-    }
+    await this.pageAccessService.validateCanView(page, user);
+
     return this.commentService.findByPageId(page.id, pagination);
   }
 
@@ -91,13 +88,13 @@ export class CommentController {
       throw new NotFoundException('Comment not found');
     }
 
-    const ability = await this.spaceAbility.createForUser(
-      user,
-      comment.spaceId,
-    );
-    if (ability.cannot(SpaceCaslAction.Read, SpaceCaslSubject.Page)) {
-      throw new ForbiddenException();
+    const page = await this.pageRepo.findById(comment.pageId);
+    if (!page) {
+      throw new NotFoundException('Page not found');
     }
+
+    await this.pageAccessService.validateCanView(page, user);
+
     return comment;
   }
 
@@ -109,17 +106,12 @@ export class CommentController {
       throw new NotFoundException('Comment not found');
     }
 
-    const ability = await this.spaceAbility.createForUser(
-      user,
-      comment.spaceId,
-    );
-
-    // must be a space member with edit permission
-    if (ability.cannot(SpaceCaslAction.Edit, SpaceCaslSubject.Page)) {
-      throw new ForbiddenException(
-        'You must have space edit permission to edit comments',
-      );
+    const page = await this.pageRepo.findById(comment.pageId);
+    if (!page) {
+      throw new NotFoundException('Page not found');
     }
+
+    await this.pageAccessService.validateCanEdit(page, user);
 
     return this.commentService.update(comment, dto, user);
   }
@@ -132,15 +124,14 @@ export class CommentController {
       throw new NotFoundException('Comment not found');
     }
 
-    const ability = await this.spaceAbility.createForUser(
-      user,
-      comment.spaceId,
-    );
-
-    // must be a space member with edit permission
-    if (ability.cannot(SpaceCaslAction.Edit, SpaceCaslSubject.Page)) {
-      throw new ForbiddenException();
+    const page = await this.pageRepo.findById(comment.pageId);
+    if (!page) {
+      throw new NotFoundException('Page not found');
     }
+
+    await this.pageAccessService.validateCanEdit(page, user);
+
+    const ability = await this.spaceAbility.createForUser(user, comment.spaceId);
 
     // Check if user is the comment owner
     const isOwner = comment.creatorId === user.id;
@@ -184,14 +175,12 @@ export class CommentController {
       throw new NotFoundException('Comment not found');
     }
 
-    const ability = await this.spaceAbility.createForUser(
-      user,
-      comment.spaceId,
-    );
-
-    if (ability.cannot(SpaceCaslAction.Edit, SpaceCaslSubject.Page)) {
-      throw new ForbiddenException();
+    const page = await this.pageRepo.findById(comment.pageId);
+    if (!page) {
+      throw new NotFoundException('Page not found');
     }
+
+    await this.pageAccessService.validateCanEdit(page, user);
 
     return this.commentService.resolve(comment, dto.resolved, user);
   }

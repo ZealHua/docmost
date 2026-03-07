@@ -11,8 +11,8 @@ export default function OssDetails() {
         withTableBorder
       >
         <Table.Caption>
-          To unlock enterprise features like AI, SSO, MFA, Resolve comments,
-          contact support@openmemo.com.cn.
+          To unlock enterprise features like AI, Page-level permissions, SSO,
+          MFA, Resolve comments, contact support@openmemo.com.cn.
         </Table.Caption>
         <Table.Tbody>
           <Table.Tr>

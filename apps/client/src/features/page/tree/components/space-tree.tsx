@@ -240,9 +240,19 @@ export default function SpaceTree({ spaceId, readOnly }: SpaceTreeProps) {
       {isRootReady && rootElement.current && (
         <Tree
           data={filteredData}
-          disableDrag={readOnly}
-          disableDrop={readOnly}
-          disableEdit={readOnly}
+          disableDrag={
+            readOnly
+              ? true
+              : (data) => {
+                  return data.canEdit === false;
+                }
+          }
+          disableDrop={
+            readOnly
+              ? true
+              : ({ parentNode }) => parentNode?.data?.canEdit === false
+          }
+          disableEdit={readOnly ? true : (data) => data.canEdit === false}
           {...controllers}
           width={width}
           height={rootElement.current.clientHeight}
@@ -413,7 +423,9 @@ function Node({ node, style, dragHandle, tree }: NodeRendererProps<any>) {
                 <IconFileDescription size="18" />
               )
             }
-            readOnly={tree.props.disableEdit as boolean}
+            readOnly={
+              tree.props.disableEdit === true || node.data.canEdit === false
+            }
             removeEmojiAction={handleRemoveEmoji}
           />
         </div>
@@ -423,7 +435,7 @@ function Node({ node, style, dragHandle, tree }: NodeRendererProps<any>) {
         <div className={classes.actions}>
           <NodeMenu node={node} treeApi={tree} spaceId={node.data.spaceId} />
 
-          {!tree.props.disableEdit && (
+          {tree.props.disableEdit !== true && node.data.canEdit !== false && (
             <CreateNode
               node={node}
               treeApi={tree}
@@ -528,6 +540,7 @@ function NodeMenu({ node, treeApi, spaceId }: NodeMenuProps) {
         parentPageId: duplicatedPage.parentPageId,
         icon: duplicatedPage.icon,
         hasChildren: duplicatedPage.hasChildren,
+        canEdit: true,
         children: [],
       };
 
@@ -606,7 +619,7 @@ function NodeMenu({ node, treeApi, spaceId }: NodeMenuProps) {
             {t("Export page")}
           </Menu.Item>
 
-          {!(treeApi.props.disableEdit as boolean) && (
+          {treeApi.props.disableEdit !== true && node.data.canEdit !== false && (
             <>
               <Menu.Item
                 leftSection={<IconCopy size={16} />}

@@ -7,6 +7,7 @@ import { QueueJob, QueueName } from '../../integrations/queue/constants';
 import {
   ICommentNotificationJob,
   ICommentResolvedNotificationJob,
+  IPagePermissionGrantedNotificationJob,
   IPageMentionNotificationJob,
 } from '../../integrations/queue/constants/queue.interface';
 import { CommentNotificationService } from './services/comment.notification';
@@ -33,6 +34,7 @@ export class NotificationProcessor
     job: Job<
       | ICommentNotificationJob
       | ICommentResolvedNotificationJob
+      | IPagePermissionGrantedNotificationJob
       | IPageMentionNotificationJob,
       void
     >,
@@ -61,6 +63,14 @@ export class NotificationProcessor
         case QueueJob.PAGE_MENTION_NOTIFICATION: {
           await this.pageNotificationService.processPageMention(
             job.data as IPageMentionNotificationJob,
+            appUrl,
+          );
+          break;
+        }
+
+        case QueueJob.PAGE_PERMISSION_GRANTED_NOTIFICATION: {
+          await this.pageNotificationService.processPagePermissionGranted(
+            job.data as IPagePermissionGrantedNotificationJob,
             appUrl,
           );
           break;

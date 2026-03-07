@@ -32,6 +32,8 @@ import { ShareRepo } from '@docmost/db/repos/share/share.repo';
 import { PaginationOptions } from '@docmost/db/pagination/pagination-options';
 import { EnvironmentService } from '../../integrations/environment/environment.service';
 import { hasLicenseOrEE } from '../../common/helpers';
+import { PagePermissionRepo } from '@docmost/db/repos/page/page-permission.repo';
+import { PageAccessService } from '../page/page-access/page-access.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('shares')
@@ -41,6 +43,8 @@ export class ShareController {
     private readonly spaceAbility: SpaceAbilityFactory,
     private readonly shareRepo: ShareRepo,
     private readonly pageRepo: PageRepo,
+    private readonly pagePermissionRepo: PagePermissionRepo,
+    private readonly pageAccessService: PageAccessService,
     private readonly environmentService: EnvironmentService,
   ) {}
 
@@ -119,10 +123,7 @@ export class ShareController {
       throw new NotFoundException('Shared page not found');
     }
 
-    const ability = await this.spaceAbility.createForUser(user, page.spaceId);
-    if (ability.cannot(SpaceCaslAction.Read, SpaceCaslSubject.Share)) {
-      throw new ForbiddenException();
-    }
+    await this.pageAccessService.validateCanView(page, user);
 
     return this.shareService.getShareForPage(page.id, workspace.id);
   }
@@ -140,9 +141,13 @@ export class ShareController {
       throw new NotFoundException('Page not found');
     }
 
-    const ability = await this.spaceAbility.createForUser(user, page.spaceId);
-    if (ability.cannot(SpaceCaslAction.Create, SpaceCaslSubject.Share)) {
-      throw new ForbiddenException();
+    await this.pageAccessService.validateCanEdit(page, user);
+
+    const isRestricted = await this.pagePermissionRepo.hasRestrictedAncestor(
+      page.id,
+    );
+    if (isRestricted) {
+      throw new BadRequestException('Cannot share a restricted page');
     }
 
     const sharingAllowed = await this.shareService.isSharingAllowed(
@@ -170,10 +175,12 @@ export class ShareController {
       throw new NotFoundException('Share not found');
     }
 
-    const ability = await this.spaceAbility.createForUser(user, share.spaceId);
-    if (ability.cannot(SpaceCaslAction.Edit, SpaceCaslSubject.Share)) {
-      throw new ForbiddenException();
+    const page = await this.pageRepo.findById(share.pageId);
+    if (!page) {
+      throw new NotFoundException('Page not found');
     }
+
+    await this.pageAccessService.validateCanEdit(page, user);
 
     return this.shareService.updateShare(share.id, updateShareDto);
   }
@@ -187,10 +194,12 @@ export class ShareController {
       throw new NotFoundException('Share not found');
     }
 
-    const ability = await this.spaceAbility.createForUser(user, share.spaceId);
-    if (ability.cannot(SpaceCaslAction.Manage, SpaceCaslSubject.Share)) {
-      throw new ForbiddenException();
+    const page = await this.pageRepo.findById(share.pageId);
+    if (!page) {
+      throw new NotFoundException('Page not found');
     }
+
+    await this.pageAccessService.validateCanEdit(page, user);
 
     await this.shareRepo.deleteShare(share.id);
   }

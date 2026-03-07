@@ -233,6 +233,17 @@ export interface Notifications {
   workspaceId: string;
 }
 
+export interface PageAccess {
+  accessLevel: string;
+  createdAt: Generated<Timestamp>;
+  creatorId: string | null;
+  id: Generated<string>;
+  pageId: string;
+  spaceId: string;
+  updatedAt: Generated<Timestamp>;
+  workspaceId: string;
+}
+
 export interface PageEmbeddings {
   attachmentId: Generated<string>;
   chunkIndex: Generated<number>;
@@ -267,6 +278,17 @@ export interface PageHistory {
   updatedAt: Generated<Timestamp>;
   version: number | null;
   workspaceId: string;
+}
+
+export interface PagePermissions {
+  addedById: string | null;
+  createdAt: Generated<Timestamp>;
+  groupId: string | null;
+  id: Generated<string>;
+  pageAccessId: string;
+  role: string;
+  updatedAt: Generated<Timestamp>;
+  userId: string | null;
 }
 
 export interface Pages {
@@ -496,8 +518,10 @@ export interface DB {
   groups: Groups;
   groupUsers: GroupUsers;
   notifications: Notifications;
+  pageAccess: PageAccess;
   pageEmbeddings: PageEmbeddings;
   pageHistory: PageHistory;
+  pagePermissions: PagePermissions;
   pages: Pages;
   researchOperations: ResearchOperations;
   researchSessions: ResearchSessions;

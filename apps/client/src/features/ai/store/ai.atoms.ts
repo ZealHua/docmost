@@ -25,7 +25,7 @@ export const aiThinkingAtom = atomWithStorage<boolean>(
 // Web Search enabled toggle (persisted to localStorage)
 export const aiWebSearchEnabledAtom = atomWithStorage<boolean>(
   "docmost_ai_web_search",
-  false,
+  true,
 );
 
 // Selected pages for AI chat (user explicitly selected for context)

@@ -23,7 +23,11 @@ describe('AiController deep research endpoints', () => {
 
   const ragService = {};
   const webSearchService = {};
-  const sessionRepo = {};
+  const sessionRepo = {
+    findById: jest.fn(),
+    updateSelectedPageIds: jest.fn(),
+    touch: jest.fn(),
+  };
 
   const messageRepo = {
     countAssistantMessagesWithApprovalAudit: jest.fn(),
@@ -33,7 +37,17 @@ describe('AiController deep research endpoints', () => {
     countByStatuses: jest.fn(),
   };
 
-  const pageRepo = {};
+  const pageRepo = {
+    findByIds: jest.fn(),
+  };
+
+  const spaceMemberRepo = {
+    getUserSpaceIds: jest.fn(),
+  };
+
+  const pagePermissionRepo = {
+    filterAccessiblePageIds: jest.fn(),
+  };
 
   const configService = {
     get: jest.fn().mockReturnValue('false'),
@@ -56,6 +70,8 @@ describe('AiController deep research endpoints', () => {
       messageRepo as any,
       researchSessionRepo as any,
       pageRepo as any,
+      spaceMemberRepo as any,
+      pagePermissionRepo as any,
       configService as any,
       mem0Service as any,
       deepResearchService as any,
@@ -68,6 +84,134 @@ describe('AiController deep research endpoints', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     orchestrator.isConfigured.mockReturnValue(true);
+  });
+
+  it('sanitizes selectedPageIds before RAG retrieval and persistence', async () => {
+    const controller = createController();
+    const streamChat = jest.fn(async (_messages, _chunks, onChunk, onDone) => {
+      onChunk('hello');
+      await onDone();
+    });
+
+    orchestrator.getProvider.mockReturnValue({
+      streamChat,
+    });
+
+    (ragService as any).retrieveSelectedPages = jest
+      .fn()
+      .mockResolvedValue([]);
+    (webSearchService as any).rewriteQuery = jest
+      .fn()
+      .mockResolvedValue('NO_SEARCH');
+    spaceMemberRepo.getUserSpaceIds.mockResolvedValue(['space-1']);
+    pageRepo.findByIds.mockResolvedValue([
+      { id: 'page-1', workspaceId: 'workspace-1', spaceId: 'space-1' },
+      { id: 'page-2', workspaceId: 'workspace-1', spaceId: 'space-2' },
+      { id: 'page-4', workspaceId: 'workspace-2', spaceId: 'space-1' },
+    ]);
+    pagePermissionRepo.filterAccessiblePageIds.mockResolvedValue(['page-1']);
+
+    sessionRepo.findById.mockResolvedValue({
+      id: 'session-1',
+      workspaceId: 'workspace-1',
+      userId: 'user-1',
+    });
+    (messageRepo as any).create = jest.fn().mockResolvedValue(undefined);
+    sessionRepo.updateSelectedPageIds.mockResolvedValue(undefined);
+    sessionRepo.touch.mockResolvedValue(undefined);
+    (mem0Service as any).isEnabled = jest.fn().mockReturnValue(false);
+
+    const responseRaw = {
+      setHeader: jest.fn(),
+      flushHeaders: jest.fn(),
+      write: jest.fn(),
+      end: jest.fn(),
+    };
+
+    await controller.streamChat(
+      {
+        messages: [{ role: 'user', content: 'hello' }],
+        sessionId: 'session-1',
+        selectedPageIds: ['page-1', 'page-2', 'page-3', 'page-4', 'page-1'],
+        isWebSearchEnabled: false,
+      } as any,
+      { raw: { signal: undefined } } as any,
+      {
+        hijack: jest.fn(),
+        raw: responseRaw,
+      } as any,
+      { id: 'user-1' } as any,
+      { id: 'workspace-1', settings: {} } as any,
+    );
+
+    expect(spaceMemberRepo.getUserSpaceIds).toHaveBeenCalledWith('user-1');
+    expect(pageRepo.findByIds).toHaveBeenCalledWith(['page-1', 'page-2', 'page-3', 'page-4']);
+    expect(pagePermissionRepo.filterAccessiblePageIds).toHaveBeenCalledWith({
+      pageIds: ['page-1'],
+      userId: 'user-1',
+    });
+    expect((ragService as any).retrieveSelectedPages).toHaveBeenCalledWith(
+      ['page-1'],
+      'workspace-1',
+    );
+    expect(sessionRepo.updateSelectedPageIds).toHaveBeenCalledWith('session-1', ['page-1']);
+  });
+
+  it('does not call selected-page retrieval when no accessible selected pages remain', async () => {
+    const controller = createController();
+    const streamChat = jest.fn(async (_messages, _chunks, _onChunk, onDone) => {
+      await onDone();
+    });
+
+    orchestrator.getProvider.mockReturnValue({
+      streamChat,
+    });
+
+    (ragService as any).retrieveSelectedPages = jest
+      .fn()
+      .mockResolvedValue([]);
+    (webSearchService as any).rewriteQuery = jest
+      .fn()
+      .mockResolvedValue('NO_SEARCH');
+    spaceMemberRepo.getUserSpaceIds.mockResolvedValue(['space-1']);
+    pageRepo.findByIds.mockResolvedValue([
+      { id: 'page-2', workspaceId: 'workspace-1', spaceId: 'space-2' },
+    ]);
+    pagePermissionRepo.filterAccessiblePageIds.mockResolvedValue([]);
+
+    sessionRepo.findById.mockResolvedValue({
+      id: 'session-1',
+      workspaceId: 'workspace-1',
+      userId: 'user-1',
+    });
+    (messageRepo as any).create = jest.fn().mockResolvedValue(undefined);
+    sessionRepo.updateSelectedPageIds.mockResolvedValue(undefined);
+    sessionRepo.touch.mockResolvedValue(undefined);
+    (mem0Service as any).isEnabled = jest.fn().mockReturnValue(false);
+
+    await controller.streamChat(
+      {
+        messages: [{ role: 'user', content: 'hello' }],
+        sessionId: 'session-1',
+        selectedPageIds: ['page-2'],
+        isWebSearchEnabled: false,
+      } as any,
+      { raw: { signal: undefined } } as any,
+      {
+        hijack: jest.fn(),
+        raw: {
+          setHeader: jest.fn(),
+          flushHeaders: jest.fn(),
+          write: jest.fn(),
+          end: jest.fn(),
+        },
+      } as any,
+      { id: 'user-1' } as any,
+      { id: 'workspace-1', settings: {} } as any,
+    );
+
+    expect((ragService as any).retrieveSelectedPages).not.toHaveBeenCalled();
+    expect(sessionRepo.updateSelectedPageIds).not.toHaveBeenCalled();
   });
 
   it('continueDeepResearch validates continuation and returns ready status', async () => {

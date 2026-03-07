@@ -23,6 +23,8 @@ import {
   ApiKeys,
   Watchers,
   PageEmbeddings,
+  PageAccess as _PageAccess,
+  PagePermissions as _PagePermissions,
   AiSessions,
   AiMessages,
 } from './db';
@@ -135,6 +137,16 @@ export type UpdatableApiKey = Updateable<Omit<ApiKeys, 'id'>>;
 export type PageEmbedding = Selectable<PageEmbeddings>;
 export type InsertablePageEmbedding = Insertable<PageEmbeddings>;
 export type UpdatablePageEmbedding = Updateable<Omit<PageEmbeddings, 'id'>>;
+
+// Page Access
+export type PageAccess = Selectable<_PageAccess>;
+export type InsertablePageAccess = Insertable<_PageAccess>;
+export type UpdatablePageAccess = Updateable<Omit<_PageAccess, 'id'>>;
+
+// Page Permission
+export type PagePermission = Selectable<_PagePermissions>;
+export type InsertablePagePermission = Insertable<_PagePermissions>;
+export type UpdatablePagePermission = Updateable<Omit<_PagePermissions, 'id'>>;
 
 // Notification
 export type Notification = Selectable<Notifications>;

@@ -9,6 +9,7 @@ import { IconGroupCircle } from "@/components/icons/icon-people-circle.tsx";
 import { useTranslation } from "react-i18next";
 
 interface MultiMemberSelectProps {
+  value?: string[];
   onChange: (value: string[]) => void;
 }
 
@@ -37,7 +38,7 @@ const renderMultiSelectOption: MultiSelectProps["renderOption"] = ({
   </Group>
 );
 
-export function MultiMemberSelect({ onChange }: MultiMemberSelectProps) {
+export function MultiMemberSelect({ value, onChange }: MultiMemberSelectProps) {
   const { t } = useTranslation();
   const [searchValue, setSearchValue] = useState("");
   const [debouncedQuery] = useDebouncedValue(searchValue, 500);
@@ -89,6 +90,7 @@ export function MultiMemberSelect({ onChange }: MultiMemberSelectProps) {
   return (
     <MultiSelect
       data={data}
+      value={value}
       renderOption={renderMultiSelectOption}
       hidePickedOptions
       maxDropdownHeight={300}

@@ -13,6 +13,7 @@ import { CommentMentionEmail } from '@docmost/transactional/emails/comment-menti
 import { CommentCreateEmail } from '@docmost/transactional/emails/comment-created-email';
 import { CommentResolvedEmail } from '@docmost/transactional/emails/comment-resolved-email';
 import { getPageTitle } from '../../../common/helpers';
+import { PagePermissionRepo } from '@docmost/db/repos/page/page-permission.repo';
 
 @Injectable()
 export class CommentNotificationService {
@@ -23,6 +24,7 @@ export class CommentNotificationService {
     private readonly notificationService: NotificationService,
     private readonly spaceMemberRepo: SpaceMemberRepo,
     private readonly watcherRepo: WatcherRepo,
+    private readonly pagePermissionRepo: PagePermissionRepo,
   ) {}
 
   async processComment(data: ICommentNotificationJob, appUrl: string) {
@@ -65,8 +67,27 @@ export class CommentNotificationService {
         spaceId,
       );
 
+    const hasRestrictedAncestor = await this.pagePermissionRepo.hasRestrictedAncestor(
+      pageId,
+    );
+
+    const userCanAccessPage = new Map<string, boolean>();
+
+    if (hasRestrictedAncestor) {
+      await Promise.all(
+        allCandidateIds.map(async (userId) => {
+          const canAccess = await this.pagePermissionRepo.canUserAccessPage(
+            userId,
+            pageId,
+          );
+          userCanAccessPage.set(userId, canAccess);
+        }),
+      );
+    }
+
     for (const userId of mentionedUserIds) {
       if (!usersWithAccess.has(userId)) continue;
+      if (hasRestrictedAncestor && !userCanAccessPage.get(userId)) continue;
 
       const notification = await this.notificationService.create({
         userId,
@@ -92,6 +113,7 @@ export class CommentNotificationService {
     for (const recipientId of recipientIds) {
       if (notifiedUserIds.has(recipientId)) continue;
       if (!usersWithAccess.has(recipientId)) continue;
+      if (hasRestrictedAncestor && !userCanAccessPage.get(recipientId)) continue;
 
       const notification = await this.notificationService.create({
         userId: recipientId,
@@ -146,6 +168,19 @@ export class CommentNotificationService {
         `Skipping resolved notification for user ${commentCreatorId}: no access to space ${spaceId}`,
       );
       return;
+    }
+
+    const hasRestrictedAncestor = await this.pagePermissionRepo.hasRestrictedAncestor(
+      pageId,
+    );
+    if (hasRestrictedAncestor) {
+      const canAccess = await this.pagePermissionRepo.canUserAccessPage(
+        commentCreatorId,
+        pageId,
+      );
+      if (!canAccess) {
+        return;
+      }
     }
 
     const notification = await this.notificationService.create({

@@ -7,6 +7,7 @@ import { sql } from 'kysely';
 import { PageRepo } from '@docmost/db/repos/page/page.repo';
 import { SpaceMemberRepo } from '@docmost/db/repos/space/space-member.repo';
 import { ShareRepo } from '@docmost/db/repos/share/share.repo';
+import { PagePermissionRepo } from '@docmost/db/repos/page/page-permission.repo';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const tsquery = require('pg-tsquery')();
@@ -18,6 +19,7 @@ export class SearchService {
     private pageRepo: PageRepo,
     private shareRepo: ShareRepo,
     private spaceMemberRepo: SpaceMemberRepo,
+    private pagePermissionRepo: PagePermissionRepo,
   ) {}
 
   async searchPage(
@@ -104,8 +106,21 @@ export class SearchService {
       }
 
       if (pageIdsToSearch.length > 0) {
+        const visiblePageIds: string[] = [];
+        for (const pageId of pageIdsToSearch) {
+          const isRestricted =
+            await this.pagePermissionRepo.hasRestrictedAncestor(pageId);
+          if (!isRestricted) {
+            visiblePageIds.push(pageId);
+          }
+        }
+
+        if (visiblePageIds.length === 0) {
+          return { items: [] };
+        }
+
         queryResults = queryResults
-          .where('id', 'in', pageIdsToSearch)
+          .where('id', 'in', visiblePageIds)
           .where('workspaceId', '=', opts.workspaceId);
       } else {
         return { items: [] };
@@ -115,17 +130,29 @@ export class SearchService {
     }
 
     //@ts-ignore
-    queryResults = await queryResults.execute();
+    let results = await queryResults.execute();
 
-    //@ts-ignore
-    const searchResults = queryResults.map((result: SearchResponseDto) => {
+    if (opts.userId && results.length > 0) {
+      const pageIds = results.map((result: any) => result.id);
+      const accessibleIds = await this.pagePermissionRepo.filterAccessiblePageIds(
+        {
+          pageIds,
+          userId: opts.userId,
+          ...(searchParams.spaceId ? { spaceId: searchParams.spaceId } : {}),
+        },
+      );
+      const accessibleSet = new Set(accessibleIds);
+      results = results.filter((result: any) => accessibleSet.has(result.id));
+    }
+
+    const searchResults = results.map((result: any) => {
       if (result.highlight) {
         result.highlight = result.highlight
           .replace(/\r\n|\r|\n/g, ' ')
           .replace(/\s+/g, ' ');
       }
       return result;
-    });
+    }) as SearchResponseDto[];
 
     return { items: searchResults };
   }
@@ -206,6 +233,19 @@ export class SearchService {
         // we need this check or the query will throw an error if the userSpaceIds array is empty
         pageSearch = pageSearch.where('spaceId', 'in', userSpaceIds);
         pages = await pageSearch.execute();
+      }
+
+      if (pages.length > 0) {
+        const pageIds = pages.map((page) => page.id);
+        const accessibleIds = await this.pagePermissionRepo.filterAccessiblePageIds(
+          {
+            pageIds,
+            userId,
+            ...(suggestion?.spaceId ? { spaceId: suggestion.spaceId } : {}),
+          },
+        );
+        const accessibleSet = new Set(accessibleIds);
+        pages = pages.filter((page) => accessibleSet.has(page.id));
       }
     }
 

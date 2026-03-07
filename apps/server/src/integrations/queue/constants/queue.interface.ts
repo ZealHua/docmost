@@ -60,3 +60,12 @@ export interface IPageMentionNotificationJob {
   spaceId: string;
   workspaceId: string;
 }
+
+export interface IPagePermissionGrantedNotificationJob {
+  recipientUserIds: string[];
+  actorId: string;
+  pageId: string;
+  spaceId: string;
+  workspaceId: string;
+  role: 'reader' | 'writer';
+}

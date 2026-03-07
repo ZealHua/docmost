@@ -1,12 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { InjectKysely } from 'nestjs-kysely';
 import { KyselyDB } from '@docmost/db/types/kysely.types';
-import { IPageMentionNotificationJob } from '../../../integrations/queue/constants/queue.interface';
+import {
+  IPageMentionNotificationJob,
+  IPagePermissionGrantedNotificationJob,
+} from '../../../integrations/queue/constants/queue.interface';
 import { NotificationService } from '../notification.service';
 import { NotificationType } from '../notification.constants';
 import { SpaceMemberRepo } from '@docmost/db/repos/space/space-member.repo';
 import { PageMentionEmail } from '@docmost/transactional/emails/page-mention-email';
+import { PagePermissionEmail } from '@docmost/transactional/emails/page-permission-email';
 import { getPageTitle } from '../../../common/helpers';
+import { PagePermissionRepo } from '@docmost/db/repos/page/page-permission.repo';
 
 @Injectable()
 export class PageNotificationService {
@@ -14,6 +19,7 @@ export class PageNotificationService {
     @InjectKysely() private readonly db: KyselyDB,
     private readonly notificationService: NotificationService,
     private readonly spaceMemberRepo: SpaceMemberRepo,
+    private readonly pagePermissionRepo: PagePermissionRepo,
   ) {}
 
   async processPageMention(data: IPageMentionNotificationJob, appUrl: string) {
@@ -34,9 +40,29 @@ export class PageNotificationService {
         spaceId,
       );
 
-    const accessibleMentions = newMentions.filter((m) =>
+    let accessibleMentions = newMentions.filter((m) =>
       usersWithAccess.has(m.userId),
     );
+
+    const hasRestrictedAncestor = await this.pagePermissionRepo.hasRestrictedAncestor(
+      pageId,
+    );
+
+    if (hasRestrictedAncestor) {
+      accessibleMentions = (
+        await Promise.all(
+          accessibleMentions.map(async (mention) => {
+            const canAccess = await this.pagePermissionRepo.canUserAccessPage(
+              mention.userId,
+              pageId,
+            );
+
+            return canAccess ? mention : null;
+          }),
+        )
+      ).filter((mention): mention is (typeof accessibleMentions)[number] => Boolean(mention));
+    }
+
     if (accessibleMentions.length === 0) return;
 
     const mentionsByCreator = new Map<
@@ -57,6 +83,76 @@ export class PageNotificationService {
         spaceId,
         workspaceId,
         appUrl,
+      );
+    }
+  }
+
+  async processPagePermissionGranted(
+    data: IPagePermissionGrantedNotificationJob,
+    appUrl: string,
+  ) {
+    const {
+      recipientUserIds,
+      actorId,
+      pageId,
+      spaceId,
+      workspaceId,
+      role,
+    } = data;
+
+    const context = await this.getPageContext(actorId, pageId, spaceId, appUrl);
+    if (!context) return;
+
+    const usersWithAccess = await this.spaceMemberRepo.getUserIdsWithSpaceAccess(
+      recipientUserIds,
+      spaceId,
+    );
+
+    const hasRestrictedAncestor = await this.pagePermissionRepo.hasRestrictedAncestor(
+      pageId,
+    );
+
+    const subject =
+      role === 'writer'
+        ? `${context.actor.name} gave you edit access to ${context.pageTitle}`
+        : `${context.actor.name} gave you view access to ${context.pageTitle}`;
+
+    for (const userId of recipientUserIds) {
+      if (!usersWithAccess.has(userId) || userId === actorId) {
+        continue;
+      }
+
+      if (hasRestrictedAncestor) {
+        const canAccess = await this.pagePermissionRepo.canUserAccessPage(
+          userId,
+          pageId,
+        );
+
+        if (!canAccess) {
+          continue;
+        }
+      }
+
+      const notification = await this.notificationService.create({
+        userId,
+        workspaceId,
+        type: NotificationType.PAGE_PERMISSION_GRANTED,
+        actorId,
+        pageId,
+        spaceId,
+        data: { role },
+      });
+
+      await this.notificationService.queueEmail(
+        userId,
+        notification.id,
+        subject,
+        PagePermissionEmail({
+          actorName: context.actor.name,
+          pageTitle: context.pageTitle,
+          pageUrl: context.basePageUrl,
+          role,
+        }),
       );
     }
   }

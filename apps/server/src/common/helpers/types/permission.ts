@@ -14,3 +14,12 @@ export enum SpaceVisibility {
   OPEN = 'open', // any workspace member can see that it exists and join.
   PRIVATE = 'private', // only added space users can see
 }
+
+export enum PageAccessLevel {
+  RESTRICTED = 'restricted',
+}
+
+export enum PagePermissionRole {
+  READER = 'reader',
+  WRITER = 'writer',
+}

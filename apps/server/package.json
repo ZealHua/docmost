@@ -150,12 +150,22 @@
     "moduleFileExtensions": [
       "js",
       "json",
-      "ts"
+      "ts",
+      "tsx"
     ],
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1",
+      "^@docmost/db/(.*)$": "<rootDir>/database/$1",
+      "^@docmost/transactional/(.*)$": "<rootDir>/integrations/transactional/$1",
+      "^@docmost/ee/(.*)$": "<rootDir>/ee/$1",
+      "^@/mem0/(.*)$": "<rootDir>/mem0/$1",
+      "^@/config/(.*)$": "<rootDir>/config/$1",
+      "^src/(.*)$": "<rootDir>/$1"
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s"

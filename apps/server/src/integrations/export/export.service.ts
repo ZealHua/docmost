@@ -37,6 +37,7 @@ import {
   getProsemirrorContent,
 } from '../../common/helpers/prosemirror/utils';
 import { htmlToMarkdown } from '@docmost/editor-ext';
+import { PagePermissionRepo } from '@docmost/db/repos/page/page-permission.repo';
 
 @Injectable()
 export class ExportService {
@@ -44,6 +45,7 @@ export class ExportService {
 
   constructor(
     private readonly pageRepo: PageRepo,
+    private readonly pagePermissionRepo: PagePermissionRepo,
     @InjectKysely() private readonly db: KyselyDB,
     private readonly storageService: StorageService,
     private readonly environmentService: EnvironmentService,
@@ -100,6 +102,7 @@ export class ExportService {
     format: string,
     includeAttachments: boolean,
     includeChildren: boolean,
+    userId: string,
   ) {
     let pages: Page[];
 
@@ -122,14 +125,26 @@ export class ExportService {
       throw new BadRequestException('No pages to export');
     }
 
+    const accessibleIds = await this.pagePermissionRepo.filterAccessiblePageIds({
+      pageIds: pages.map((page) => page.id),
+      userId,
+      spaceId: pages[0].spaceId,
+    });
+
+    const accessibleIdSet = new Set(accessibleIds);
+    pages = pages.filter((p) => accessibleIdSet.has(p.id));
+
     const parentPageIndex = pages.findIndex((obj) => obj.id === pageId);
+    if (parentPageIndex < 0) {
+      throw new BadRequestException('No pages to export');
+    }
     // set to null to make export of pages with parentId work
     pages[parentPageIndex].parentPageId = null;
 
     const tree = buildTree(pages as Page[]);
 
     const zip = new JSZip();
-    await this.zipPages(tree, format, zip, includeAttachments);
+    await this.zipPages(tree, format, zip, includeAttachments, userId);
 
     const zipFile = zip.generateNodeStream({
       type: 'nodebuffer',
@@ -144,6 +159,7 @@ export class ExportService {
     spaceId: string,
     format: string,
     includeAttachments: boolean,
+    userId: string,
   ) {
     const space = await this.db
       .selectFrom('spaces')
@@ -174,11 +190,20 @@ export class ExportService {
       .where('deletedAt', 'is', null)
       .execute();
 
-    const tree = buildTree(pages as Page[]);
+    const accessibleIds = await this.pagePermissionRepo.filterAccessiblePageIds({
+      pageIds: pages.map((page) => page.id),
+      userId,
+      spaceId,
+    });
+
+    const accessibleIdSet = new Set(accessibleIds);
+    const visiblePages = pages.filter((page) => accessibleIdSet.has(page.id));
+
+    const tree = buildTree(visiblePages as Page[]);
 
     const zip = new JSZip();
 
-    await this.zipPages(tree, format, zip, includeAttachments);
+    await this.zipPages(tree, format, zip, includeAttachments, userId);
 
     const zipFile = zip.generateNodeStream({
       type: 'nodebuffer',
@@ -198,6 +223,7 @@ export class ExportService {
     format: string,
     zip: JSZip,
     includeAttachments: boolean,
+    userId: string,
   ): Promise<void> {
     const slugIdToPath: Record<string, string> = {};
     const pageIdToFilePath: Record<string, string> = {};
@@ -219,6 +245,7 @@ export class ExportService {
         const prosemirrorJson = await this.turnPageMentionsToLinks(
           getProsemirrorContent(page.content),
           page.workspaceId,
+          userId,
         );
 
         const currentPagePath = slugIdToPath[page.slugId];
@@ -303,7 +330,11 @@ export class ExportService {
     }
   }
 
-  async turnPageMentionsToLinks(prosemirrorJson: any, workspaceId: string) {
+  async turnPageMentionsToLinks(
+    prosemirrorJson: any,
+    workspaceId: string,
+    userId?: string,
+  ) {
     const doc = jsonToNode(prosemirrorJson);
 
     const pageMentionIds = [];
@@ -328,7 +359,17 @@ export class ExportService {
       .where('workspaceId', '=', workspaceId)
       .execute();
 
-    const pageMap = new Map(pages.map((page) => [page.id, page]));
+    let visiblePages = pages;
+    if (userId) {
+      const accessibleIds = await this.pagePermissionRepo.filterAccessiblePageIds({
+        pageIds: pages.map((page) => page.id),
+        userId,
+      });
+      const accessibleIdSet = new Set(accessibleIds);
+      visiblePages = pages.filter((page) => accessibleIdSet.has(page.id));
+    }
+
+    const pageMap = new Map(visiblePages.map((page) => [page.id, page]));
 
     let editorState = EditorState.create({
       doc: doc,
