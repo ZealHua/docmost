@@ -27,6 +27,7 @@ import {
   PagePermissions as _PagePermissions,
   AiSessions,
   AiMessages,
+  AuditLogs,
 } from './db';
 
 // Workspace
@@ -167,3 +168,8 @@ export type UpdatableAiSession = Updateable<Omit<AiSessions, 'id'>>;
 export type AiMessage = Selectable<AiMessages>;
 export type InsertableAiMessage = Insertable<AiMessages>;
 export type UpdatableAiMessage = Updateable<Omit<AiMessages, 'id'>>;
+
+// Audit Log
+export type AuditLog = Selectable<AuditLogs>;
+export type InsertableAuditLog = Insertable<AuditLogs>;
+export type UpdatableAuditLog = Updateable<Omit<AuditLogs, 'id'>>;

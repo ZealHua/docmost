@@ -81,6 +81,21 @@ export interface Attachments {
   workspaceId: string;
 }
 
+export interface AuditLogs {
+  actorId: string | null;
+  actorType: string;
+  after: Json | null;
+  before: Json | null;
+  createdAt: Generated<Timestamp>;
+  eventType: string;
+  id: Generated<string>;
+  ipAddress: string | null;
+  metadata: Json | null;
+  resourceId: string | null;
+  resourceType: string;
+  workspaceId: string;
+}
+
 export interface AuthAccounts {
   authProviderId: string | null;
   createdAt: Generated<Timestamp>;
@@ -509,6 +524,7 @@ export interface DB {
   aiSessions: AiSessions;
   apiKeys: ApiKeys;
   attachments: Attachments;
+  auditLogs: AuditLogs;
   authAccounts: AuthAccounts;
   authProviders: AuthProviders;
   backlinks: Backlinks;
