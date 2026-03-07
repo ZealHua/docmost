@@ -34,6 +34,12 @@ const Command = Extension.create({
 
 const SlashCommand = Command.configure({
   suggestion: {
+    allow: ({ state, range }) => {
+      const $pos = state.doc.resolve(range.from);
+      const node = $pos.parent;
+
+      return node.type.name !== "codeBlock";
+    },
     items: getSuggestionItems,
     render: renderItems,
   },

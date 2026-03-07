@@ -32,6 +32,12 @@ const Command = Extension.create({
 
 const EmojiCommand = Command.configure({
   suggestion: {
+    allow: ({ state, range }) => {
+      const $pos = state.doc.resolve(range.from);
+      const node = $pos.parent;
+
+      return node.type.name !== "codeBlock";
+    },
     items: getEmojiItems,
     render: renderEmojiItems,
   },
