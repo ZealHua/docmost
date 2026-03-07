@@ -5,15 +5,17 @@ import { KyselyDB } from '@docmost/db/types/kysely.types';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { QueueJob, QueueName } from '../../../integrations/queue/constants';
+import { WorkspaceRepo } from '@docmost/db/repos/workspace/workspace.repo';
 
 @Injectable()
 export class TrashCleanupService {
   private readonly logger = new Logger(TrashCleanupService.name);
-  private readonly RETENTION_DAYS = 30;
+  private readonly DEFAULT_RETENTION_DAYS = 30;
 
   constructor(
     @InjectKysely() private readonly db: KyselyDB,
     @InjectQueue(QueueName.ATTACHMENT_QUEUE) private attachmentQueue: Queue,
+    private readonly workspaceRepo: WorkspaceRepo,
   ) {}
 
   @Interval('trash-cleanup', 24 * 60 * 60 * 1000) // every 24 hours
@@ -21,15 +23,33 @@ export class TrashCleanupService {
     try {
       this.logger.debug('Starting trash cleanup job');
 
-      const retentionDate = new Date();
-      retentionDate.setDate(retentionDate.getDate() - this.RETENTION_DAYS);
+      const workspaces = await this.workspaceRepo.findAllForRetention();
+      const oldDeletedPages: Array<{
+        id: string;
+        spaceId: string;
+        workspaceId: string;
+      }> = [];
 
-      // Get all pages that were deleted more than 30 days ago
-      const oldDeletedPages = await this.db
-        .selectFrom('pages')
-        .select(['id', 'spaceId', 'workspaceId'])
-        .where('deletedAt', '<', retentionDate)
-        .execute();
+      for (const workspace of workspaces) {
+        const retentionSettings =
+          ((workspace.settings as Record<string, any>)
+            ?.retention as Record<string, any>) ?? {};
+        const retentionDays =
+          this.getPositiveInt(retentionSettings.trashDays) ??
+          this.DEFAULT_RETENTION_DAYS;
+
+        const retentionDate = new Date();
+        retentionDate.setDate(retentionDate.getDate() - retentionDays);
+
+        const pages = await this.db
+          .selectFrom('pages')
+          .select(['id', 'spaceId', 'workspaceId'])
+          .where('workspaceId', '=', workspace.id)
+          .where('deletedAt', '<', retentionDate)
+          .execute();
+
+        oldDeletedPages.push(...pages);
+      }
 
       if (oldDeletedPages.length === 0) {
         this.logger.debug('No old trash items to clean up');
@@ -112,5 +132,17 @@ export class TrashCleanupService {
         `Error deleting pages, they may have been already deleted: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
+  }
+
+  private getPositiveInt(value: unknown): number | null {
+    if (typeof value !== 'number') {
+      return null;
+    }
+
+    if (!Number.isInteger(value) || value < 1) {
+      return null;
+    }
+
+    return value;
   }
 }

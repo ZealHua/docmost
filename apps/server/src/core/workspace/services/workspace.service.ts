@@ -411,6 +411,25 @@ export class WorkspaceService {
       delete updateWorkspaceDto.disablePublicSharing;
     }
 
+    if (
+      typeof updateWorkspaceDto.auditLogsDays !== 'undefined' ||
+      typeof updateWorkspaceDto.trashDays !== 'undefined'
+    ) {
+      const retentionWorkspace = await this.workspaceRepo.findById(workspaceId);
+      const retentionSettings =
+        ((retentionWorkspace?.settings as Record<string, any>)
+          ?.retention as Record<string, any>) ?? {};
+
+      await this.workspaceRepo.updateRetentionSettings(workspaceId, {
+        auditLogsDays:
+          updateWorkspaceDto.auditLogsDays ?? retentionSettings.auditLogsDays,
+        trashDays: updateWorkspaceDto.trashDays ?? retentionSettings.trashDays,
+      });
+
+      delete updateWorkspaceDto.auditLogsDays;
+      delete updateWorkspaceDto.trashDays;
+    }
+
     await this.workspaceRepo.updateWorkspace(updateWorkspaceDto, workspaceId);
 
     const workspace = await this.workspaceRepo.findById(workspaceId, {

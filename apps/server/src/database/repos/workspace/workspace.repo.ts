@@ -211,4 +211,34 @@ export class WorkspaceRepo {
       .returning(this.baseFields)
       .executeTakeFirst();
   }
+
+  async updateRetentionSettings(
+    workspaceId: string,
+    retention: {
+      auditLogsDays?: number;
+      trashDays?: number;
+    },
+  ) {
+    return this.db
+      .updateTable('workspaces')
+      .set({
+        settings: sql`COALESCE(settings, '{}'::jsonb)
+                || jsonb_build_object('retention', COALESCE(settings->'retention', '{}'::jsonb)
+                || jsonb_build_object(
+                  'auditLogsDays', ${sql.lit(retention.auditLogsDays)},
+                  'trashDays', ${sql.lit(retention.trashDays)}
+                ))`,
+        updatedAt: new Date(),
+      })
+      .where('id', '=', workspaceId)
+      .returning(this.baseFields)
+      .executeTakeFirst();
+  }
+
+  async findAllForRetention() {
+    return this.db
+      .selectFrom('workspaces')
+      .select(['id', 'settings'])
+      .execute();
+  }
 }
