@@ -1,5 +1,4 @@
 import {
-  Global,
   Logger,
   Module,
   OnModuleDestroy,

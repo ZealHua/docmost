@@ -67,6 +67,27 @@ $ npm run migration:revert
 # Shows the list of executed and pending migrations
 $ npm run migration:show
 
+## API Changelog (Page Content)
+
+### 2026-02 — Finalized request contract
+
+The Page API content mutation and retrieval contract has been finalized with the following field names:
+
+- `format`: content format selector. Supported values are `json`, `markdown`, and `html`.
+- `operation`: content update behavior for page updates. Supported values are `append`, `prepend`, and `replace`.
+
+Endpoint behavior summary:
+
+- `POST /pages`
+  - Supports optional `content` plus `format` for initial content ingestion.
+- `PUT /pages`
+  - Supports optional `content` plus `operation` and `format` for content mutations.
+  - Content mutation is applied when all required fields for mutation are present.
+- `GET /pages/:pageId`
+  - Supports optional `format` for response content projection (`json`, `markdown`, `html`).
+
+Legacy request field names `input`, `output`, and `contentOperation` are no longer part of the canonical contract.
+
 
 
 ## Test

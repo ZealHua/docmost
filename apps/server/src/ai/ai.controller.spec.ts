@@ -1,5 +1,6 @@
 import { ServiceUnavailableException } from '@nestjs/common';
 import { ResearchPlan } from './services/planning.service';
+import { AiController } from './ai.controller';
 
 jest.mock('@docmost/db/helpers/helpers', () => ({
   isPageEmbeddingsTableExists: jest.fn(),
@@ -12,8 +13,6 @@ jest.mock('@docmost/db/repos/page/page.repo', () => ({
 jest.mock('@/mem0/mem0.service', () => ({
   Mem0Service: class {},
 }), { virtual: true });
-
-const { AiController } = require('./ai.controller');
 
 describe('AiController deep research endpoints', () => {
   const orchestrator = {

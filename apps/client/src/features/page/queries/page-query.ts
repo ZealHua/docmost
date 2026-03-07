@@ -22,9 +22,12 @@ import {
   restorePage,
 } from "@/features/page/services/page-service";
 import {
+  ICreatePageInput,
   IMovePage,
   IPage,
+  IPageInfoInput,
   IPageInput,
+  IUpdatePageInput,
   SidebarPagesParams,
 } from "@/features/page/types/page.types";
 import { notifications } from "@mantine/notifications";
@@ -41,7 +44,7 @@ import { SpaceTreeNode } from "@/features/page/tree/types";
 import { useQueryEmit } from "@/features/websocket/use-query-emit";
 
 export function usePageQuery(
-  pageInput: Partial<IPageInput>,
+  pageInput: IPageInfoInput,
 ): UseQueryResult<IPage, Error> {
   const query = useQuery({
     queryKey: ["pages", pageInput.pageId],
@@ -65,7 +68,7 @@ export function usePageQuery(
 
 export function useCreatePageMutation() {
   const { t } = useTranslation();
-  return useMutation<IPage, Error, Partial<IPageInput>>({
+  return useMutation<IPage, Error, ICreatePageInput>({
     mutationFn: (data) => createPage(data),
     onSuccess: (data) => {
       invalidateOnCreatePage(data);
@@ -101,13 +104,13 @@ export function updatePageData(data: IPage) {
 }
 
 export function useUpdateTitlePageMutation() {
-  return useMutation<IPage, Error, Partial<IPageInput>>({
+  return useMutation<IPage, Error, IUpdatePageInput>({
     mutationFn: (data) => updatePage(data),
   });
 }
 
 export function useUpdatePageMutation() {
-  return useMutation<IPage, Error, Partial<IPageInput>>({
+  return useMutation<IPage, Error, IUpdatePageInput>({
     mutationFn: (data) => updatePage(data),
     onSuccess: (data) => {
       updatePage(data);

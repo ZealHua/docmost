@@ -70,6 +70,35 @@ export interface SidebarPagesParams {
   cursor?: string;
 }
 
+export type PageContentFormat = "json" | "markdown" | "html";
+
+export type PageContentOperation = "append" | "prepend" | "replace";
+
+export interface IPageInfoInput {
+  pageId: string;
+  includeSpace?: boolean;
+  includeContent?: boolean;
+  format?: PageContentFormat;
+}
+
+export interface ICreatePageInput {
+  spaceId: string;
+  title?: string;
+  parentPageId?: string;
+  icon?: string;
+  content?: string | object;
+  format?: PageContentFormat;
+}
+
+export interface IUpdatePageInput {
+  pageId: string;
+  title?: string;
+  icon?: string;
+  content?: string | object;
+  operation?: PageContentOperation;
+  format?: PageContentFormat;
+}
+
 export interface IPageInput {
   pageId: string;
   title: string;

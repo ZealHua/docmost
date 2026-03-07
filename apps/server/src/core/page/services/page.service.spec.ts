@@ -39,8 +39,14 @@ jest.mock(
 );
 
 import { PageService } from './page.service';
+import { BadRequestException } from '@nestjs/common';
+import { jsonToNode } from 'src/collaboration/collaboration.util';
 
 describe('PageService', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   function createService() {
     const pagePermissionRepo = {
       filterAccessiblePageIds: jest.fn(),
@@ -54,6 +60,10 @@ describe('PageService', () => {
       notifyPagePermissionChanged: jest.fn(),
     };
 
+    const collaborationGateway = {
+      handleYjsEvent: jest.fn(),
+    };
+
     const service = new PageService(
       {} as any,
       {} as any,
@@ -64,14 +74,14 @@ describe('PageService', () => {
       {} as any,
       {} as any,
       {} as any,
-      {} as any,
+      collaborationGateway as any,
       {} as any,
       pagePermissionRepo as any,
       {} as any,
       wsGateway as any,
     );
 
-    return { service, pagePermissionRepo };
+    return { service, pagePermissionRepo, collaborationGateway };
   }
 
   it('returns visible pages with canEdit=true when no restrictions exist in space', async () => {
@@ -119,5 +129,53 @@ describe('PageService', () => {
       { id: 'p1', title: 'Reader', canEdit: false },
       { id: 'p2', title: 'Writer', canEdit: true },
     ]);
+  });
+
+  it('throws BadRequestException for invalid content payload during updatePageContent', async () => {
+    const { service, collaborationGateway } = createService();
+    (jsonToNode as jest.Mock).mockImplementation(() => {
+      throw new Error('invalid prosemirror');
+    });
+
+    await expect(
+      service.updatePageContent(
+        'page-1',
+        { bad: 'payload' },
+        'append',
+        'json',
+        { id: 'user-1' } as any,
+      ),
+    ).rejects.toThrow(BadRequestException);
+
+    expect(collaborationGateway.handleYjsEvent).not.toHaveBeenCalled();
+  });
+
+  it('sends prepend operation payload to collaboration gateway', async () => {
+    const { service, collaborationGateway } = createService();
+    const prosemirrorJson = {
+      type: 'doc',
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Hi' }] }],
+    };
+    const user = { id: 'user-1' } as any;
+
+    (jsonToNode as jest.Mock).mockReturnValue(undefined);
+
+    await service.updatePageContent(
+      'page-1',
+      prosemirrorJson,
+      'prepend',
+      'json',
+      user,
+    );
+
+    expect(collaborationGateway.handleYjsEvent).toHaveBeenCalledWith(
+      'updatePageContent',
+      'page.page-1',
+      {
+        operation: 'prepend',
+        prosemirrorJson,
+        user,
+      },
+    );
   });
 });

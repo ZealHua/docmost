@@ -1,11 +1,14 @@
 import api from "@/lib/api-client";
 import {
+  ICreatePageInput,
   ICopyPageToSpace,
   IExportPageParams,
+  IPageInfoInput,
   IMovePage,
   IMovePageToSpace,
   IPage,
   IPageInput,
+  IUpdatePageInput,
   SidebarPagesParams,
 } from "@/features/page/types/page.types";
 import { QueryParams } from "@/lib/types";
@@ -15,19 +18,17 @@ import { InfiniteData } from "@tanstack/react-query";
 import { IFileTask } from "@/features/file-task/types/file-task.types.ts";
 import { IAttachment } from "@/features/attachments/types/attachment.types.ts";
 
-export async function createPage(data: Partial<IPage>): Promise<IPage> {
+export async function createPage(data: ICreatePageInput): Promise<IPage> {
   const req = await api.post<IPage>("/pages/create", data);
   return req.data;
 }
 
-export async function getPageById(
-  pageInput: Partial<IPageInput>,
-): Promise<IPage> {
+export async function getPageById(pageInput: IPageInfoInput): Promise<IPage> {
   const req = await api.post<IPage>("/pages/info", pageInput);
   return req.data;
 }
 
-export async function updatePage(data: Partial<IPageInput>): Promise<IPage> {
+export async function updatePage(data: IUpdatePageInput): Promise<IPage> {
   const req = await api.post<IPage>("/pages/update", data);
   return req.data;
 }
