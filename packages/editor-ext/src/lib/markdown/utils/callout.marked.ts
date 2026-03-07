@@ -17,7 +17,7 @@ export const calloutExtension = {
     const rule = /^:::([a-zA-Z0-9]+)\s+([\s\S]+?):::/;
     const match = rule.exec(src);
 
-    const validCalloutTypes = ['info', 'success', 'warning', 'danger'];
+    const validCalloutTypes = ['info', 'note', 'success', 'warning', 'danger'];
 
     if (match) {
       let type = match[1];

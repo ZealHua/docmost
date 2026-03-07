@@ -120,37 +120,80 @@ export class WsGateway implements OnGatewayConnection, OnModuleDestroy {
         }
       }
 
-      const sockets = await this.server.in(room).fetchSockets();
-      const accessByUser = new Map<string, boolean>();
-
-      await Promise.all(
-        sockets.map(async (socket) => {
-          if (socket.id === client.id) {
-            return;
-          }
-
-          const socketUserId = socket.data?.userId as string | undefined;
-          if (!socketUserId) {
-            return;
-          }
-
-          if (!accessByUser.has(socketUserId)) {
-            const canAccess = await this.getCachedPageAccess(
-              socketUserId,
-              pageId,
-            );
-            accessByUser.set(socketUserId, canAccess);
-          }
-
-          if (accessByUser.get(socketUserId)) {
-            socket.emit('message', data);
-          }
-        }),
+      await this.broadcastToAuthorizedUsers(
+        room,
+        (client.data?.userId as string | undefined) ?? null,
+        pageId,
+        data,
       );
       return;
     }
 
     client.broadcast.emit('message', data);
+  }
+
+  async emitCommentEvent(
+    spaceId: string,
+    pageId: string,
+    data: any,
+  ): Promise<void> {
+    const room = this.getSpaceRoomName(spaceId);
+
+    const hasRestrictionsInSpace = await this.getCachedBoolean(
+      this.restrictedSpaceCache,
+      spaceId,
+      () => this.pagePermissionRepo.hasRestrictedPagesInSpace(spaceId),
+    );
+
+    if (!hasRestrictionsInSpace) {
+      this.server.to(room).emit('message', data);
+      return;
+    }
+
+    const hasRestrictedAncestor = await this.getCachedBoolean(
+      this.restrictedAncestorCache,
+      pageId,
+      () => this.pagePermissionRepo.hasRestrictedAncestor(pageId),
+    );
+
+    if (!hasRestrictedAncestor) {
+      this.server.to(room).emit('message', data);
+      return;
+    }
+
+    await this.broadcastToAuthorizedUsers(room, null, pageId, data);
+  }
+
+  private async broadcastToAuthorizedUsers(
+    room: string,
+    excludeUserId: string | null,
+    pageId: string,
+    data: any,
+  ): Promise<void> {
+    const sockets = await this.server.in(room).fetchSockets();
+    const accessByUser = new Map<string, boolean>();
+
+    await Promise.all(
+      sockets.map(async (socket) => {
+        const socketUserId = socket.data?.userId as string | undefined;
+        if (!socketUserId) {
+          return;
+        }
+
+        if (excludeUserId && socketUserId === excludeUserId) {
+          return;
+        }
+
+        if (!accessByUser.has(socketUserId)) {
+          const canAccess = await this.getCachedPageAccess(socketUserId, pageId);
+          accessByUser.set(socketUserId, canAccess);
+        }
+
+        if (accessByUser.get(socketUserId)) {
+          socket.emit('message', data);
+        }
+      }),
+    );
   }
 
   private extractPageIdFromEvent(data: any): string | undefined {

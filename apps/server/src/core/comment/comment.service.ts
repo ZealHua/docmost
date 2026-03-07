@@ -17,6 +17,7 @@ import { CursorPaginationResult } from '@docmost/db/pagination/cursor-pagination
 import { QueueJob, QueueName } from '../../integrations/queue/constants';
 import { extractUserMentionIdsFromJson } from '../../common/helpers/prosemirror/utils';
 import { ICommentNotificationJob } from '../../integrations/queue/constants/queue.interface';
+import { WsGateway } from '../../ws/ws.gateway';
 
 @Injectable()
 export class CommentService {
@@ -25,6 +26,7 @@ export class CommentService {
   constructor(
     private commentRepo: CommentRepo,
     private pageRepo: PageRepo,
+    private wsGateway: WsGateway,
     @InjectQueue(QueueName.GENERAL_QUEUE)
     private generalQueue: Queue,
     @InjectQueue(QueueName.NOTIFICATION_QUEUE)
@@ -63,7 +65,7 @@ export class CommentService {
       }
     }
 
-    const comment = await this.commentRepo.insertComment({
+    const inserted = await this.commentRepo.insertComment({
       pageId: page.id,
       content: commentContent,
       selection: createCommentDto?.selection?.substring(0, 250),
@@ -72,6 +74,11 @@ export class CommentService {
       creatorId: userId,
       workspaceId: workspaceId,
       spaceId: page.spaceId,
+    });
+
+    const comment = await this.commentRepo.findById(inserted.id, {
+      includeCreator: true,
+      includeResolvedBy: true,
     });
 
     this.generalQueue
@@ -98,6 +105,12 @@ export class CommentService {
       !isReply,
       createCommentDto.parentCommentId,
     );
+
+    this.wsGateway.emitCommentEvent(page.spaceId, page.id, {
+      operation: 'commentCreated',
+      pageId: page.id,
+      comment,
+    });
 
     return comment;
   }
@@ -154,6 +167,12 @@ export class CommentService {
     comment.editedAt = editedAt;
     comment.updatedAt = editedAt;
 
+    this.wsGateway.emitCommentEvent(comment.spaceId, comment.pageId, {
+      operation: 'commentUpdated',
+      pageId: comment.pageId,
+      comment,
+    });
+
     return comment;
   }
 
@@ -179,11 +198,18 @@ export class CommentService {
       comment.id,
     );
 
-    comment.resolvedAt = resolvedAt;
-    comment.resolvedById = resolvedById;
-    comment.updatedAt = new Date();
+    const resolvedComment = await this.commentRepo.findById(comment.id, {
+      includeCreator: true,
+      includeResolvedBy: true,
+    });
 
-    return comment;
+    this.wsGateway.emitCommentEvent(comment.spaceId, comment.pageId, {
+      operation: 'commentResolved',
+      pageId: comment.pageId,
+      comment: resolvedComment,
+    });
+
+    return resolvedComment;
   }
 
   private async queueCommentNotification(

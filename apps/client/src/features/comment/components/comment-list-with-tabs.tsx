@@ -14,7 +14,6 @@ import { usePageQuery } from "@/features/page/queries/page-query.ts";
 import { IPagination } from "@/lib/types.ts";
 import { extractPageSlugId } from "@/lib";
 import { useTranslation } from "react-i18next";
-import { useQueryEmit } from "@/features/websocket/use-query-emit";
 import { useIsCloudEE } from "@/hooks/use-is-cloud-ee";
 import { useGetSpaceBySlugQuery } from "@/features/space/queries/space-query.ts";
 
@@ -26,10 +25,9 @@ function CommentListWithTabs() {
     data: comments,
     isLoading: isCommentsLoading,
     isError,
-  } = useCommentsQuery({ pageId: page?.id, limit: 100 });
+  } = useCommentsQuery({ pageId: page?.id });
   const createCommentMutation = useCreateCommentMutation();
   const [isLoading, setIsLoading] = useState(false);
-  const emit = useQueryEmit();
   const isCloudEE = useIsCloudEE();
   const { data: space } = useGetSpaceBySlugQuery(page?.space?.slug);
 
@@ -66,11 +64,6 @@ function CommentListWithTabs() {
         };
 
         await createCommentMutation.mutateAsync(commentData);
-
-        emit({
-          operation: "invalidateComment",
-          pageId: page?.id,
-        });
       } catch (error) {
         console.error("Failed to post comment:", error);
       } finally {

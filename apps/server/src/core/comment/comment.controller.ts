@@ -26,6 +26,7 @@ import {
 } from '../casl/interfaces/space-ability.type';
 import { CommentRepo } from '@docmost/db/repos/comment/comment.repo';
 import { PageAccessService } from '../page/page-access/page-access.service';
+import { WsGateway } from '../../ws/ws.gateway';
 
 @UseGuards(JwtAuthGuard)
 @Controller('comments')
@@ -36,6 +37,7 @@ export class CommentController {
     private readonly pageRepo: PageRepo,
     private readonly spaceAbility: SpaceAbilityFactory,
     private readonly pageAccessService: PageAccessService,
+    private readonly wsGateway: WsGateway,
   ) {}
 
   @HttpCode(HttpStatus.OK)
@@ -101,7 +103,10 @@ export class CommentController {
   @HttpCode(HttpStatus.OK)
   @Post('update')
   async update(@Body() dto: UpdateCommentDto, @AuthUser() user: User) {
-    const comment = await this.commentRepo.findById(dto.commentId);
+    const comment = await this.commentRepo.findById(dto.commentId, {
+      includeCreator: true,
+      includeResolvedBy: true,
+    });
     if (!comment) {
       throw new NotFoundException('Comment not found');
     }
@@ -155,16 +160,21 @@ export class CommentController {
         );
       }*/
       await this.commentRepo.deleteComment(comment.id);
-      return;
+    } else {
+      // Space admin can delete any comment
+      if (ability.cannot(SpaceCaslAction.Manage, SpaceCaslSubject.Settings)) {
+        throw new ForbiddenException(
+          'You can only delete your own comments or must be a space admin',
+        );
+      }
+      await this.commentRepo.deleteComment(comment.id);
     }
 
-    // Space admin can delete any comment
-    if (ability.cannot(SpaceCaslAction.Manage, SpaceCaslSubject.Settings)) {
-      throw new ForbiddenException(
-        'You can only delete your own comments or must be a space admin',
-      );
-    }
-    await this.commentRepo.deleteComment(comment.id);
+    this.wsGateway.emitCommentEvent(comment.spaceId, comment.pageId, {
+      operation: 'commentDeleted',
+      pageId: comment.pageId,
+      commentId: comment.id,
+    });
   }
 
   @HttpCode(HttpStatus.OK)
