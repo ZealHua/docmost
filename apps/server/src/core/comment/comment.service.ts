@@ -106,11 +106,16 @@ export class CommentService {
       createCommentDto.parentCommentId,
     );
 
-    this.wsGateway.emitCommentEvent(page.spaceId, page.id, {
-      operation: 'commentCreated',
-      pageId: page.id,
-      comment,
-    });
+    this.wsGateway.emitCommentEvent(
+      page.spaceId,
+      page.id,
+      {
+        operation: 'commentCreated',
+        pageId: page.id,
+        comment,
+      },
+      userId,
+    );
 
     return comment;
   }
@@ -167,11 +172,16 @@ export class CommentService {
     comment.editedAt = editedAt;
     comment.updatedAt = editedAt;
 
-    this.wsGateway.emitCommentEvent(comment.spaceId, comment.pageId, {
-      operation: 'commentUpdated',
-      pageId: comment.pageId,
-      comment,
-    });
+    this.wsGateway.emitCommentEvent(
+      comment.spaceId,
+      comment.pageId,
+      {
+        operation: 'commentUpdated',
+        pageId: comment.pageId,
+        comment,
+      },
+      authUser.id,
+    );
 
     return comment;
   }
@@ -203,11 +213,16 @@ export class CommentService {
       includeResolvedBy: true,
     });
 
-    this.wsGateway.emitCommentEvent(comment.spaceId, comment.pageId, {
-      operation: 'commentResolved',
-      pageId: comment.pageId,
-      comment: resolvedComment,
-    });
+    this.wsGateway.emitCommentEvent(
+      comment.spaceId,
+      comment.pageId,
+      {
+        operation: 'commentResolved',
+        pageId: comment.pageId,
+        comment: resolvedComment,
+      },
+      authUser.id,
+    );
 
     return resolvedComment;
   }

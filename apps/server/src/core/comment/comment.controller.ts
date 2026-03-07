@@ -170,11 +170,16 @@ export class CommentController {
       await this.commentRepo.deleteComment(comment.id);
     }
 
-    this.wsGateway.emitCommentEvent(comment.spaceId, comment.pageId, {
-      operation: 'commentDeleted',
-      pageId: comment.pageId,
-      commentId: comment.id,
-    });
+    this.wsGateway.emitCommentEvent(
+      comment.spaceId,
+      comment.pageId,
+      {
+        operation: 'commentDeleted',
+        pageId: comment.pageId,
+        commentId: comment.id,
+      },
+      user.id,
+    );
   }
 
   @HttpCode(HttpStatus.OK)

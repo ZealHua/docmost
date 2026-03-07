@@ -13,6 +13,22 @@ import { SpaceMemberRepo } from '@docmost/db/repos/space/space-member.repo';
 import * as cookie from 'cookie';
 import { PagePermissionRepo } from '@docmost/db/repos/page/page-permission.repo';
 
+type CommentCreatedOrUpdatedOrResolvedEvent = {
+  operation: 'commentCreated' | 'commentUpdated' | 'commentResolved';
+  pageId: string;
+  comment: unknown;
+};
+
+type CommentDeletedEvent = {
+  operation: 'commentDeleted';
+  pageId: string;
+  commentId: string;
+};
+
+export type CommentWebSocketEvent =
+  | CommentCreatedOrUpdatedOrResolvedEvent
+  | CommentDeletedEvent;
+
 @WebSocketGateway({
   cors: { origin: '*' },
   transports: ['websocket'],
@@ -135,7 +151,8 @@ export class WsGateway implements OnGatewayConnection, OnModuleDestroy {
   async emitCommentEvent(
     spaceId: string,
     pageId: string,
-    data: any,
+    data: CommentWebSocketEvent,
+    excludeUserId: string | null = null,
   ): Promise<void> {
     const room = this.getSpaceRoomName(spaceId);
 
@@ -146,7 +163,11 @@ export class WsGateway implements OnGatewayConnection, OnModuleDestroy {
     );
 
     if (!hasRestrictionsInSpace) {
-      this.server.to(room).emit('message', data);
+      if (excludeUserId) {
+        this.server.to(room).except(this.getUserRoomName(excludeUserId)).emit('message', data);
+      } else {
+        this.server.to(room).emit('message', data);
+      }
       return;
     }
 
@@ -157,11 +178,15 @@ export class WsGateway implements OnGatewayConnection, OnModuleDestroy {
     );
 
     if (!hasRestrictedAncestor) {
-      this.server.to(room).emit('message', data);
+      if (excludeUserId) {
+        this.server.to(room).except(this.getUserRoomName(excludeUserId)).emit('message', data);
+      } else {
+        this.server.to(room).emit('message', data);
+      }
       return;
     }
 
-    await this.broadcastToAuthorizedUsers(room, null, pageId, data);
+    await this.broadcastToAuthorizedUsers(room, excludeUserId, pageId, data);
   }
 
   private async broadcastToAuthorizedUsers(
@@ -297,5 +322,9 @@ export class WsGateway implements OnGatewayConnection, OnModuleDestroy {
 
   getSpaceRoomName(spaceId: string): string {
     return `space-${spaceId}`;
+  }
+
+  private getUserRoomName(userId: string): string {
+    return `user-${userId}`;
   }
 }

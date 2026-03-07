@@ -23,11 +23,14 @@ describe('WsGateway', () => {
     );
 
     const emit = jest.fn();
-    const to = jest.fn().mockReturnValue({ emit });
+    const exceptEmit = jest.fn();
+    const except = jest.fn().mockReturnValue({ emit: exceptEmit });
+    const to = jest.fn().mockReturnValue({ emit, except });
+    const fetchSockets = jest.fn().mockResolvedValue([]);
 
     (gateway as any).server = {
       to,
-      in: jest.fn().mockReturnValue({ fetchSockets: jest.fn().mockResolvedValue([]) }),
+      in: jest.fn().mockReturnValue({ fetchSockets }),
     };
 
     return {
@@ -35,6 +38,9 @@ describe('WsGateway', () => {
       pagePermissionRepo,
       serverTo: to,
       serverEmit: emit,
+      serverExcept: except,
+      serverExceptEmit: exceptEmit,
+      fetchSockets,
     };
   }
 
@@ -108,5 +114,100 @@ describe('WsGateway', () => {
 
     expect(pagePermissionRepo.hasRestrictedPagesInSpace).toHaveBeenCalledTimes(1);
     expect(roomEmit).toHaveBeenCalledTimes(2);
+  });
+
+  it('emits comment events without sender exclusion when unrestricted', async () => {
+    const { gateway, pagePermissionRepo, serverTo, serverEmit, serverExcept } =
+      createGateway();
+
+    pagePermissionRepo.hasRestrictedPagesInSpace.mockResolvedValue(false);
+
+    await gateway.emitCommentEvent('space-1', 'page-1', {
+      operation: 'commentDeleted',
+      pageId: 'page-1',
+      commentId: 'comment-1',
+    });
+
+    expect(serverTo).toHaveBeenCalledWith('space-space-1');
+    expect(serverEmit).toHaveBeenCalledWith('message', {
+      operation: 'commentDeleted',
+      pageId: 'page-1',
+      commentId: 'comment-1',
+    });
+    expect(serverExcept).not.toHaveBeenCalled();
+  });
+
+  it('emits comment events with sender exclusion when unrestricted', async () => {
+    const {
+      gateway,
+      pagePermissionRepo,
+      serverTo,
+      serverExcept,
+      serverExceptEmit,
+      serverEmit,
+    } = createGateway();
+
+    pagePermissionRepo.hasRestrictedPagesInSpace.mockResolvedValue(false);
+
+    await gateway.emitCommentEvent(
+      'space-1',
+      'page-1',
+      {
+        operation: 'commentDeleted',
+        pageId: 'page-1',
+        commentId: 'comment-1',
+      },
+      'user-1',
+    );
+
+    expect(serverTo).toHaveBeenCalledWith('space-space-1');
+    expect(serverExcept).toHaveBeenCalledWith('user-user-1');
+    expect(serverExceptEmit).toHaveBeenCalledWith('message', {
+      operation: 'commentDeleted',
+      pageId: 'page-1',
+      commentId: 'comment-1',
+    });
+    expect(serverEmit).not.toHaveBeenCalled();
+  });
+
+  it('broadcasts comment events only to authorized sockets and excludes sender on restricted pages', async () => {
+    const { gateway, pagePermissionRepo, fetchSockets } = createGateway();
+
+    pagePermissionRepo.hasRestrictedPagesInSpace.mockResolvedValue(true);
+    pagePermissionRepo.hasRestrictedAncestor.mockResolvedValue(true);
+    pagePermissionRepo.canUserAccessPage.mockImplementation(async (userId: string) => {
+      if (userId === 'user-2') return true;
+      if (userId === 'user-3') return false;
+      return true;
+    });
+
+    const senderEmit = jest.fn();
+    const authorizedEmit = jest.fn();
+    const unauthorizedEmit = jest.fn();
+
+    fetchSockets.mockResolvedValue([
+      { data: { userId: 'user-1' }, emit: senderEmit },
+      { data: { userId: 'user-2' }, emit: authorizedEmit },
+      { data: { userId: 'user-3' }, emit: unauthorizedEmit },
+    ]);
+
+    await gateway.emitCommentEvent(
+      'space-1',
+      'page-1',
+      {
+        operation: 'commentDeleted',
+        pageId: 'page-1',
+        commentId: 'comment-1',
+      },
+      'user-1',
+    );
+
+    expect(senderEmit).not.toHaveBeenCalled();
+    expect(authorizedEmit).toHaveBeenCalledWith('message', {
+      operation: 'commentDeleted',
+      pageId: 'page-1',
+      commentId: 'comment-1',
+    });
+    expect(unauthorizedEmit).not.toHaveBeenCalled();
   });
 });
