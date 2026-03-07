@@ -48,6 +48,8 @@ All files in the following directories are licensed under the Docmost Enterprise
 
 See the [development documentation](https://docmost.com/docs/self-hosting/development)
 
+For audit log export operations and runtime tuning, see [doc/AUDIT_LOGS_OPERATIONS.md](doc/AUDIT_LOGS_OPERATIONS.md).
+
 ## Thanks
 Special thanks to;
 

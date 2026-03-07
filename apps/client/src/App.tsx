@@ -38,6 +38,7 @@ import UserApiKeys from "@/ee/api-key/pages/user-api-keys";
 import WorkspaceApiKeys from "@/ee/api-key/pages/workspace-api-keys";
 import AiPage from "@/features/ai/pages/AiPage.tsx";
 import AiSettings from "@/features/ai/pages/ai-settings.tsx";
+import AuditLogPage from "@/ee/audit-log/pages/audit-log.tsx";
 
 export default function App() {
   const { t } = useTranslation();
@@ -102,6 +103,7 @@ export default function App() {
             <Route path={"sharing"} element={<Shares />} />
             <Route path={"security"} element={<Security />} />
             <Route path={"ai"} element={<AiSettings />} />
+            <Route path={"audit-log"} element={<AuditLogPage />} />
             {/* {!isCloud() && <Route path={"license"} element={<License />} />} */}
             {isCloud() && <Route path={"billing"} element={<Billing />} />}
           </Route>
