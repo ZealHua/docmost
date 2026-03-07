@@ -113,7 +113,7 @@ export function useUpdatePageMutation() {
   return useMutation<IPage, Error, IUpdatePageInput>({
     mutationFn: (data) => updatePage(data),
     onSuccess: (data) => {
-      updatePage(data);
+      updatePageData(data);
 
       invalidateOnUpdatePage(
         data.spaceId,
